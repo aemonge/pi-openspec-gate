@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "exempt": [
+    { "prefix": "**/openspec/**", "category": "ladder-artifacts" },
+    { "prefix": "**/docs/**", "category": "documentation" },
+    { "prefix": "**/skills/**", "category": "declared-skills" }
+  ]
+}

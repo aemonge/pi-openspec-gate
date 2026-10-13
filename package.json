@@ -1,0 +1,27 @@
+{
+  "name": "pi-openspec-gate",
+  "version": "0.1.0",
+  "description": "Ladder gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "openspec",
+    "ladder",
+    "accounting"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "test": "node --test --experimental-strip-types test/"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}

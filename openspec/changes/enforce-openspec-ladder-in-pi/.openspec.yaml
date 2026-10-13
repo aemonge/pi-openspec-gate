@@ -1,0 +1,4 @@
+schema: ramona-plan
+created: 2026-10-07
+goal: Build the Pi extension that structurally gates mutations through the ladder.
+skip_specs: true
