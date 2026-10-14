@@ -11,5 +11,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [x] Step 3 — Tests + sweep + jiti smoke load + commit
       check: suite green incl. instrument tests, vocabulary sweep zero ·
       paths: test/instruments.test.ts
-- [ ] Step 4 — Human live validation (happy path): focus set → attributed
-      writes → receipts in 4-tasks.md · response: — · outcome: —
+- [x] Step 4 — Human live validation (happy path) — VALID 2026-10-14
+      outcome: all five legs live in a fresh project (/tmp/ladder-demo):
+      instrument.v1 (work_focus, openspec_focus), attributed.v1 (write →
+      first-change, taskId idea; subagent → first-change), zero
+      declarations, bare-work.md never created · response: human VALID
