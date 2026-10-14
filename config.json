@@ -4,5 +4,6 @@
     { "prefix": "**/openspec/**", "category": "ladder-artifacts" },
     { "prefix": "**/docs/**", "category": "documentation" },
     { "prefix": "**/skills/**", "category": "declared-skills" }
-  ]
+  ],
+  "accountingTools": ["work_focus", "openspec_focus", "stage", "subject"]
 }

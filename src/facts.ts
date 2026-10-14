@@ -9,6 +9,7 @@ export const FACT = {
   attributed: 'pi-openspec-gate.attributed.v1',
   exempt: 'pi-openspec-gate.exempt.v1',
   inherited: 'pi-openspec-gate.inherited.v1',
+  instrument: 'pi-openspec-gate.instrument.v1',
 } as const;
 
 export type FactAppender = (customType: string, data?: unknown) => void;
@@ -48,6 +49,11 @@ export type InheritedFact = {
   parentSessionId: string;
   change: string;
   taskId?: string;
+  at: string;
+};
+
+export type InstrumentFact = {
+  tool: string;
   at: string;
 };
 

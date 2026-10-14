@@ -115,6 +115,12 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     const input: unknown = event.input;
     const cwd: string = ctx.cwd ?? process.cwd();
 
+    // 0. instruments — the gate never gates its own accounting layer
+    if (config.accountingTools?.includes(toolName)) {
+      appendFact(FACT.instrument, { tool: toolName, at: utcNow() });
+      return undefined;
+    }
+
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName));
     if (!verdict.mutating) return undefined; // read-only or creation: pass
 

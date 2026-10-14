@@ -25,6 +25,8 @@ export type ExemptRule = {
 export type GateConfig = {
   enabled: boolean;
   exempt: readonly ExemptRule[];
+  /** Entry-store instrument names that pass ungated (the gate never gates its instruments). */
+  accountingTools?: readonly string[];
 };
 
 const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [] };
@@ -55,9 +57,15 @@ function parseConfig(raw: string, source: string): GateConfig {
       }
     }
   }
+  const accountingTools = Array.isArray(parsed.accountingTools)
+    ? parsed.accountingTools.filter(
+        (name): name is string => typeof name === 'string' && name.length > 0,
+      )
+    : [];
   return {
     enabled: parsed.enabled !== false,
     exempt: Object.freeze(exempt),
+    accountingTools: Object.freeze(accountingTools),
   };
 }
 
