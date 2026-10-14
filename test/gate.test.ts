@@ -11,7 +11,7 @@ import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 /** Exact copy from the Execution artifact — the gate must byte-match it. */
 const EXPECTED_BLOCK_COPY = [
   '⛔ unaccounted mutation — no active change',
-  '   focus:   openspec focus set <change-id>',
+  '   focus:   set the focus fact via your cockpit/status tool',
   '   create:  openspec new change <slug> --schema ramona-plan',
   '   or say "do it" — recorded as declared work, proceeds',
 ].join('\n');

@@ -1,9 +1,17 @@
 /**
  * Gate enablement and exemption paths are extension config, not policy.
  * config.json lives beside index.ts in the extension root.
+ *
+ * Root resolution: this module lives in <extension-root>/src/, the config
+ * in <extension-root>/. jiti does not guarantee import.meta.dirname, so the
+ * module directory is resolved from import.meta.url and the config is
+ * looked up at the extension root first, then beside this module (single-
+ * file layout). A missing config never disables accounting: the gate stays
+ * enabled with no exemptions.
  */
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export type ExemptRule = {
   /** Path prefix. Either the segment form "star-star / <segment> / star-star"
@@ -53,13 +61,31 @@ function parseConfig(raw: string, source: string): GateConfig {
   };
 }
 
-export function loadGateConfig(extensionRoot?: string): GateConfig {
-  const root = extensionRoot ?? import.meta.dirname ?? process.cwd();
+/** Config candidates in resolution order: extension root, then module directory. */
+function configCandidates(moduleDir: string): string[] {
+  return [join(moduleDir, '..', 'config.json'), join(moduleDir, 'config.json')];
+}
+
+function moduleDir(): string {
   try {
-    return parseConfig(readFileSync(join(root, 'config.json'), 'utf8'), join(root, 'config.json'));
+    return dirname(fileURLToPath(import.meta.url));
   } catch {
-    // No config file or unreadable: gate stays enabled with no exemptions.
-    // Missing accounting inputs never disable accounting.
-    return DEFAULT_CONFIG;
+    return import.meta.dirname ?? process.cwd();
   }
+}
+
+export function loadGateConfig(extensionRoot?: string): GateConfig {
+  const candidates = extensionRoot
+    ? [join(extensionRoot, 'config.json')]
+    : configCandidates(moduleDir());
+  for (const candidate of candidates) {
+    try {
+      return parseConfig(readFileSync(candidate, 'utf8'), candidate);
+    } catch {
+      // try the next candidate
+    }
+  }
+  // No config file or unreadable: gate stays enabled with no exemptions.
+  // Missing accounting inputs never disable accounting.
+  return DEFAULT_CONFIG;
 }

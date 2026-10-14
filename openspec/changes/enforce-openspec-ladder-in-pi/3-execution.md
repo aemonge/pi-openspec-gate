@@ -38,7 +38,7 @@
 Block message (exact copy):
 
 > ⛔ unaccounted mutation — no active change
->    focus:   openspec focus set <change-id>
+>    focus:   set the focus fact via your cockpit/status tool
 >    create:  openspec new change <slug> --schema ramona-plan
 >    or say "do it" — recorded as declared work, proceeds
 
@@ -56,3 +56,11 @@ Block message (exact copy):
 ## History
 
 Snapshot subject: `feat(ladder): ladder-gate accounting extension`
+
+> Amendment (2026-10-14, human ruling): block-copy remedy 1 referenced
+> `openspec focus set <change-id>` — a command that never existed in the
+> openspec CLI (verified against the /usr/lib/openspec/dist/cli command
+> registry: no focus command, no focus-state writer). Copy now names the
+> real focus mechanism: the status/cockpit tool that writes the
+> openspec-focus fact the gate reads. Trio synced: this artifact,
+> src/gate.ts, test/gate.test.ts.

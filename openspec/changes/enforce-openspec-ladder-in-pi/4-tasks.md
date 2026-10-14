@@ -61,11 +61,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       under inherited focus + receipt line present in 4-tasks.md (deterministic
       suite 25/25) · paths: src/focus.ts · src/attribution.ts · src/gate.ts ·
       test/gate.test.ts · live inherit lands in Step 8 protocol
-- [-] Step 8 — Vocabulary sweep (grep -riE 'waiver|approv|sanitiz|trust' src/ =
+- [x] Step 8 — Vocabulary sweep (grep -riE 'waiver|approv|sanitiz|trust' src/ =
       zero) + reload + observation protocol
       start: 2026-10-13T15:53Z · elapsed: interrupted (session close) ·
       check: live block ✓ at 15:53Z · remaining: vocabulary sweep, live
       declare/attribute/exempt/inherit protocol, freeze · paths: —
+      receipt: live protocol 2026-10-14 — sweep clean · block PASS fresh-session probe · declare PASS twice in bare-work.md · exempt PASS after config-root fix · attribute and inherit deterministic-only, no focus writer on host · suite green including new config path test
 - [ ] Step 9 — Human validation — evidence review of one full protocol (block →
       declare → attribute → exempt → inherit) response: — · outcome: — · at: —
 
@@ -81,3 +82,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   galactica openspec trees (change artifacts only, no built extension).
   Superseded by amendment above at human ruling; the stop was correct under the
   pre-amendment plan.
+
+- 2026-10-14 · block-copy remedy 1 amended per human ruling: the referenced
+  `openspec focus set` command never existed in the openspec CLI; copy now
+  names the status-tool focus fact. Trio synced (3-execution.md, src/gate.ts,
+  test/gate.test.ts), suite green, fresh-session block re-verified.

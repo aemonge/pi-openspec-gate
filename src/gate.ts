@@ -30,7 +30,7 @@ import { matchExemption } from './exemptions.ts';
 
 export const BLOCK_MESSAGE = [
   '⛔ unaccounted mutation — no active change',
-  '   focus:   openspec focus set <change-id>',
+  '   focus:   set the focus fact via your cockpit/status tool',
   '   create:  openspec new change <slug> --schema ramona-plan',
   '   or say "do it" — recorded as declared work, proceeds',
 ].join('\n');
