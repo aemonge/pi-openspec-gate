@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { loadGateConfig } from '../src/config.ts';
+import { loadGateConfig, parseConfigString } from '../src/config.ts';
 
 /**
  * Covers the live no-arg path that the 2026-10-14 protocol run proved broken:
@@ -22,5 +22,25 @@ describe('config root resolution (live path)', () => {
   test('explicit nonexistent root falls back to enabled-with-no-exemptions', () => {
     const config = loadGateConfig('/nonexistent-gate-root');
     assert.deepEqual({ enabled: config.enabled, exempt: [...config.exempt] }, { enabled: true, exempt: [] });
+  });
+});
+
+describe('readOnlyTools (research escape hatch)', () => {
+  test('parsed, filtered, frozen when present', () => {
+    const config = parseConfigString(
+      JSON.stringify({ readOnlyTools: ['my_probe', 'team_search', '', 42, null] }),
+    );
+    assert.deepEqual([...(config.readOnlyTools ?? [])], ['my_probe', 'team_search']);
+    assert.ok(Object.isFrozen(config.readOnlyTools));
+  });
+
+  test('absent key means no override', () => {
+    const config = parseConfigString(JSON.stringify({ enabled: true }));
+    assert.equal(config.readOnlyTools, undefined);
+  });
+
+  test('empty array means no override', () => {
+    const config = parseConfigString(JSON.stringify({ readOnlyTools: [] }));
+    assert.equal(config.readOnlyTools, undefined);
   });
 });

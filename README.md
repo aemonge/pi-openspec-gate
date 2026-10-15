@@ -45,7 +45,13 @@ pi install -l npm:@aemonge-dev/pi-openspec-gate         # project-scoped
 
 Exemptions are path-scoped only, never fuzzy. `accountingTools` names
 entry-store instruments that pass ungated — the gate never gates its own
-instruments.
+instruments. `readOnlyTools` names additional tools classified read-only at
+load, merged over the built-in research set — the escape hatch for new
+research tools without a package release:
+
+```json
+{ "readOnlyTools": ["my_probe", "team_search"] }
+```
 
 ## Facts (session entries; any reader may consume, the gate never renders)
 

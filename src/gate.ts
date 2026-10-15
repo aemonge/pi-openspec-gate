@@ -48,6 +48,7 @@ export type GateState = {
 
 export function createGate(pi: ExtensionAPI, config: GateConfig): void {
   const state: GateState = { declarationWords: undefined, inheritedFocus: undefined };
+  const configReadOnlyTools = new Set(config.readOnlyTools ?? []);
 
   const annotationsOf = (toolName: string) =>
     (pi.getAllTools?.() ?? []).find((tool) => tool.name === toolName)?.annotations;
@@ -121,7 +122,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       return undefined;
     }
 
-    const verdict = classifyMutation(toolName, input, annotationsOf(toolName));
+    const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
     if (!verdict.mutating) return undefined; // read-only or creation: pass
 
     const paths = extractPaths(toolName, input, cwd);

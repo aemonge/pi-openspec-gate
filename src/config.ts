@@ -27,6 +27,10 @@ export type GateConfig = {
   exempt: readonly ExemptRule[];
   /** Entry-store instrument names that pass ungated (the gate never gates its instruments). */
   accountingTools?: readonly string[];
+  /** Extra tool names classified read-only at load (merged over the built-in
+   *  set) — the escape hatch for new research tools without a package
+   *  release. Absent key = no override. */
+  readOnlyTools?: readonly string[];
 };
 
 const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [] };
@@ -62,11 +66,22 @@ function parseConfig(raw: string, source: string): GateConfig {
         (name): name is string => typeof name === 'string' && name.length > 0,
       )
     : [];
+  const readOnlyTools = Array.isArray(parsed.readOnlyTools)
+    ? parsed.readOnlyTools.filter(
+        (name): name is string => typeof name === 'string' && name.length > 0,
+      )
+    : [];
   return {
     enabled: parsed.enabled !== false,
     exempt: Object.freeze(exempt),
     accountingTools: Object.freeze(accountingTools),
+    ...(readOnlyTools.length > 0 ? { readOnlyTools: Object.freeze(readOnlyTools) } : {}),
   };
+}
+
+/** Parse a config JSON string directly (test surface; same rules as file load). */
+export function parseConfigString(raw: string): GateConfig {
+  return parseConfig(raw, '<string>');
 }
 
 /** Config candidates in resolution order: extension root, then module directory. */

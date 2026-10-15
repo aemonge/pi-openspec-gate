@@ -3,9 +3,15 @@
  *
  * Order of decision:
  *   1. tool annotations — readOnlyHint === true  → not mutating
- *   2. known tool names — read-only set / mutating set
- *   3. bash             → verb scan (mutating verbs, read-only verbs)
- *   4. anything else    → mutating (fail-safe: unknown = mutating)
+ *   2. known tool names — read-only set / mutating set / config read-only set
+ *   3. lsp_fix          → input-aware (write !== true = preview, not mutating)
+ *   4. bash|shell|powershell → verb scan (mutating verbs, read-only verbs)
+ *   5. anything else    → mutating (fail-safe: unknown = mutating)
+ *
+ * Research instruments (web, docs, graph reads, memory reads) are *known*
+ * read-only tools, not judgments: the fail-safe stays untouched for
+ * genuinely unknown tools. No tool in the current ecosystem declares
+ * annotations, so the known sets + config are the live mechanism.
  *
  * openspec change creation (`openspec new` / `openspec init`) is classified
  * as creation, not an unaccounted mutation: creating a change is the act of
@@ -21,11 +27,40 @@ export type MutationVerdict = {
   creation: boolean;
 };
 
-const READ_ONLY_TOOLS = new Set(['read', 'grep', 'find', 'ls', 'skill', 'glob']);
-const MUTATING_TOOLS = new Set(['edit', 'write', 'multi_edit', 'applypatch']);
+const READ_ONLY_TOOLS = new Set([
+  // Pi core
+  'read',
+  'grep',
+  'find',
+  'ls',
+  // research instruments: web (pi-web-agent), docs (context7), lsp reads,
+  // Engram memory reads (gentle-engram)
+  'web_explore',
+  'web_search',
+  'web_fetch',
+  'resolve-library-id',
+  'query-docs',
+  'lsp_diagnostics',
+  'mem_search',
+  'mem_context',
+  'mem_get_observation',
+  'mem_timeline',
+  'mem_stats',
+  'mem_list_projects',
+  'mem_current_project',
+  'mem_doctor',
+  'mem_review',
+]);
+const MUTATING_TOOLS = new Set(['edit', 'write']);
 
 const BASH_MUTATING_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
-  { pattern: />>?|tee\b|\bsed\s+(-\w*\s+)*-i\b|\bpatch\b|\btruncate\b/u, basis: 'bash.write-redirect-or-inplace' },
+  // A `>` is a write only when it targets a real sink: fd-redirects to
+  // /dev/null and fd duplication (2>&1) discard or shuffle streams; every
+  // other >, >>, 2>, &> writes a file.
+  {
+    pattern: /(?<![\d>])(?:\d)?>>?(?!\s*(?:\/dev\/null|&\d|>))|tee\b|\bsed\s+(-\w*\s+)*-i\b|\bpatch\b|\btruncate\b/u,
+    basis: 'bash.write-redirect-or-inplace',
+  },
   { pattern: /\b(?:rm|rmdir|unlink|shred)\b/u, basis: 'bash.remove' },
   { pattern: /\b(?:mv|cp|rsync|install|ln)\s/u, basis: 'bash.move-copy-link' },
   { pattern: /\b(?:mkdir|touch|mknod)\b/u, basis: 'bash.create-filesystem' },
@@ -45,13 +80,24 @@ const BASH_GIT_READ_ONLY = /\bgit\s+(?:status|diff|log|show|blame|ls-files|ls-re
 
 const BASH_OPENSPEC_READ_ONLY = /\bopenspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
 
+// graphify reads: the knowledge-graph CLI's query surface. Checked early so
+// quoted query text ("how does install flow work") cannot trip later
+// mutating patterns — same precedent as `git log --grep`. Mutating verbs
+// (update, add, watch, merge-graphs, cluster-only, hook install, bare
+// `graphify .`) stay fail-safe/attributed.
+const BASH_GRAPHIFY_READ_ONLY = /\bgraphify\s+(?:query|path|explain|hook\s+status)\b/u;
+
 const OPENSPEC_CREATION = /\bopenspec\s+(?:new|init)\b/u;
 
 function bashVerdict(command: string): MutationVerdict {
   if (OPENSPEC_CREATION.test(command)) {
     return { mutating: false, basis: 'bash.openspec-creation', creation: true };
   }
-  if (BASH_OPENSPEC_READ_ONLY.test(command) || BASH_GIT_READ_ONLY.test(command)) {
+  if (
+    BASH_OPENSPEC_READ_ONLY.test(command) ||
+    BASH_GIT_READ_ONLY.test(command) ||
+    BASH_GRAPHIFY_READ_ONLY.test(command)
+  ) {
     return { mutating: false, basis: 'bash.read-only-verb', creation: false };
   }
   for (const { pattern, basis } of BASH_MUTATING_PATTERNS) {
@@ -71,6 +117,11 @@ function commandOf(input: unknown): string {
   return typeof command === 'string' ? command : '';
 }
 
+function wantsWrite(input: unknown): boolean {
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) return false;
+  return (input as Record<string, unknown>).write === true;
+}
+
 export type ToolAnnotations = {
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
@@ -82,6 +133,7 @@ export function classifyMutation(
   toolName: string,
   input: unknown,
   annotations?: ToolAnnotations,
+  extraReadOnlyTools?: ReadonlySet<string>,
 ): MutationVerdict {
   const tool = toolName.toLowerCase();
   if (annotations?.readOnlyHint === true) {
@@ -90,10 +142,20 @@ export function classifyMutation(
   if (READ_ONLY_TOOLS.has(tool)) {
     return { mutating: false, basis: 'tool.known-read-only', creation: false };
   }
+  if (extraReadOnlyTools?.has(tool)) {
+    return { mutating: false, basis: 'tool.config-read-only', creation: false };
+  }
   if (MUTATING_TOOLS.has(tool)) {
     return { mutating: true, basis: `tool.known-mutating:${tool}`, creation: false };
   }
-  if (tool === 'bash' || tool === 'shell') {
+  if (tool === 'lsp_fix') {
+    // Input-aware: lsp_fix previews by default (write: false); only an
+    // explicit write:true mutates files.
+    return wantsWrite(input)
+      ? { mutating: true, basis: 'tool.lsp-fix-write', creation: false }
+      : { mutating: false, basis: 'tool.lsp-fix-preview', creation: false };
+  }
+  if (tool === 'bash' || tool === 'shell' || tool === 'powershell') {
     const command = commandOf(input);
     if (!command) {
       return { mutating: true, basis: 'bash.empty-command=fail-safe', creation: false };
