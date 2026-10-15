@@ -25,19 +25,19 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       outcome: suite green 44/44 in 0.30s (node v24.19.0; devbox shim
       swallows `--test` with dir arg — explicit file list required);
       `npm test` script left untouched (works outside shim).
-- [-] Step 5 — Publish + pi install refresh
+- [x] Step 5 — Publish + pi install refresh
       check: npm publish 0.1.2 (auth-dependent) ·
       pi install npm:@aemonge-dev/pi-openspec-gate · installed
       classifier.ts shows read set · paths: none (repo unchanged)
-      outcome: v0.1.2 committed and pack-verified (14 files, shasum
-      d553f0e6…); publish ENEEDAUTH persists inside the devbox pi
-      subprocess even after human npm login — home dotfiles (incl.
-      ~/.npmrc token) are not visible to the session's filesystem view
-      (same sandboxing as the read-only package store; repo dirs ARE
-      shared). npm test script fixed for node 24/devbox: directory arg
-      → explicit glob (9024ee8), `npm test` green 44/44 via script.
-      Human terminal (outside devbox pi): `just publish 0.1.2` then
-      `pi install npm:@aemonge-dev/pi-openspec-gate`, then restart pi.
+      outcome: DONE 2026-10-15 · registry shows 0.1.2 (`npm view` …
+      '0.1.2') · `pi install npm:@aemonge-dev/pi-openspec-gate@0.1.2`
+      refreshed the store (changed 1 package) · npm test fixed for
+      node24/devbox (9024ee8), 44/44 green · publish executed from human
+      terminal (devbox pi subprocess cannot see npm credentials — sandbox
+      hides home dotfiles; repo dirs shared) · caveat: pi-web-agent
+      postinstall (patch-jiti-compat.mjs) blocked by allowScripts — if
+      web_explore misbehaves after restart, `npm install-scripts approve
+      @demigodmode/pi-web-agent`.
 - [-] Step 6 — Human live validation (restart Pi; research-only session;
       web_explore + graphify query pass without focus)
       outcome: partial, live 2026-10-15 — web_explore ran successfully in
@@ -87,3 +87,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:42Z
 
   gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:42Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:14:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:14:34Z
