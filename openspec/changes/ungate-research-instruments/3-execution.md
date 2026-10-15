@@ -23,3 +23,10 @@ Running log. Facts, no narrative.
   powershell routing, readOnlyTools config + README + tests. 44/44 green,
   vocabulary law holds, bare-work ledger untouched (one debt line from
   the consumed declaration, as designed).
+- 2026-10-15 · Step 5: npm publish ENEEDAUTH (devbox has no npm
+  credentials — human `npm login` + `just publish 0.1.2`); package store
+  mounted read-only at runtime, hand-sync refused by the OS (correct
+  design). Step 6 partial: acceptance research (A2A protocol) executed
+  live via web_explore passing under 0.1.1 through focus attribution.
+  Scout subagent discovery: its tool registry is read/grep/find/ls only —
+  research instruments must be agent-registered, not just gate-known.

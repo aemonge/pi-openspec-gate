@@ -25,10 +25,39 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       outcome: suite green 44/44 in 0.30s (node v24.19.0; devbox shim
       swallows `--test` with dir arg — explicit file list required);
       `npm test` script left untouched (works outside shim).
-- [ ] Step 5 — Publish + pi install refresh
+- [-] Step 5 — Publish + pi install refresh
       check: npm publish 0.1.2 (auth-dependent) ·
       pi install npm:@aemonge-dev/pi-openspec-gate · installed
       classifier.ts shows read set · paths: none (repo unchanged)
-- [ ] Step 6 — Human live validation (restart Pi; research-only session;
+      outcome: commits 2255345 + 567c8f8 landed; npm publish blocked
+      ENEEDAUTH (devbox session has no credentials — human `npm login`
+      required); package store ~/.pi/agent/npm mounted read-only at runtime,
+      hand-sync refused (correct). Human: `cd ~/projects/pi-openspec-gate
+      && just publish 0.1.2` (lint+test+build+publish+install) or plain
+      `npm publish --access public` then `pi install
+      npm:@aemonge-dev/pi-openspec-gate`.
+- [-] Step 6 — Human live validation (restart Pi; research-only session;
       web_explore + graphify query pass without focus)
-      outcome: pending · response: pending
+      outcome: partial, live 2026-10-15 — web_explore ran successfully in
+      the still-0.1.1 session via focus attribution (attributed leg
+      proven); no-focus leg pending publish+install+restart. Scout
+      subagent could not participate: agent-level tool registry for scout
+      is read/grep/find/ls only — research instruments not registered at
+      the agent layer (separate finding, not a gate issue).
+      response: pending restart
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T07:58:09Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T07:58:09Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T07:58:31Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T07:58:31Z
+
+  gate-attributed · tool: subagent · paths: — · at 2026-10-15T07:59:19Z
+
+  gate-attributed · tool: subagent · paths: — · at 2026-10-15T07:59:19Z
+
+  gate-attributed · tool: web_explore · paths: — · at 2026-10-15T08:03:51Z
+
+  gate-attributed · tool: web_explore · paths: — · at 2026-10-15T08:03:51Z
