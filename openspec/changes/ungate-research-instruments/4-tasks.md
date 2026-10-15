@@ -29,13 +29,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       check: npm publish 0.1.2 (auth-dependent) ·
       pi install npm:@aemonge-dev/pi-openspec-gate · installed
       classifier.ts shows read set · paths: none (repo unchanged)
-      outcome: commits 2255345 + 567c8f8 landed; npm publish blocked
-      ENEEDAUTH (devbox session has no credentials — human `npm login`
-      required); package store ~/.pi/agent/npm mounted read-only at runtime,
-      hand-sync refused (correct). Human: `cd ~/projects/pi-openspec-gate
-      && just publish 0.1.2` (lint+test+build+publish+install) or plain
-      `npm publish --access public` then `pi install
-      npm:@aemonge-dev/pi-openspec-gate`.
+      outcome: v0.1.2 committed and pack-verified (14 files, shasum
+      d553f0e6…); publish ENEEDAUTH persists inside the devbox pi
+      subprocess even after human npm login — home dotfiles (incl.
+      ~/.npmrc token) are not visible to the session's filesystem view
+      (same sandboxing as the read-only package store; repo dirs ARE
+      shared). npm test script fixed for node 24/devbox: directory arg
+      → explicit glob (9024ee8), `npm test` green 44/44 via script.
+      Human terminal (outside devbox pi): `just publish 0.1.2` then
+      `pi install npm:@aemonge-dev/pi-openspec-gate`, then restart pi.
 - [-] Step 6 — Human live validation (restart Pi; research-only session;
       web_explore + graphify query pass without focus)
       outcome: partial, live 2026-10-15 — web_explore ran successfully in
@@ -61,3 +63,27 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   gate-attributed · tool: web_explore · paths: — · at 2026-10-15T08:03:51Z
 
   gate-attributed · tool: web_explore · paths: — · at 2026-10-15T08:03:51Z
+
+  gate-attributed · tool: mem_save · paths: — · at 2026-10-15T08:05:03Z
+
+  gate-attributed · tool: mem_save · paths: — · at 2026-10-15T08:05:03Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-10-15T08:07:39Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-10-15T08:07:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:07:48Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:07:48Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:27Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:27Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:42Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-15T08:08:42Z
