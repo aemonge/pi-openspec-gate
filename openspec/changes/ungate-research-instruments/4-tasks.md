@@ -38,15 +38,11 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       postinstall (patch-jiti-compat.mjs) blocked by allowScripts — if
       web_explore misbehaves after restart, `npm install-scripts approve
       @demigodmode/pi-web-agent`.
-- [-] Step 6 — Human live validation (restart Pi; research-only session;
+- [x] Step 6 — Human live validation (restart Pi; research-only session;
       web_explore + graphify query pass without focus)
-      outcome: partial, live 2026-10-15 — web_explore ran successfully in
-      the still-0.1.1 session via focus attribution (attributed leg
-      proven); no-focus leg pending publish+install+restart. Scout
-      subagent could not participate: agent-level tool registry for scout
-      is read/grep/find/ls only — research instruments not registered at
-      the agent layer (separate finding, not a gate issue).
-      response: pending restart
+      outcome: VALID 2026-10-15 · fresh session, no focus, no declaration:
+      web_explore passed 3× (one transient search-backend error mid-run,
+      not a gate block) · response: human "Great!!"
 
   gate-attributed · tool: bash · paths: — · at 2026-10-15T07:58:09Z
 
