@@ -1,0 +1,5 @@
+schema: ramona-idea
+created: 2026-10-16
+goal: Close the attribution-not-approval hole where the assistant can spawn its own change and thereby satisfy the gate
+status: proposed
+created_by: assistant
