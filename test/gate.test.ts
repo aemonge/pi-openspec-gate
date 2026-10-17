@@ -68,6 +68,12 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const fake = makeFakePi();
     createGate(fake.pi as never, {
       enabled: true,
+      approval: config?.approval ?? {
+        enforce: false,
+        humanGateSteps: false,
+        archiveGuard: false,
+        stampCreations: false,
+      },
       exempt: config?.exempt ?? [{ prefix: '**/openspec/**', category: 'ladder-artifacts' }],
     });
     const ctx = {
@@ -132,12 +138,18 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
   });
 
   test('inherit: subagent child inherits parent focus via session file', async () => {
-    // parent session file with a focus fact
+    // real pi layout: sessions root holds per-cwd dirs; the CHILD's own
+    // getSessionDir() points at its own dir, the PARENT lives in a different
+    // per-cwd dir under a `<ISO-timestamp>_<sessionId>.jsonl` name
+    // (regressions: exact-name lookup never matched live files; single-root
+    // lookup never escaped the child's own directory)
     const sessionsRoot = mkdtempSync(join(tmpdir(), 'gate-sessions-'));
-    const dir = join(sessionsRoot, '--parent-repo--');
-    mkdirSync(dir, { recursive: true });
+    const parentDir = join(sessionsRoot, '--parent-repo--');
+    const childDir = join(sessionsRoot, '--child-repo--');
+    mkdirSync(parentDir, { recursive: true });
+    mkdirSync(childDir, { recursive: true });
     writeFileSync(
-      join(dir, 'parent-1.jsonl'),
+      join(parentDir, '2026-10-17T08-00-00-000Z_parent-1.jsonl'),
       `${JSON.stringify({ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c1', taskId: 't9' } })}\n`,
       'utf8',
     );
@@ -152,7 +164,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
       await fire(
         'session_start',
         {},
-        { cwd: repo, sessionManager: { getSessionDir: () => sessionsRoot } },
+        { cwd: repo, sessionManager: { getSessionDir: () => childDir } },
       );
       const inherited = entries.find((e) => e.customType === 'pi-openspec-gate.inherited.v1');
       assert.ok(inherited, 'inherited fact recorded');

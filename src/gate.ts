@@ -11,8 +11,16 @@
  * Handler failure blocks the call as a fail-safe.
  */
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
+import { existsSync as exists } from 'node:fs';
+import { dirname } from 'node:path';
 
 import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
+import {
+  changeIsApproved,
+  changeMetaPath,
+  readChangeMeta,
+  writeChangeMeta,
+} from './approval.ts';
 import { classifyMutation } from './classifier.ts';
 import type { GateConfig } from './config.ts';
 import { FACT, utcNow, type FactAppender } from './facts.ts';
@@ -35,19 +43,73 @@ export const BLOCK_MESSAGE = [
   '   or say "do it" — recorded as declared work, proceeds',
 ].join('\n');
 
+export const BLOCK_APPROVAL_TOUCH = [
+  '⛔ approval is human-terminal only',
+  '   the assistant cannot approve or validate — ask the human',
+].join('\n');
+
+export const BLOCK_HUMANGATE = [
+  '⛔ human-validation flip requires a human act',
+  '   validate: pi-openspec-gate validate <slug>   ← your terminal',
+  '   or reply literally: VALID',
+].join('\n');
+
+export const BLOCK_ARCHIVE = [
+  '⛔ archive requires an approved change',
+  '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+  '   or pass --i-am-the-human',
+].join('\n');
+
+export const BLOCK_UNAPPROVED = [
+  '⛔ focused change is not approved — attribution is not approval',
+  '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+  '   docs:    openspec/** stays exempt — drafting is never blocked',
+].join('\n');
+
 /** A human "do it" latches exactly one declared mutation. */
 const DECLARE_PATTERN = /\bdo\s+it\b/iu;
 const DECLARE_MAX_LENGTH = 200;
+
+/** A literal "VALID" reply latches exactly one human-gate flip. */
+const VALID_PATTERN = /\bVALID\b/u;
+const VALID_MAX_LENGTH = 200;
+
+/** Any tool-call attempt to run the approval CLI — blocked before all else. */
+const APPROVAL_TOUCH_PATTERN = /pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)\b/u;
+const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
+const ARCHIVE_FLAG = /--i-am-the-human\b/u;
+const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
+const HUMAN_GATE_LINE_PATTERN = /human\s+validation/iu;
+const CHANGE_FROM_PATH_PATTERN = /(?:^|\/)changes\/([^/]+)\//u;
+
+/** True when the text flips a "Human validation" step to complete. */
+export function flipsHumanValidationStep(text: string): boolean {
+  for (const line of text.split('\n')) {
+    if (HUMAN_GATE_FLIP_PATTERN.test(line) && HUMAN_GATE_LINE_PATTERN.test(line)) return true;
+  }
+  return false;
+}
 
 type SessionDirLike = { getSessionDir?: () => string };
 
 export type GateState = {
   declarationWords: string | undefined;
   inheritedFocus: ActiveFocus | undefined;
+  validationPermit: boolean;
 };
 
 export function createGate(pi: ExtensionAPI, config: GateConfig): void {
-  const state: GateState = { declarationWords: undefined, inheritedFocus: undefined };
+  const approval = config.approval ?? {
+    enforce: false,
+    humanGateSteps: false,
+    archiveGuard: false,
+    stampCreations: false,
+  };
+  const state: GateState = {
+    declarationWords: undefined,
+    inheritedFocus: undefined,
+    validationPermit: false,
+  };
   const configReadOnlyTools = new Set(config.readOnlyTools ?? []);
 
   const annotationsOf = (toolName: string) =>
@@ -72,9 +134,16 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // Federated inheritance: subagent children carry PI_SUBAGENT_DELEGATION.
     const delegation = parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION);
     if (delegation?.parentSessionId) {
+      // getSessionDir() may return the sessions root OR the per-cwd session
+      // directory one level below it — try each candidate root until the
+      // parent's file resolves (bounded: ≤3 scans).
       const sessionDir = (ctx.sessionManager as SessionDirLike | undefined)?.getSessionDir?.();
-      const root = sessionDir ?? joinDefaultSessionRoot();
-      const parentFile = findSessionFile(root, delegation.parentSessionId);
+      const roots = [...(sessionDir ? [sessionDir, dirname(sessionDir)] : []), joinDefaultSessionRoot()];
+      let parentFile: string | undefined;
+      for (const root of roots) {
+        parentFile = findSessionFile(root, delegation.parentSessionId);
+        if (parentFile) break;
+      }
       const focus = parentFile ? readFocusFromSessionFile(parentFile) : undefined;
       if (focus) {
         state.inheritedFocus = { ...focus, inheritedFrom: delegation.parentSessionId };
@@ -109,6 +178,9 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     if (DECLARE_PATTERN.test(text)) {
       state.declarationWords = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
     }
+    if (VALID_PATTERN.test(text)) {
+      state.validationPermit = true; // one human-gate flip, latched
+    }
   });
 
   pi.on('tool_call', async (event, ctx) => {
@@ -122,11 +194,70 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       return undefined;
     }
 
+    // 0.5 approval-touch guard — no path, latch, or exemption may reach the
+    // approval surface; runs before classification because a piped-to-
+    // read-only form would otherwise classify as non-mutating
+    const bashCommand =
+      input !== null && typeof input === 'object' && !Array.isArray(input)
+        ? String((input as Record<string, unknown>).command ?? '')
+        : '';
+    if (bashCommand && APPROVAL_TOUCH_PATTERN.test(bashCommand)) {
+      appendFact(FACT.unapproved, { kind: 'approval-touch', tool: toolName, paths: [], at: utcNow() });
+      return { block: true, reason: BLOCK_APPROVAL_TOUCH };
+    }
+
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
+
+    // creation stamping — assistant-witnessed `openspec new change <slug>`:
+    // the change enters the world as proposed + audited; human-terminal
+    // creations are invisible to the gate and stay unstamped
+    if (verdict.creation && approval.stampCreations) {
+      const slug = /\bopenspec\s+new\s+change\s+([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
+      const root = openspecRootOf(cwd);
+      if (slug && root) {
+        writeChangeMeta(root, slug, { status: 'proposed', created_by: 'assistant' }, { onlyIfAbsent: true });
+        appendFact(FACT.creationStamped, { change: slug, tool: toolName, at: utcNow() });
+      }
+    }
     if (!verdict.mutating) return undefined; // read-only or creation: pass
 
     const paths = extractPaths(toolName, input, cwd);
     const openspecRoot = openspecRootOf(cwd);
+
+    // 0.7 human-gate flip guard — a [x] flip on a "Human validation" line
+    // needs a human act; runs before exempt (tasks files are openspec/**)
+    if (approval.humanGateSteps && (toolName === 'edit' || toolName === 'write')) {
+      const record = input as Record<string, unknown> | null;
+      const newText = typeof record?.newText === 'string' ? record.newText : '';
+      const content = typeof record?.content === 'string' ? record.content : '';
+      if ((newText && flipsHumanValidationStep(newText)) || (content && flipsHumanValidationStep(content))) {
+        const slug =
+          paths.map((p) => CHANGE_FROM_PATH_PATTERN.exec(p)?.[1]).find(Boolean) ??
+          activeFocus(ctx.sessionManager, cwd)?.change;
+        const meta = slug && openspecRoot ? readChangeMeta(openspecRoot, slug) : undefined;
+        if (meta?.validated) {
+          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'meta', at: utcNow() });
+        } else if (state.validationPermit) {
+          state.validationPermit = false; // latch consumed: exactly one flip
+          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'valid-latch', at: utcNow() });
+        } else {
+          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'none', at: utcNow() });
+          return { block: true, reason: BLOCK_HUMANGATE };
+        }
+      }
+    }
+
+    // 0.8 archive guard — archiving an unapproved change needs a human flag
+    if (approval.archiveGuard && bashCommand && ARCHIVE_PATTERN.test(bashCommand)) {
+      const slug = /\bopenspec\s+archive\s+(?:-[\w-]+\s+)*([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
+      const root = openspecRootOf(cwd);
+      const meta = slug && root ? readChangeMeta(root, slug) : undefined;
+      const changeExists = slug && root ? exists(changeMetaPath(root, slug).replace(/\.openspec\.yaml$/u, '')) : false;
+      if (slug && meta && !changeIsApproved(meta) && !ARCHIVE_FLAG.test(bashCommand)) {
+        appendFact(FACT.unapproved, { kind: 'archive', tool: toolName, change: slug, at: utcNow() });
+        return { block: true, reason: BLOCK_ARCHIVE };
+      }
+    }
 
     // 1. exempt — path-scoped, always recorded
     const exemption = matchExemption(toolName, paths, config.exempt, cwd);
@@ -144,6 +275,21 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // 2. attributed — the focus names an active change
     const focus = activeFocus(ctx.sessionManager, cwd);
     if (focusIsActive(focus, openspecRoot)) {
+      // 2a. approval teeth — attribution is not approval; source mutations
+      // on a focused-but-unapproved change block with the terminal remedy
+      if (approval.enforce) {
+        const meta = readChangeMeta(openspecRoot!, focus.change);
+        if (!changeIsApproved(meta)) {
+          appendFact(FACT.unapproved, {
+            kind: 'source-mutation',
+            tool: toolName,
+            change: focus.change,
+            paths,
+            at: utcNow(),
+          });
+          return { block: true, reason: BLOCK_UNAPPROVED };
+        }
+      }
       const at = utcNow();
       appendFact(FACT.attributed, {
         tool: toolName,

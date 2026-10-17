@@ -22,6 +22,17 @@ export type ExemptRule = {
   category: string;
 };
 
+export type ApprovalConfig = {
+  /** Focused change must be status: approved for source (non-exempt) mutations. */
+  enforce: boolean;
+  /** [ ]→[x] flips on "Human validation" lines require a human act (meta `validated` or literal VALID reply). */
+  humanGateSteps: boolean;
+  /** openspec archive of an unapproved change blocks unless --i-am-the-human. */
+  archiveGuard: boolean;
+  /** Witnessed assistant `openspec new` creations get status: proposed + created_by: assistant. */
+  stampCreations: boolean;
+};
+
 export type GateConfig = {
   enabled: boolean;
   exempt: readonly ExemptRule[];
@@ -31,9 +42,28 @@ export type GateConfig = {
    *  set) — the escape hatch for new research tools without a package
    *  release. Absent key = no override. */
   readOnlyTools?: readonly string[];
+  /** Approval teeth; absent section = all off (legacy behavior). */
+  approval: ApprovalConfig;
 };
 
-const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [] };
+const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [], approval: approvalOff() };
+
+function approvalOff(): ApprovalConfig {
+  return { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false };
+}
+
+function parseApproval(raw: unknown): ApprovalConfig {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return approvalOff();
+  const record = raw as Record<string, unknown>;
+  const flag = (key: keyof ApprovalConfig): boolean =>
+    typeof record[key] === 'boolean' ? (record[key] as boolean) : false;
+  return {
+    enforce: flag('enforce'),
+    humanGateSteps: flag('humanGateSteps'),
+    archiveGuard: flag('archiveGuard'),
+    stampCreations: flag('stampCreations'),
+  };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -76,6 +106,7 @@ function parseConfig(raw: string, source: string): GateConfig {
     exempt: Object.freeze(exempt),
     accountingTools: Object.freeze(accountingTools),
     ...(readOnlyTools.length > 0 ? { readOnlyTools: Object.freeze(readOnlyTools) } : {}),
+    approval: parseApproval(parsed.approval),
   };
 }
 

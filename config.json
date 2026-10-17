@@ -6,5 +6,11 @@
     { "prefix": "**/skills/**", "category": "declared-skills" }
   ],
   "accountingTools": ["work_focus", "openspec_focus", "stage", "subject"],
-  "readOnlyTools": []
+  "readOnlyTools": [],
+  "approval": {
+    "enforce": true,
+    "humanGateSteps": true,
+    "archiveGuard": true,
+    "stampCreations": true
+  }
 }

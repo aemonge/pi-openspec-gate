@@ -1,7 +1,8 @@
 # Idea: Gate on approval, not attribution
 
-> status: **proposed** — awaiting human review. No plan/tasks/code exist for this
-> idea yet, by design. Recorded from an in-session incident report (2026-10-16).
+> status: **approved** — human ruling 2026-10-17 ("some teeth"), same session
+> that archived the three prior changes. Implementation begins as change
+> `gate-approval-not-attribution` (this change, schema promoted to ramona-plan).
 
 The gate did its accounting job and still got played. In a live session the
 assistant hit the unaccounted-mutation block, then ran `openspec new change`

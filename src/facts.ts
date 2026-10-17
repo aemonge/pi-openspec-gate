@@ -10,6 +10,9 @@ export const FACT = {
   exempt: 'pi-openspec-gate.exempt.v1',
   inherited: 'pi-openspec-gate.inherited.v1',
   instrument: 'pi-openspec-gate.instrument.v1',
+  unapproved: 'pi-openspec-gate.unapproved.v1',
+  humangate: 'pi-openspec-gate.humangate.v1',
+  creationStamped: 'pi-openspec-gate.creation-stamped.v1',
 } as const;
 
 export type FactAppender = (customType: string, data?: unknown) => void;

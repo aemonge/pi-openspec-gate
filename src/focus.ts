@@ -92,13 +92,19 @@ export function readFocusFromSessionFile(file: string): ActiveFocus | undefined 
   return latest;
 }
 
-/** Locate a session file by id under the sessions root (bounded glob). */
+/** Locate a session file by id under the sessions root (bounded glob).
+ *  pi persists sessions as `<ISO-timestamp>_<sessionId>.jsonl`; exact
+ *  `<sessionId>.jsonl` names stay supported for older/test layouts. */
 export function findSessionFile(sessionRoot: string, sessionId: string): string | undefined {
   try {
+    const exact = `${sessionId}.jsonl`;
     for (const dir of readdirSync(sessionRoot, { withFileTypes: true })) {
       if (!dir.isDirectory()) continue;
-      const candidate = join(sessionRoot, dir.name, `${sessionId}.jsonl`);
-      if (existsSync(candidate)) return candidate;
+      for (const name of readdirSync(join(sessionRoot, dir.name))) {
+        if (name === exact || name.endsWith(`_${sessionId}.jsonl`)) {
+          return join(sessionRoot, dir.name, name);
+        }
+      }
     }
   } catch {
     return undefined;

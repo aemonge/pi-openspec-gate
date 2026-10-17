@@ -1,5 +1,7 @@
-schema: ramona-idea
+schema: ramona-plan
 created: 2026-10-16
 goal: Close the attribution-not-approval hole where the assistant can spawn its own change and thereby satisfy the gate
-status: proposed
+status: approved
 created_by: assistant
+
+approved_at: 2026-10-17T11:55:05Z

@@ -53,6 +53,33 @@ research tools without a package release:
 { "readOnlyTools": ["my_probe", "team_search"] }
 ```
 
+## Approval (attribution is not approval)
+
+A focused change only authorizes source mutations when its
+`openspec/changes/<slug>/.openspec.yaml` says `status: approved`. The
+assistant can draft freely (`openspec/**` stays exempt), but executing code
+changes on an unapproved change blocks with the terminal remedy. Approval
+lives in the human's terminal only — any tool-call attempt to run the
+approver is itself blocked:
+
+```sh
+pi-openspec-gate approve <slug>    # status: approved  (human terminal)
+pi-openspec-gate validate <slug>   # permits Human-validation [x] flips
+```
+
+- Assistant-witnessed `openspec new change` creations are stamped
+  `status: proposed` + `created_by: assistant` (audit, not permission)
+- `[ ]→[x]` on "Human validation" lines needs `validated` in meta or the
+  human's literal one-shot `VALID` reply
+- `openspec archive` of an unapproved change blocks without `--i-am-the-human`
+
+```json
+"approval": { "enforce": true, "humanGateSteps": true,
+              "archiveGuard": true, "stampCreations": true }
+```
+
+Absent section = all teeth off (legacy behavior).
+
 ## Facts (session entries; any reader may consume, the gate never renders)
 
 | Fact | Meaning |
@@ -63,6 +90,9 @@ research tools without a package release:
 | `pi-openspec-gate.exempt.v1` | path-exempt pass with category + paths |
 | `pi-openspec-gate.inherited.v1` | subagent inherited the parent's focus |
 | `pi-openspec-gate.instrument.v1` | allowlisted accounting tool passed |
+| `pi-openspec-gate.unapproved.v1` | unapproved change blocked (source-mutation / archive / approval-touch) |
+| `pi-openspec-gate.humangate.v1` | human-validation flip checked (permit: none / meta / valid-latch) |
+| `pi-openspec-gate.creation-stamped.v1` | witnessed creation stamped proposed + created_by |
 
 ## License
 
