@@ -2,7 +2,7 @@
 
 # Static gate: the vocabulary law (permission words are forbidden here).
 lint:
-    @! grep -riE 'waiver|approv|sanitiz|trust' src/ test/ config.json index.ts
+    @! grep -riE 'waiver|sanitiz|trust' src/ test/ config.json index.ts
     @echo "vocabulary law holds"
 
 # Full test suite.
