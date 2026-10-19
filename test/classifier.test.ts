@@ -309,3 +309,27 @@ test('conjunction: env-prefix stripped for anchoring, verbs still checked', () =
   assert.equal(classifyMutation('bash', { command: 'LC_ALL=C sort f' }).mutating, false);
   assert.equal(classifyMutation('bash', { command: 'FOO=1 rm x' }).mutating, true);
 });
+
+// ——— wrapper normalization (pios-gate-cli) ——————————————————————————————
+
+test('wrapper: pios-gate classifies like bare openspec forms', () => {
+  const cases: Array<[string, boolean]> = [
+    ['pios-gate list --json', false],
+    ['pios-gate show my-change', false],
+    ['pios-gate validate my-change', false], // forwards: openspec structure lint
+    ['./bin/pios-gate status', false],
+    ['pi-openspec-gate list', false],
+    ['pios-gate new change my-slice --schema ramona-plan', false], // creation
+    ['pios-gate archive my-change', true], // forwards, but mutating verb
+    ['pios-gate update', true],
+    ['pios-gate frobnicate --x', true], // unknown subcommand fails safe
+    ['pios-gate list && pios-gate show x', false], // per-segment normalization
+    ['which pios-gate', false], // wrapper as an ARGUMENT, not the verb
+  ];
+  for (const [command, mutating] of cases) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, mutating, command);
+  }
+  const creation = classifyMutation('bash', { command: 'pios-gate new change z' });
+  assert.equal(creation.creation, true, 'wrapper creation is creation');
+});

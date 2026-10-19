@@ -1,6 +1,6 @@
 {
   "name": "@aemonge-dev/pi-openspec-gate",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Ladder gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer.",
   "type": "module",
   "license": "MIT",
@@ -24,7 +24,8 @@
     "justfile"
   ],
   "bin": {
-    "pi-openspec-gate": "bin/pi-openspec-gate"
+    "pi-openspec-gate": "bin/pi-openspec-gate",
+    "pios-gate": "bin/pios-gate"
   },
   "scripts": {
     "test": "node --test --experimental-strip-types test/*.test.ts"

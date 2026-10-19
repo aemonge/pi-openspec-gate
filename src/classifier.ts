@@ -232,6 +232,17 @@ export function splitSegments(command: string): SplitResult {
   return { segments, grammarUnsafe };
 }
 
+// Wrapper normalization — `pios-gate …` / `pi-openspec-gate …` (optionally
+// behind a path like `./bin/`) is the gate's feature-extension surface: the
+// wrapper forwards to openspec, so its subcommands classify exactly like
+// the bare forms. Per segment, so compounds work too. The approval verbs
+// never get this far in a gated session (touch guard blocks them first).
+const WRAPPER_TOKEN = /^(?:[^\s]*\/)?(?:pios-gate|pi-openspec-gate)(?:\.\w+)?\s+/u;
+
+function stripWrapper(segment: string): string {
+  return WRAPPER_TOKEN.test(segment) ? segment.replace(WRAPPER_TOKEN, 'openspec ') : segment;
+}
+
 function bashVerdict(command: string): MutationVerdict {
   const { segments, grammarUnsafe } = splitSegments(command);
   if (grammarUnsafe) {
@@ -244,7 +255,7 @@ function bashVerdict(command: string): MutationVerdict {
         return { mutating: true, basis, creation: false };
       }
     }
-    const body = stripAssignments(segment);
+    const body = stripAssignments(stripWrapper(segment));
     if (OPENSPEC_CREATION_ANCHORED.test(body)) {
       creation = true;
       continue;
@@ -256,7 +267,7 @@ function bashVerdict(command: string): MutationVerdict {
       GRAPHIFY_READ_ONLY_ANCHORED.test(body);
     if (readVerbed) continue; // read verb: arguments are data, not commands
     for (const { pattern, basis } of BASH_COMMAND_PATTERNS) {
-      if (pattern.test(segment)) {
+      if (pattern.test(body)) {
         return { mutating: true, basis, creation: false };
       }
     }

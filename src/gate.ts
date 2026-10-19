@@ -12,7 +12,7 @@
  */
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { existsSync as exists } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
 import {
@@ -74,8 +74,12 @@ const DECLARE_MAX_LENGTH = 200;
 const VALID_PATTERN = /\bVALID\b/u;
 const VALID_MAX_LENGTH = 200;
 
-/** Any tool-call attempt to run the approval CLI — blocked before all else. */
-const APPROVAL_TOUCH_PATTERN = /pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)\b/u;
+/** Any tool-call attempt to run an approval CLI — blocked before all else.
+ *  Old surface: pi-openspec-gate approve|validate. New surface: pios-gate
+ *  approve|confirm (validate forwards to openspec there — structure lint,
+ *  not a human act — so it is NOT touch-guarded under the new name). */
+const APPROVAL_TOUCH_PATTERN =
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm))\b/u;
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
@@ -96,6 +100,8 @@ export type GateState = {
   declarationWords: string | undefined;
   inheritedFocus: ActiveFocus | undefined;
   validationPermit: boolean;
+  /** witnessed-but-unresolved creation; stamped on message_end (below) */
+  pendingCreation?: { slug: string; root: string; tool: string; at: string };
 };
 
 export function createGate(pi: ExtensionAPI, config: GateConfig): void {
@@ -159,6 +165,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
 
   // Declaration latch: the human's own words, user messages only.
   pi.on('message_end', (event) => {
+    // resolve witnessed creations BEFORE anything else: the stamp lands
+    // only after the call ran (dir exists) — pre-creating the dir broke
+    // `openspec new`'s scaffolder ("already exists" error, no docs written)
+    if (state.pendingCreation) {
+      const { slug, root, tool, at } = state.pendingCreation;
+      state.pendingCreation = undefined;
+      if (exists(join(root, 'changes', slug))) {
+        writeChangeMeta(root, slug, { status: 'proposed', created_by: 'assistant' }, { onlyIfAbsent: true });
+        appendFact(FACT.creationStamped, { change: slug, tool, at });
+      }
+    }
     const message = (event as { message?: { role?: unknown; content?: unknown } }).message;
     if (!message || message.role !== 'user') return;
     const content = message.content;
@@ -208,15 +225,15 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
 
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
 
-    // creation stamping — assistant-witnessed `openspec new change <slug>`:
-    // the change enters the world as proposed + audited; human-terminal
-    // creations are invisible to the gate and stay unstamped
+    // creation stamping — assistant-witnessed `openspec new change <slug>`
+    // (or its `pios-gate` wrapper form): the change enters the world as
+    // proposed + audited. The stamp itself lands on message_end, after the
+    // call ran — pre-creating the dir broke openspec's scaffolder.
     if (verdict.creation && approval.stampCreations) {
-      const slug = /\bopenspec\s+new\s+change\s+([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
+      const slug = /\b(?:pios-gate|pi-openspec-gate|openspec)\s+new\s+change\s+([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
       const root = openspecRootOf(cwd);
       if (slug && root) {
-        writeChangeMeta(root, slug, { status: 'proposed', created_by: 'assistant' }, { onlyIfAbsent: true });
-        appendFact(FACT.creationStamped, { change: slug, tool: toolName, at: utcNow() });
+        state.pendingCreation = { slug, root, tool: toolName, at: utcNow() };
       }
     }
     if (!verdict.mutating) return undefined; // read-only or creation: pass

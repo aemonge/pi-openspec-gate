@@ -133,6 +133,28 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal((fact!.data as { kind: string }).kind, 'approval-touch');
   });
 
+  test('approval-touch guard: pios-gate approve|confirm blocked; validate forwards freely', async () => {
+    const { fire, ctx } = freshGate();
+    focusOn('c1');
+    writeChangeMeta(root, 'c1', { status: 'approved' });
+    for (const command of [
+      'pios-gate approve c1',
+      'pios-gate confirm c1',
+      './bin/pios-gate approve c1',
+      'node bin/pios-gate.ts confirm c1 | tail -1',
+    ]) {
+      const blocked = await fire('tool_call', { toolName: 'bash', input: { command } }, ctx);
+      assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, command);
+    }
+    // validate under the new name is openspec's structure lint — read-only passthrough
+    const lint = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'pios-gate validate c1' } },
+      ctx,
+    );
+    assert.equal(lint, undefined, 'pios-gate validate forwards to openspec lint — not a human act');
+  });
+
   test('enforce: focused-but-unapproved change blocks source mutations', async () => {
     const { fire, ctx, entries } = freshGate();
     focusOn('c1');
@@ -283,7 +305,7 @@ describe('approval teeth: attribution is not approval', () => {
     assert.notEqual(approved, { block: true, reason: BLOCK_ARCHIVE });
   });
 
-  test('creation stamping: witnessed openspec new change → proposed + created_by', async () => {
+  test('creation stamping: stamp lands after the call runs, never pre-creates', async () => {
     const { fire, ctx, entries } = freshGate();
     const pass = await fire(
       'tool_call',
@@ -292,11 +314,33 @@ describe('approval teeth: attribution is not approval', () => {
     );
     assert.equal(pass, undefined);
     const metaFile = join(repo, 'openspec', 'changes', 'fresh-one', '.openspec.yaml');
-    assert.ok(existsSync(metaFile), 'meta stamped');
+    assert.equal(existsSync(metaFile), false, 'no pre-created meta — openspec\'s scaffolder runs freely');
+    // openspec runs (the real command creates the dir); then the turn ends
+    mkdirSync(join(repo, 'openspec', 'changes', 'fresh-one'), { recursive: true });
+    await fire('message_end', { message: { role: 'assistant', content: 'created' } }, ctx);
+    assert.ok(existsSync(metaFile), 'meta stamped after the call completed');
     const meta = readChangeMeta(root, 'fresh-one');
     assert.equal(meta.status, 'proposed');
     assert.equal(meta.raw.created_by, 'assistant');
     assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.creation-stamped.v1'));
+  });
+
+  test('creation stamping: wrapper form witnessed too; no dir → no stamp', async () => {
+    const { fire, ctx, entries } = freshGate();
+    const pass = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'pios-gate new change wrapped-one --schema ramona-plan' } },
+      ctx,
+    );
+    assert.equal(pass, undefined, 'wrapper creation passes (normalized to openspec)');
+    // command "failed" to create the dir — no message_end stamp either
+    await fire('message_end', { message: { role: 'assistant', content: 'done' } }, ctx);
+    assert.equal(existsSync(join(repo, 'openspec', 'changes', 'wrapped-one')), false);
+    assert.equal(
+      entries.some((e) => e.customType === 'pi-openspec-gate.creation-stamped.v1'),
+      false,
+      'nothing stamped for a creation that never landed',
+    );
   });
 
   test('meta writer: set-only stamps never overwrite; human keys preserved', () => {

@@ -63,9 +63,17 @@ lives in the human's terminal only — any tool-call attempt to run the
 approver is itself blocked:
 
 ```sh
-pi-openspec-gate approve <slug>    # status: approved  (human terminal)
-pi-openspec-gate validate <slug>   # permits Human-validation [x] flips
+pios-gate approve <slug>     # status: approved  (human terminal)
+pios-gate confirm <slug>     # permits Human-validation [x] flips
+pios-gate pending            # what needs the human, one command
+pios-gate list               # anything else execs openspec verbatim
 ```
+
+`pios-gate` is the gate as a feature extension of openspec: `approve`,
+`confirm`, and `pending` are gate-owned and never forwarded; every other
+argv passthroughs to `openspec` untouched — so `pios-gate validate x` is
+openspec's structure lint (the reason `validate` was renamed `confirm`).
+The old `pi-openspec-gate` bin remains as a permanent alias.
 
 - Assistant-witnessed `openspec new change` creations are stamped
   `status: proposed` + `created_by: assistant` (audit, not permission)
