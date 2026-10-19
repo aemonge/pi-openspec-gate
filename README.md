@@ -21,6 +21,8 @@ Never permission, never a renderer: another layer owns trust; this gate
 owns declaredness (the law of disjoint questions). `unknown = mutating` is
 a fail-safe, not a judgment. Ladder entry (`openspec new` / `init`) is
 never gated. Subagents inherit the parent's focus — federated accounting.
+Terminal surface: `pios-gate` (see [Install](#install) and
+[Approval](#approval-attribution-is-not-approval)).
 
 ## Install
 
@@ -28,6 +30,18 @@ never gated. Subagents inherit the parent's focus — federated accounting.
 pi install npm:@aemonge-dev/pi-openspec-gate            # personal
 pi install -l npm:@aemonge-dev/pi-openspec-gate         # project-scoped
 ```
+
+The extension (session gate) and the terminal CLI are one package, two
+installs — `pi install` loads the gate into sessions but puts nothing on
+your PATH:
+
+```bash
+npm install -g @aemonge-dev/pi-openspec-gate             # pios-gate + the
+                                                          # pi-openspec-gate
+                                                          # alias, npm-managed
+```
+
+Same package, same version; run both and you're fully installed.
 
 ## Config (`config.json` beside `index.ts`)
 
@@ -101,6 +115,23 @@ Absent section = all teeth off (legacy behavior).
 | `pi-openspec-gate.unapproved.v1` | unapproved change blocked (source-mutation / archive / approval-touch) |
 | `pi-openspec-gate.humangate.v1` | human-validation flip checked (permit: none / meta / valid-latch) |
 | `pi-openspec-gate.creation-stamped.v1` | witnessed creation stamped proposed + created_by |
+
+## Development
+
+```bash
+just lint      # vocabulary law: permission words stay out of the gate
+just test      # full suite (node:test, no deps)
+just build     # loader smoke + packed-artifact gates
+just publish <version>   # gates → bump+commit+tag → npm publish → global install
+```
+
+The ladder in one sentence: an assistant-created change is born
+`proposed`; the human approves it from their terminal (`pios-gate
+approve`); work attributes to the focused change as receipts in its
+`4-tasks.md`; human-validation steps need `pios-gate confirm` (or a
+literal `VALID` reply); then it archives. The full ledger — every change
+ever built, with receipts — lives in `openspec/changes/archive/`, and
+[CHANGELOG.md](CHANGELOG.md) is its human-readable front door.
 
 ## License
 
