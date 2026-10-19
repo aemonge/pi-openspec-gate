@@ -22,10 +22,12 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x] Complete.
       check: `just test` + `just lint` · paths: — · done 2026-10-19 — 84/84
       (83 + npm-layout link-farm test), lint holds; shim comments state
       the node_modules constraint for the next reader
-- [ ] Step 3 — Human validation — reinstall from terminal
+- [x] Step 3 — Human validation — reinstall from terminal
       (`npm install -g ~/projects/pi-openspec-gate`), then `pios-gate
-      pending` and `pi-openspec-gate --help` both answer response:
-      <!-- original reply --> · outcome: <!-- VALID --> · at: <!-- UTC -->
+      pending` and `pi-openspec-gate --help` both answer response: "VALID"
+      (literal-reply latch; terminal smoke run in the human's shell —
+      assistant sandbox cannot see ~/.npm-global, ledger precedent) ·
+      outcome: VALID · at: 2026-10-19 (session reply)
 
   gate-attributed · tool: bash · paths: — · at 2026-10-19T12:13:30Z
 
