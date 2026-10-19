@@ -5,7 +5,9 @@
  *   1. tool annotations — readOnlyHint === true  → not mutating
  *   2. known tool names — read-only set / mutating set / config read-only set
  *   3. lsp_fix          → input-aware (write !== true = preview, not mutating)
- *   4. bash|shell|powershell → verb scan (mutating verbs, read-only verbs)
+ *   4. bash|shell|powershell → segment split (conjunction): every segment
+ *      must independently classify read-only or creation; mutating-anywhere
+ *      beats read-only-anywhere; unknown grammar fails safe
  *   5. anything else    → mutating (fail-safe: unknown = mutating)
  *
  * Research instruments (web, docs, graph reads, memory reads) are *known*
@@ -53,7 +55,19 @@ const READ_ONLY_TOOLS = new Set([
 ]);
 const MUTATING_TOOLS = new Set(['edit', 'write']);
 
-const BASH_MUTATING_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
+// Mutating patterns come in two tiers.
+//
+// OPERATOR tier — mutation operators detectable locally (redirects,
+// in-place edits): checked in EVERY segment, even verb-anchored reads —
+// this is what catches `git status > out.txt`, which the old anywhere-
+// escapes let pass (they preempted even the redirect scan).
+//
+// COMMAND tier — mutating command words (rm, npm install, git commit…):
+// checked only when the segment's verb did NOT anchor as a known read-only
+// verb. A read verb's arguments are data, not commands: `graphify query
+// "install flow"` and `git log --grep rm` must pass (same precedent the
+// old early-escape served, without the preemption hole).
+const BASH_OPERATOR_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
   // A `>` is a write only when it targets a real sink: fd-redirects to
   // /dev/null and fd duplication (2>&1) discard or shuffle streams; every
   // other >, >>, 2>, &> writes a file.
@@ -61,6 +75,9 @@ const BASH_MUTATING_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
     pattern: /(?<![\d>])(?:\d)?>>?(?!\s*(?:\/dev\/null|&\d|>))|tee\b|\bsed\s+(-\w*\s+)*-i\b|\bpatch\b|\btruncate\b/u,
     basis: 'bash.write-redirect-or-inplace',
   },
+];
+
+const BASH_COMMAND_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
   { pattern: /\b(?:rm|rmdir|unlink|shred)\b/u, basis: 'bash.remove' },
   { pattern: /\b(?:mv|cp|rsync|install|ln)\s/u, basis: 'bash.move-copy-link' },
   { pattern: /\b(?:mkdir|touch|mknod)\b/u, basis: 'bash.create-filesystem' },
@@ -73,42 +90,182 @@ const BASH_MUTATING_PATTERNS: readonly { pattern: RegExp; basis: string }[] = [
   { pattern: /\bcurl\b[^\n]*\b(?:-X\s*(?:POST|PUT|PATCH|DELETE)|--upload-file|-T\s|-d\s|--data)/u, basis: 'bash.http-write' },
 ];
 
-const BASH_READ_ONLY_PATTERN =
-  /(?:^|[;&|]\s*|\$\(\s*)(?:pwd|echo|printf|cat|head|tail|less|more|ls|ll|stat|file|which|command\s+-v|type|whoami|date|env|printenv|wc|sort|uniq|cut|awk|sed|tr|du|df|free|uname|id|grep|rg|ag|find|fd|tree|diff|cmp|basename|dirname|realpath|readlink|test|\[)\b/u;
+// Segment-anchored read-only verbs — the verb must lead its segment
+// (after VAR=value stripping). The old anywhere-anchored escapes let one
+// clean verb launder the rest of a compound command; conjunction closed
+// that (per-segment-bash-classification). Quoted program text (sed, awk)
+// cannot trip anything: quotes are opaque to the splitter.
+const READ_ONLY_VERB_ANCHORED =
+  /^(?:pwd|echo|printf|cat|head|tail|less|more|ls|ll|stat|file|which|command\s+-v|type|whoami|date|env|printenv|wc|sort|uniq|cut|awk|sed|tr|du|df|free|uname|id|grep|rg|ag|find|fd|tree|diff|cmp|basename|dirname|realpath|readlink|test|\[)\b/u;
 
-const BASH_GIT_READ_ONLY = /\bgit\s+(?:status|diff|log|show|blame|ls-files|ls-remote|rev-parse|describe|reflog|shortlog|whatchanged|annotate)\b/u;
+const GIT_READ_ONLY_ANCHORED = /^git\s+(?:status|diff|log|show|blame|ls-files|ls-remote|rev-parse|describe|reflog|shortlog|whatchanged|annotate)\b/u;
 
-const BASH_OPENSPEC_READ_ONLY = /\bopenspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
+const OPENSPEC_READ_ONLY_ANCHORED = /^openspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
 
-// graphify reads: the knowledge-graph CLI's query surface. Checked early so
-// quoted query text ("how does install flow work") cannot trip later
-// mutating patterns — same precedent as `git log --grep`. Mutating verbs
-// (update, add, watch, merge-graphs, cluster-only, hook install, bare
-// `graphify .`) stay fail-safe/attributed.
-const BASH_GRAPHIFY_READ_ONLY = /\bgraphify\s+(?:query|path|explain|hook\s+status)\b/u;
+// graphify reads: the knowledge-graph CLI's query surface, anchored like
+// every other verb. Mutating verbs (update, add, watch, merge-graphs,
+// cluster-only, hook install, bare `graphify .`) stay fail-safe/attributed.
+const GRAPHIFY_READ_ONLY_ANCHORED = /^graphify\s+(?:query|path|explain|hook\s+status)\b/u;
 
-const OPENSPEC_CREATION = /\bopenspec\s+(?:new|init)\b/u;
+const OPENSPEC_CREATION_ANCHORED = /^openspec\s+(?:new|init)\b/u;
 
-function bashVerdict(command: string): MutationVerdict {
-  if (OPENSPEC_CREATION.test(command)) {
-    return { mutating: false, basis: 'bash.openspec-creation', creation: true };
-  }
-  if (
-    BASH_OPENSPEC_READ_ONLY.test(command) ||
-    BASH_GIT_READ_ONLY.test(command) ||
-    BASH_GRAPHIFY_READ_ONLY.test(command)
-  ) {
-    return { mutating: false, basis: 'bash.read-only-verb', creation: false };
-  }
-  for (const { pattern, basis } of BASH_MUTATING_PATTERNS) {
-    if (pattern.test(command)) {
-      return { mutating: true, basis, creation: false };
+// Leading VAR=value tokens are stripped before the verb anchors —
+// ergonomics only (LC_ALL=C sort): the verb after them is still fully
+// checked.
+const ASSIGNMENT_PREFIX = /^(?:[A-Za-z_]\w*=(?:"[^"]*"|'[^']*'|[^\s'"]+)\s+)+/u;
+
+function stripAssignments(segment: string): string {
+  return segment.replace(ASSIGNMENT_PREFIX, '');
+}
+
+export type SplitResult = {
+  segments: string[];
+  /** true when the command uses grammar the splitter refuses to interpret */
+  grammarUnsafe: boolean;
+};
+
+/**
+ * Split a shell command into segments on unquoted `;` `&&` `||` `|` `&`
+ * and newlines. Single/double quotes are opaque (nothing inside splits or
+ * trips); backslash escapes its next char (line continuations included);
+ * `#` comments (word-start only) skip to newline; `&` never separates
+ * redirect grammar (`2>&1`, `&>`, `>&`); `$( ` `<(` `>(` `<<` and unbalanced
+ * quotes mark the command grammar-unsafe. Conservative by construction:
+ * what it cannot interpret, it refuses to pass.
+ */
+export function splitSegments(command: string): SplitResult {
+  const segments: string[] = [];
+  let current = '';
+  let inSingle = false;
+  let inDouble = false;
+  let grammarUnsafe = false;
+
+  const push = () => {
+    const trimmed = current.trim();
+    if (trimmed) segments.push(trimmed);
+    current = '';
+  };
+
+  for (let i = 0; i < command.length; i += 1) {
+    const ch = command[i]!;
+    const next = command[i + 1] ?? '';
+
+    if (inSingle) {
+      if (ch === "'") inSingle = false;
+      current += ch;
+      continue;
+    }
+    if (inDouble) {
+      if (ch === '\\') {
+        current += ch + next;
+        i += 1;
+        continue;
+      }
+      if (ch === '"') inDouble = false;
+      current += ch;
+      continue;
+    }
+
+    switch (ch) {
+      case '\\': // escape: consume the next char verbatim
+        current += ch + next;
+        i += 1;
+        continue;
+      case "'":
+        inSingle = true;
+        current += ch;
+        continue;
+      case '"':
+        inDouble = true;
+        current += ch;
+        continue;
+      case '#':
+        // comment only at word start (preceded by whitespace/nothing)
+        if (current === '' || /\s$/.test(current)) {
+          const nl = command.indexOf('\n', i);
+          i = nl === -1 ? command.length : nl - 1;
+          continue;
+        }
+        current += ch;
+        continue;
+      case ';':
+        push();
+        continue;
+      case '&':
+        // redirect grammar: &> / >& / 2>&1 never separate
+        if (next === '>' || />\s*$/.test(current)) {
+          current += ch;
+          continue;
+        }
+        if (next === '&') i += 1; // &&
+        push();
+        continue;
+      case '|':
+        if (next === '|') i += 1; // ||
+        push();
+        continue;
+      case '\n':
+        push();
+        continue;
+      case '$':
+        if (next === '(') grammarUnsafe = true;
+        current += ch;
+        continue;
+      case '`':
+        grammarUnsafe = true;
+        current += ch;
+        continue;
+      case '<':
+        if (next === '(' || next === '<') grammarUnsafe = true;
+        current += ch;
+        continue;
+      case '>':
+        if (next === '(') grammarUnsafe = true;
+        current += ch;
+        continue;
+      default:
+        current += ch;
     }
   }
-  if (BASH_READ_ONLY_PATTERN.test(command)) {
-    return { mutating: false, basis: 'bash.read-only-verb', creation: false };
+  if (inSingle || inDouble) grammarUnsafe = true;
+  push();
+  return { segments, grammarUnsafe };
+}
+
+function bashVerdict(command: string): MutationVerdict {
+  const { segments, grammarUnsafe } = splitSegments(command);
+  if (grammarUnsafe) {
+    return { mutating: true, basis: 'bash.grammar=fail-safe', creation: false };
   }
-  return { mutating: true, basis: 'bash.unknown=fail-safe', creation: false };
+  let creation = false;
+  for (const segment of segments) {
+    for (const { pattern, basis } of BASH_OPERATOR_PATTERNS) {
+      if (pattern.test(segment)) {
+        return { mutating: true, basis, creation: false };
+      }
+    }
+    const body = stripAssignments(segment);
+    if (OPENSPEC_CREATION_ANCHORED.test(body)) {
+      creation = true;
+      continue;
+    }
+    const readVerbed =
+      READ_ONLY_VERB_ANCHORED.test(body) ||
+      GIT_READ_ONLY_ANCHORED.test(body) ||
+      OPENSPEC_READ_ONLY_ANCHORED.test(body) ||
+      GRAPHIFY_READ_ONLY_ANCHORED.test(body);
+    if (readVerbed) continue; // read verb: arguments are data, not commands
+    for (const { pattern, basis } of BASH_COMMAND_PATTERNS) {
+      if (pattern.test(segment)) {
+        return { mutating: true, basis, creation: false };
+      }
+    }
+    return { mutating: true, basis: 'bash.unknown=fail-safe', creation: false };
+  }
+  if (creation) {
+    return { mutating: false, basis: 'bash.openspec-creation', creation: true };
+  }
+  return { mutating: false, basis: 'bash.read-only-verb', creation: false };
 }
 
 function commandOf(input: unknown): string {

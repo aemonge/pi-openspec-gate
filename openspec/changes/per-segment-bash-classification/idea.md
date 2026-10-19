@@ -1,27 +1,38 @@
-# Idea: Classify every bash segment, not the whole string
+# Idea: The ledger must see every segment of work
 
-The bash read-only scan is whole-string: one anchored verb at `^` passes the
-entire command. Proven live in the `ungate-research-instruments` session —
-`which graphify; graphify --version` passed because `which` anchored at the
-start, though the second segment (`graphify --version`) is unknown and must
-be fail-safe. Any read-only verb can thus launder an arbitrary tail through
-`;`, `&&`, `||`, or `|`. The gap was seen, proven, and deferred by design:
-"per-segment lands as its own change" — this is that change.
+Two accounting leaks, both proven in the live classifier. **Hole A —
+preemption:** read-only escapes (`git status`, `openspec list`, `graphify
+query`) are matched anywhere *before* the mutating scan, so `git status; npm
+install` classifies read-only — the install ran, no receipt exists, the
+ledger is blind. **Hole B — one verb launders the rest:** the generic
+read-only pattern needs a single anchored verb, so `ls; bash ./script.sh`
+passes — the script's effects escape accounting entirely. Both are
+double-entry bugs: work happened and nothing recorded it. Neither is a
+security question — whether a call may run at all belongs to APPA
+(pi-openappa), whose policy layer owns adversarial commands. This gate owns
+one thing: no mutation off the books.
 
 ## Direction
 
-Split the command on `;`, `&&`, `||`, and `|` before classification; every
-segment must independently classify read-only for the whole to pass. Splitting
-respects quoting (a `;` inside quotes is data, not a separator). One unknown
-segment fails the whole command safe — no partial credit. Powershell rides the
-same segment logic through its existing parity path.
+Two moves, cheapest first. (1) **Reorder:** mutating-anywhere beats
+read-only-anywhere — one line, closes Hole A outright. (2) **Conjunction:**
+quote-aware split on `;` `&&` `||` `|` `&` `\n`, every segment must
+independently classify read-only (mutating patterns first, verb anchored at
+segment start), else the whole command attributes. Honest-assistant bar:
+classify honest compound commands honestly; unknown verbs and unknown
+grammar (`$(…)`, heredocs) attribute — a receipt line, never a denial.
+Attribute-cheap is the bias: over-recording costs one line, under-recording
+costs the ledger.
 
 ## Constraints
 
-Classifier behavior only — no permission/trust vocabulary, no renderer
-concerns, no new tools. Fail-safe semantics for unknown segments are
-inviolable. Scope ceiling: this repo's classifier and its tests.
+Accounting only: allow/deny, adversarial construction, result filtering are
+APPA's forever (law of disjoint questions); the gate's block is "unaccounted
+— here are the remedies," never "not allowed." The `&`-vs-`2>&1` redirect
+overlap must not shred honest redirects into fake segments. Fail-safe for
+unknown tools/segments is inviolable. Scope ceiling: classifier + tests.
 
 ## Children
 
-None yet — no ramona-plan descends from this idea until a human approves it.
+This change — promoted to ramona-plan after human approval
+2026-10-19T09:18:56Z (self-descending, gate-approval precedent).

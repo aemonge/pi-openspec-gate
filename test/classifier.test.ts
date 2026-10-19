@@ -174,3 +174,138 @@ test('unknown tools stay fail-safe mutating (codename probe)', () => {
   assert.equal(verdict.mutating, true);
   assert.match(verdict.basis, /tool\.unknown=fail-safe/);
 });
+
+// ——— segment splitter (per-segment-bash-classification) —————————————————
+
+import { splitSegments } from '../src/classifier.ts';
+
+test('splitter: separators produce segments', () => {
+  const { segments, grammarUnsafe } = splitSegments('a; b && c || d | e\nf & g');
+  assert.deepEqual(segments, ['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+  assert.equal(grammarUnsafe, false);
+});
+
+test('splitter: quotes are opaque', () => {
+  const { segments, grammarUnsafe } = splitSegments('echo "a; b" \'c | d\'');
+  assert.deepEqual(segments, ['echo "a; b" \'c | d\'']);
+  assert.equal(grammarUnsafe, false);
+});
+
+test('splitter: redirect grammar never splits (&, 2>&1, &>)', () => {
+  for (const command of ['grep x y 2>&1', 'find . -name f &>/dev/null', 'a >&2']) {
+    const { segments, grammarUnsafe } = splitSegments(command);
+    assert.equal(segments.length, 1, command);
+    assert.equal(grammarUnsafe, false, command);
+  }
+  // but backgrounding & separates
+  assert.deepEqual(splitSegments('a & b').segments, ['a', 'b']);
+});
+
+test('splitter: word-start # comments skip to newline', () => {
+  assert.deepEqual(splitSegments('ls # ; rm -rf /').segments, ['ls']);
+  // mid-word # is data, not a comment
+  assert.deepEqual(splitSegments('echo a#b; rm x').segments, ['echo a#b', 'rm x']);
+});
+
+test('splitter: tripwires mark grammar unsafe', () => {
+  for (const command of [
+    'echo $(date)',
+    'echo `date`',
+    'cat <(ls)',
+    'cmd >(tee x)',
+    'cat <<EOF',
+    "echo 'unterminated",
+  ]) {
+    const { grammarUnsafe } = splitSegments(command);
+    assert.equal(grammarUnsafe, true, command);
+  }
+  // quoted tripwire characters are data
+  assert.equal(splitSegments("awk '{print $1}' f").grammarUnsafe, false);
+});
+
+test('splitter: backslash escapes (continuations)', () => {
+  const { segments, grammarUnsafe } = splitSegments('cat a \\\n b');
+  assert.equal(segments.length, 1); // the escaped newline does not split
+  assert.equal(grammarUnsafe, false);
+});
+
+// ——— conjunction verdict ——————————————————————————————————————————————
+
+test('conjunction: clean compounds pass', () => {
+  for (const command of [
+    'git status && git diff',
+    'ls | grep foo',
+    'cat a; cat b',
+    'graphify query x; graphify path y',
+    'grep x y 2>&1',
+    'FOO=1 git status',
+  ]) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, false, command);
+  }
+});
+
+test('conjunction: hole A closed — mutating beats read-only-anywhere', () => {
+  for (const command of [
+    'git status; npm install',
+    'git log; rm -rf build/',
+    'openspec list; sed -i s/a/b/ f',
+    'git status > out.txt', // hole A variant: escape preempted the redirect scan
+  ]) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, true, command);
+  }
+});
+
+test('conjunction: read-verb arguments are data, not commands', () => {
+  for (const command of [
+    'graphify query "how does install flow work"',
+    'git log --grep rm',
+    'cat install-flow.txt',
+  ]) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, false, command);
+  }
+});
+
+test('conjunction: hole B closed — one clean verb no longer launders', () => {
+  for (const command of [
+    'ls; bash ./evil.sh',
+    'which graphify; graphify --version',
+    'cat a; frobnicate --widget x',
+  ]) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, true, command);
+    assert.equal(verdict.basis, 'bash.unknown=fail-safe', command);
+  }
+});
+
+test('conjunction: grammar-unsafe commands attribute (receipt, not denial)', () => {
+  const verdict = classifyMutation('bash', { command: 'echo $(date)' });
+  assert.equal(verdict.mutating, true);
+  assert.equal(verdict.basis, 'bash.grammar=fail-safe');
+});
+
+test('conjunction: creation requires every segment clean-or-creation', () => {
+  const compound = classifyMutation('bash', {
+    command: 'git status && openspec new change z',
+  });
+  assert.equal(compound.creation, true);
+  assert.equal(compound.mutating, false);
+
+  const laundered = classifyMutation('bash', {
+    command: 'openspec new change z; rm -rf /tmp/x',
+  });
+  assert.equal(laundered.mutating, true);
+  assert.equal(laundered.creation, false);
+});
+
+test('conjunction: newlines separate like ;', () => {
+  assert.equal(classifyMutation('bash', { command: 'ls\ncat b' }).mutating, false);
+  assert.equal(classifyMutation('bash', { command: 'ls\nrm b' }).mutating, true);
+});
+
+test('conjunction: env-prefix stripped for anchoring, verbs still checked', () => {
+  assert.equal(classifyMutation('bash', { command: 'LC_ALL=C sort f' }).mutating, false);
+  assert.equal(classifyMutation('bash', { command: 'FOO=1 rm x' }).mutating, true);
+});
