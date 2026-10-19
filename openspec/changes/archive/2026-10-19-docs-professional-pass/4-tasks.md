@@ -23,9 +23,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       check: `just test` + `just lint` + pack contents · paths: package.json
       · done 2026-10-19 — 84/84, lint holds, CHANGELOG.md in tarball
       (21 files, 4.0kB)
-- [ ] Step 4 — Human validation — human reads the rendered README +
-      CHANGELOG and rules response: <!-- original reply --> · outcome:
-      <!-- VALID --> · at: <!-- UTC -->
+- [x] Step 4 — Human validation — human reads the rendered README +
+      CHANGELOG and rules response: "VALID" (literal-reply latch, same
+      session as the read) · outcome: VALID · at: 2026-10-19 (session
+      reply)
 
   gate-attributed · tool: write · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-10-19T12:47:47Z
 
