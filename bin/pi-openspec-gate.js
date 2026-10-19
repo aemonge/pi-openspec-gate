@@ -1,29 +1,19 @@
 /**
- * pi-openspec-gate — human-terminal approval surface.
+ * pi-openspec-gate — human-terminal approval surface, permanent alias
+ * (plain JS: installed bins must not be TypeScript — node refuses
+ * type-stripping under node_modules).
  *
  *   pi-openspec-gate approve <slug>    set status: approved (+ approved_at)
  *   pi-openspec-gate validate <slug>   set validated (+ validated_at)
  *
- * Intended for the HUMAN's terminal only. The gate blocks any tool-call
- * invocation of this script (approval-touch guard) — approval must never be
- * reachable from assistant tooling. Running it here means a human typed it.
+ * The forward surface is pios-gate (confirm = validate, renamed); this
+ * alias stays for every receipt and remedy line ever written.
  */
+import process from 'node:process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import process from 'node:process';
 
-import { writeChangeMeta, utcNowStamp } from '../src/approval.ts';
-
-function findOpenspecRoot(start: string): string | undefined {
-  let dir = start;
-  for (let i = 0; i < 40; i += 1) {
-    if (existsSync(join(dir, 'openspec', 'changes'))) return join(dir, 'openspec');
-    const parent = join(dir, '..');
-    if (parent === dir) return undefined;
-    dir = parent;
-  }
-  return undefined;
-}
+import { findOpenspecRoot, utcNowStamp, writeChangeMeta } from './gate-lib.js';
 
 const [command, slug] = process.argv.slice(2);
 const root = findOpenspecRoot(process.cwd());

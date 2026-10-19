@@ -1,6 +1,7 @@
 #!/bin/sh
-# pi-openspec-gate — human-terminal approval surface (shim).
-# The real logic lives in pi-openspec-gate.ts; the shim keeps the
-# extensionless entry point (Node needs the .ts extension for type
-# stripping, and the gate's approval-touch pattern matches this name).
-exec node --experimental-strip-types "$(dirname "$0")/pi-openspec-gate.ts" "$@"
+# pi-openspec-gate — human-terminal approval surface, permanent alias.
+# The forward surface is pios-gate; this alias stays for every receipt
+# and remedy line ever written. Plain JS beneath (node_modules forbids
+# type-stripping); symlink resolution survives npm's link farm.
+SELF=$(readlink -f "$0" 2>/dev/null || echo "$0")
+exec node "$(dirname "$SELF")/pi-openspec-gate.js" "$@"

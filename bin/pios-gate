@@ -1,7 +1,9 @@
 #!/bin/sh
 # pios-gate — the gate as an openspec feature extension (shim).
 # Own verbs: approve, confirm, pending. Everything else execs openspec
-# verbatim. The real logic lives in pios-gate.ts; the shim keeps the
-# extensionless entry point (Node needs the .ts extension for type
-# stripping, and the gate's approval-touch pattern matches these names).
-exec node --experimental-strip-types "$(dirname "$0")/pios-gate.ts" "$@"
+# verbatim. Plain JS beneath: node refuses type-stripping under
+# node_modules, so installed bins must not be TypeScript. npm links
+# global bins as symlinks — resolve $0 first (fallback keeps direct
+# repo invocations working).
+SELF=$(readlink -f "$0" 2>/dev/null || echo "$0")
+exec node "$(dirname "$SELF")/pios-gate.js" "$@"

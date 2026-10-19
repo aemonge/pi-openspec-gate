@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const WRAPPER = join(import.meta.dirname, '..', 'bin', 'pios-gate.ts');
+const WRAPPER = join(import.meta.dirname, '..', 'bin', 'pios-gate');
+const ALIAS = join(import.meta.dirname, '..', 'bin', 'pi-openspec-gate');
 
 type Repo = { dir: string; fakeDir: string; log: string };
 
@@ -22,8 +23,8 @@ function makeRepo(): Repo {
 
 function run(repo: Repo, args: string[], fakeExit = 0): { status: number; stdout: string; called: boolean } {
   const result = spawnSync(
-    process.execPath,
-    ['--experimental-strip-types', WRAPPER, ...args],
+    WRAPPER,
+    args,
     {
       cwd: repo.dir,
       env: { ...process.env, PATH: `${repo.fakeDir}:${process.env.PATH}`, CALL_LOG: repo.log, FAKE_EXIT: String(fakeExit) },
@@ -104,12 +105,52 @@ test('wrapper: missing openspec binary exits 127', () => {
     mkdirSync(join(dir, 'openspec', 'changes'), { recursive: true });
     const emptyBin = join(dir, 'emptybin');
     mkdirSync(emptyBin);
-    const result = spawnSync(process.execPath, ['--experimental-strip-types', WRAPPER, 'list'], {
+    const result = spawnSync(WRAPPER, ['list'], {
       cwd: dir,
       env: { PATH: emptyBin, HOME: dir },
       encoding: 'utf8',
     });
     assert.equal(result.status, 127);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
+  // npm links global bins as symlinks: <prefix>/bin/pios-gate →
+  // …/node_modules/<pkg>/bin/pios-gate. dirname "$0" through the link
+  // points at the link farm — the .ts companion is in the package copy.
+  const dir = mkdtempSync(join(tmpdir(), 'pios-npm-layout-'));
+  try {
+    const pkgBin = join(dir, 'lib', 'node_modules', '@aemonge-dev', 'pi-openspec-gate', 'bin');
+    const linkDir = join(dir, 'bin');
+    mkdirSync(pkgBin, { recursive: true });
+    mkdirSync(linkDir, { recursive: true });
+    const fakeDir = join(dir, 'fakebin');
+    mkdirSync(fakeDir);
+    writeFileSync(join(fakeDir, 'openspec'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
+    // package copy: the real shims + the real .ts companions
+    const repoBin = join(import.meta.dirname, '..', 'bin');
+    for (const f of ['gate-lib.js', 'pi-openspec-gate', 'pi-openspec-gate.js', 'pios-gate', 'pios-gate.js']) {
+      copyFileSync(join(repoBin, f), join(pkgBin, f));
+    }
+    // npm-style symlinks
+    symlinkSync(join(pkgBin, 'pios-gate'), join(linkDir, 'pios-gate'));
+    symlinkSync(join(pkgBin, 'pi-openspec-gate'), join(linkDir, 'pi-openspec-gate'));
+    mkdirSync(join(dir, 'openspec', 'changes'), { recursive: true });
+
+    const viaLink = (name: string, args: string[]) =>
+      spawnSync(join(linkDir, name), args, {
+        cwd: dir,
+        env: { ...process.env, PATH: `${fakeDir}:${process.env.PATH}` },
+        encoding: 'utf8',
+      });
+    const pending = viaLink('pios-gate', ['pending']);
+    assert.equal(pending.status, 0, `pios-gate through npm link: ${pending.stderr}`);
+    assert.match(pending.stdout, /nothing pending/);
+    const usage = viaLink('pi-openspec-gate', ['--help']);
+    assert.notEqual(usage.status, 0); // usage error — but NOT MODULE_NOT_FOUND
+    assert.doesNotMatch(usage.stderr, /Cannot find module/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
