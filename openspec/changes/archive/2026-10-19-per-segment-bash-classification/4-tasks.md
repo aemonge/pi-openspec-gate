@@ -42,9 +42,10 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       single-segment); new: conjunction matrix, two-tier data-vs-command
       cases, creation conjunction both ways, newline separation,
       env-prefix strip
-- [ ] Step 4 — Human validation — human reviews the newly-attributing
-      compound list and rules on it response: <!-- original reply --> ·
-      outcome: <!-- VALID --> · at: <!-- UTC -->
+- [x] Step 4 — Human validation — human reviews the newly-attributing
+      compound list and rules on it response: "It's been validated" (after
+      manual probe + fresh-session dogfood guidance) · outcome: VALID ·
+      at: 2026-10-19T10:33:20Z (meta permit recorded)
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-10-19T09:26:24Z
 
@@ -73,3 +74,7 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-10-19T09:30:33Z
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-10-19T09:30:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-19T10:33:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-10-19T10:33:47Z
