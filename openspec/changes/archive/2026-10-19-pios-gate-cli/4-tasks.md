@@ -58,10 +58,15 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
       check: `just test` + `just lint` · paths: package.json · README.md ·
       done 2026-10-19 — 83/83 (75 → 83), lint holds, shim chmod +x
       preserved by git
-- [ ] Step 6 — Human validation — after publish + reload: `pios-gate
+- [x] Step 6 — Human validation — after publish + reload: `pios-gate
       pending` answers, and a live `pios-gate approve …` works from the new
-      bin (dogfood) response: <!-- original reply --> · outcome:
-      <!-- VALID --> · at: <!-- UTC -->
+      bin (dogfood) response: "Done" — manual validation menu pre-publish:
+      wrapper driven from terminal (passthrough, validate→lint forwarding,
+      pending, usage exit 2), classifier probe, fresh-session touch-guard
+      dogfood; confirmed via the new surface itself (`pios-gate confirm`,
+      10:58:56Z) · outcome: VALID · at: 2026-10-19T10:58:56Z (meta permit
+      recorded); installed-copy catch-up proof remains in
+      focus-inheritance-coverage's publish-day step
 
   gate-attributed · tool: bash · paths: — · at 2026-10-19T10:46:51Z
 
