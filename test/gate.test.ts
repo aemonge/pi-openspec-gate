@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 
-import { createGate, BLOCK_MESSAGE } from '../src/gate.ts';
+import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH } from '../src/gate.ts';
 import type { GateConfig } from '../src/config.ts';
 import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 
@@ -12,8 +12,8 @@ import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 const EXPECTED_BLOCK_COPY = [
   '⛔ unaccounted mutation — no active change',
   '   focus:   set the focus fact via your cockpit/status tool',
-  '   create:  openspec new change <slug> --schema ramona-plan',
-  '   or say "do it" — recorded as declared work, proceeds',
+  '   create:  openspec new change <slug> --schema mission',
+  '   or say "action the job" / "execute the job" — recorded as declared work, proceeds',
 ].join('\n');
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -93,7 +93,25 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
   });
 
-  test('declare: human "do it" → one debt line, mutation proceeds', async () => {
+  test('declare: human "action the job" → one debt line, mutation proceeds', async () => {
+    rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger per declare test
+    const { fire, ctx, entries } = freshGate();
+    await fire('message_end', { message: { role: 'user', content: 'action the job' } }, ctx);
+    const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
+    assert.equal(pass, undefined);
+    const bare = join(repo, 'openspec', 'bare-work.md');
+    assert.ok(existsSync(bare), 'debt ledger exists');
+    const lines = readFileSync(bare, 'utf8').trim().split('\n');
+    assert.equal(lines.length, 1, 'exactly one debt line');
+    assert.match(lines[0], /^bare — action the job · at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u);
+    assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'));
+    // latch consumed: a second mutation blocks again
+    const second = await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx);
+    assert.deepEqual(second, { block: true, reason: BLOCK_MESSAGE });
+  });
+
+  test('declare: legacy "do it" still latches one declared mutation', async () => {
+    rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger per declare test
     const { fire, ctx, entries } = freshGate();
     await fire('message_end', { message: { role: 'user', content: 'do it' } }, ctx);
     const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
@@ -183,7 +201,27 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
 
   test('openspec creation is never blocked', async () => {
     const { fire, ctx } = freshGate();
-    const pass = await fire('tool_call', { toolName: 'bash', input: { command: 'openspec new change fresh --schema ramona-plan' } }, ctx);
+    const pass = await fire('tool_call', { toolName: 'bash', input: { command: 'openspec new change fresh --schema mission' } }, ctx);
     assert.equal(pass, undefined);
   });
+});
+
+test('touch-guard: grant verbs are human-terminal only (live-caught 2026-10-20)', async () => {
+  const fake = makeFakePi();
+  createGate(fake.pi as never, { enabled: true, exempt: [], approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false } });
+  const ctx = { cwd: '/tmp', sessionManager: { getEntries: () => [] } };
+  for (const invocation of [
+    'pios-gate propose demo',
+    'pios-gate deal demo',
+    'node bin/pios-gate.js plan demo',
+    'pios-gate order demo',
+    'pios-gate execute demo',
+    'pios-gate approve demo',
+  ]) {
+    const result = await fake.fire('tool_call', { toolName: 'bash', input: { command: invocation } }, ctx);
+    assert.deepEqual(result, { block: true, reason: BLOCK_APPROVAL_TOUCH }, invocation);
+  }
+  // structure lint still forwards untouched
+  const lint = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate validate demo' } }, ctx);
+  assert.equal(lint, undefined);
 });

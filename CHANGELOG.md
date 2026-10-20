@@ -10,6 +10,21 @@ entry below cites the changes that produced it. Dates are release dates.
   `pi-openspec-gate.inherited.v1` + attribution (deferred from
   [2026-10-19-focus-inheritance-coverage](openspec/changes/archive/2026-10-19-focus-inheritance-coverage),
   archived with step 3 open by design).
+- **Memory instruments** — all Engram write verbs pass ungated but
+  recorded; lifecycle capture (session summaries, passive capture) is
+  never silently eaten again.
+  [memory-instruments](openspec/changes/memory-instruments)
+- **Phase gates** — schema-declared human gates (`x-requires-approval`,
+  `x-sections`, `x-lines`) enforced at the tool-call boundary; the five
+  grants (propose/deal/plan/order/execute), the pending cockpit,
+  `inspect`, strict next-rung-only ordering, structure-refusing stamps,
+  cumulative `phases_approved` meta, `phasegate.v1` facts, the mission
+  declaration latch, and the self-teaching protocol block + skill.
+  [phase-gates](openspec/changes/phase-gates)
+- **The mission schema** — one five-rung ladder (idea → proposition →
+  proposal → plan → execution) replacing ramona-idea/ramona-plan; the
+  claim born at rung 2, judged at rung 5's last checkbox.
+  [mission-schema](openspec/changes/mission-schema)
 
 ## 0.3.1 — 2026-10-19
 

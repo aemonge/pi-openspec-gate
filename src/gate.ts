@@ -5,7 +5,7 @@
  * Decision order for every mutating call:
  *   1. exempt?    (path-scoped, every target path covered) → record fact, pass
  *   2. focused?   (this session or inherited from parent)  → attribute, pass
- *   3. declared?  (human said "do it", latch consumed)      → debt line, pass
+ *   3. declared?  (human job command, latch consumed)       → debt line, pass
  *   4. otherwise  → block, exact copy, all three remedies
  * Creation commands (openspec new/init) pass ungated.
  * Handler failure blocks the call as a fail-safe.
@@ -18,6 +18,7 @@ import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
 import {
   changeIsApproved,
   changeMetaPath,
+  phasesApprovedSet,
   readChangeMeta,
   writeChangeMeta,
 } from './approval.ts';
@@ -35,12 +36,18 @@ import {
 } from './focus.ts';
 import { extractPaths } from './paths.ts';
 import { matchExemption } from './exemptions.ts';
+import {
+  GRANT_VERBS,
+  artifactForFilename,
+  resolveChangeSchema,
+  schemaIsGated,
+} from './schema.ts';
 
 export const BLOCK_MESSAGE = [
   '⛔ unaccounted mutation — no active change',
   '   focus:   set the focus fact via your cockpit/status tool',
-  '   create:  openspec new change <slug> --schema ramona-plan',
-  '   or say "do it" — recorded as declared work, proceeds',
+  '   create:  openspec new change <slug> --schema mission',
+  '   or say "action the job" / "execute the job" — recorded as declared work, proceeds',
 ].join('\n');
 
 export const BLOCK_APPROVAL_TOUCH = [
@@ -50,7 +57,7 @@ export const BLOCK_APPROVAL_TOUCH = [
 
 export const BLOCK_HUMANGATE = [
   '⛔ human-validation flip requires a human act',
-  '   validate: pi-openspec-gate validate <slug>   ← your terminal',
+  '   confirm: pios-gate confirm <slug>   ← your terminal',
   '   or reply literally: VALID',
 ].join('\n');
 
@@ -66,20 +73,40 @@ export const BLOCK_UNAPPROVED = [
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
-/** A human "do it" latches exactly one declared mutation. */
-const DECLARE_PATTERN = /\bdo\s+it\b/iu;
+export function blockRungApproval(slug: string, missing: string[], verb: string): string {
+  return [
+    `⛔ rung gate — ${missing.join(', ')} not granted yet`,
+    `   grant:   pios-gate ${verb} ${slug}   ← your terminal`,
+    '   docs:    the schema gates this rung (x-requires-approval)',
+  ].join('\n');
+}
+
+export function blockRungSections(filename: string, missing: string[]): string {
+  return [
+    `⛔ rung gate — ${filename} is missing declared structure`,
+    `   missing: ${missing.join(' · ')}`,
+    '   add it — the grant will refuse to stamp until it exists',
+  ].join('\n');
+}
+
+/** A human job command latches exactly one declared mutation.
+ *  Primary: "action/execute the mission" ("…the job" legacy); "do it" stays as an alias. */
+const DECLARE_PATTERN = /\b(?:(?:action|execute)\s+the\s+(?:mission|job)|do\s+it)\b/iu;
 const DECLARE_MAX_LENGTH = 200;
 
 /** A literal "VALID" reply latches exactly one human-gate flip. */
 const VALID_PATTERN = /\bVALID\b/u;
 const VALID_MAX_LENGTH = 200;
 
-/** Any tool-call attempt to run an approval CLI — blocked before all else.
- *  Old surface: pi-openspec-gate approve|validate. New surface: pios-gate
- *  approve|confirm (validate forwards to openspec there — structure lint,
- *  not a human act — so it is NOT touch-guarded under the new name). */
+/** Any tool-call attempt to run an approval or grant CLI — blocked before
+ *  all else. Old surface: pi-openspec-gate approve|validate. New surface:
+ *  pios-gate approve|confirm plus the five grants (propose/deal/plan/
+ *  order/execute) — grants are human-terminal only, exactly like approval
+ *  (live-caught 2026-10-20: an assistant ran grant verbs through `node
+ *  bin/pios-gate.js` in a scratch repo). `pios-gate validate` forwards to
+ *  openspec's structure lint and is NOT touch-guarded. */
 const APPROVAL_TOUCH_PATTERN =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm))\b/u;
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|propose|deal|plan|order|execute))\b/u;
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
@@ -92,6 +119,18 @@ export function flipsHumanValidationStep(text: string): boolean {
     if (HUMAN_GATE_FLIP_PATTERN.test(line) && HUMAN_GATE_LINE_PATTERN.test(line)) return true;
   }
   return false;
+}
+
+/** A declared H2 section heading, present anywhere in the text. */
+export function sectionHeadingPresent(text: string, section: string): boolean {
+  const escaped = section.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(`^#{2,}\\s*${escaped}\\s*$`, 'mu').test(text);
+}
+
+/** A declared top-level `Key:` line, present anywhere in the text. */
+export function lineKeyPresent(text: string, key: string): boolean {
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  return new RegExp(`^${escaped}:`, 'mu').test(text);
 }
 
 type SessionDirLike = { getSessionDir?: () => string };
@@ -276,6 +315,65 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       }
     }
 
+    // 0.9 rung gates — creating ladder artifact N+1 requires rung N
+    // granted (schema x-requires-approval), and declared sections/lines
+    // must exist at birth. Runs BEFORE exempt: ladder artifacts live in
+    // exempt openspec/** territory — the gate is the only carrier of the
+    // schema's declarations. Existing files stay editable (grandfathered,
+    // receipts flow); bash creations get the approval check (heredoc
+    // content is not inspectable — documented, fail-safe on the grant).
+    if (approval.phaseGates && openspecRoot) {
+      for (const path of paths) {
+        const slug = CHANGE_FROM_PATH_PATTERN.exec(path)?.[1];
+        if (!slug) continue;
+        if (exists(path)) continue; // creation only
+        const meta = readChangeMeta(openspecRoot, slug);
+        const resolution = resolveChangeSchema(openspecRoot, meta.raw.schema);
+        if (!resolution.ok || !schemaIsGated(resolution.schema)) continue;
+        const artifact = artifactForFilename(resolution.schema, path);
+        if (!artifact || artifact.requiresApproval.length === 0) continue; // ladder entry drafts free
+        const approved = phasesApprovedSet(meta);
+        const missingApproval = artifact.requiresApproval.filter((rung) => !approved.has(rung));
+        if (missingApproval.length > 0) {
+          const firstMissing = resolution.schema.artifacts.findIndex((a) => a.id === missingApproval[0]);
+          const verb = GRANT_VERBS[firstMissing] ?? 'approve';
+          appendFact(FACT.phasegate, {
+            kind: 'missing-approval',
+            tool: toolName,
+            change: slug,
+            rung: artifact.id,
+            missing: missingApproval,
+            at: utcNow(),
+          });
+          return { block: true, reason: blockRungApproval(slug, missingApproval, verb) };
+        }
+        if (toolName === 'edit' || toolName === 'write') {
+          const record = input as Record<string, unknown> | null;
+          const text =
+            typeof record?.newText === 'string'
+              ? record.newText
+              : typeof record?.content === 'string'
+                ? record.content
+                : '';
+          const missingStructure = [
+            ...artifact.sections.filter((s) => !sectionHeadingPresent(text, s)),
+            ...artifact.lines.filter((l) => !lineKeyPresent(text, l)),
+          ];
+          if (text.length > 0 && missingStructure.length > 0) {
+            appendFact(FACT.phasegate, {
+              kind: 'missing-sections',
+              tool: toolName,
+              change: slug,
+              rung: artifact.id,
+              missing: missingStructure,
+              at: utcNow(),
+            });
+            return { block: true, reason: blockRungSections(artifact.generates, missingStructure) };
+          }
+        }
+      }
+    }
+
     // 1. exempt — path-scoped, always recorded
     const exemption = matchExemption(toolName, paths, config.exempt, cwd);
     if (exemption.exempt) {
@@ -320,7 +418,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       return undefined;
     }
 
-    // 3. declared — the human said "do it"; one debt line, then it proceeds
+    // 3. declared — a human job command latched; one debt line, then it proceeds
     if (state.declarationWords) {
       const words = state.declarationWords;
       state.declarationWords = undefined; // latch consumed: exactly one line

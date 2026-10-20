@@ -13,6 +13,7 @@ export const FACT = {
   unapproved: 'pi-openspec-gate.unapproved.v1',
   humangate: 'pi-openspec-gate.humangate.v1',
   creationStamped: 'pi-openspec-gate.creation-stamped.v1',
+  phasegate: 'pi-openspec-gate.phasegate.v1',
 } as const;
 
 export type FactAppender = (customType: string, data?: unknown) => void;

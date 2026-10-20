@@ -333,3 +333,15 @@ test('wrapper: pios-gate classifies like bare openspec forms', () => {
   const creation = classifyMutation('bash', { command: 'pios-gate new change z' });
   assert.equal(creation.creation, true, 'wrapper creation is creation');
 });
+
+// gate cockpit verbs: read-only through wrapper normalization (live-caught
+// 2026-10-20 — inspect blocked as unknown-mutating in an unfocused session)
+test('gate cockpit verbs classify read-only, unfocused and bare', () => {
+  for (const command of ['pios-gate pending', 'pios-gate inspect first-walk', 'pios-gate focus', 'pi-openspec-gate pending']) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, false, command);
+  }
+  // grants stay touch-guarded (not read-only) — approve never lands here
+  const grant = classifyMutation('bash', { command: 'pios-gate propose first-walk' });
+  assert.equal(grant.mutating, true, 'grant verbs must never classify read-only');
+});

@@ -31,6 +31,8 @@ export type ApprovalConfig = {
   archiveGuard: boolean;
   /** Witnessed assistant `openspec new` creations get status: proposed + created_by: assistant. */
   stampCreations: boolean;
+  /** Rung gates: creating ladder artifact N+1 needs rung N granted; declared sections/lines checked at birth. */
+  phaseGates: boolean;
 };
 
 export type GateConfig = {
@@ -49,10 +51,10 @@ export type GateConfig = {
 const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [], approval: approvalOff() };
 
 function approvalOff(): ApprovalConfig {
-  return { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false };
+  return { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false, phaseGates: false };
 }
 
-function parseApproval(raw: unknown): ApprovalConfig {
+export function parseApproval(raw: unknown): ApprovalConfig {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return approvalOff();
   const record = raw as Record<string, unknown>;
   const flag = (key: keyof ApprovalConfig): boolean =>
@@ -62,6 +64,7 @@ function parseApproval(raw: unknown): ApprovalConfig {
     humanGateSteps: flag('humanGateSteps'),
     archiveGuard: flag('archiveGuard'),
     stampCreations: flag('stampCreations'),
+    phaseGates: flag('phaseGates'),
   };
 }
 

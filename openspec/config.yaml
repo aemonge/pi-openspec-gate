@@ -1,4 +1,4 @@
-schema: ramona-plan
+schema: mission
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.

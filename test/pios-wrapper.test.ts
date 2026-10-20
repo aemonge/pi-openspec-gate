@@ -155,3 +155,158 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ── phase gates: the five grants ─────────────────────────────────────────
+
+const GATED_SCHEMA = `name: gated
+version: 1
+artifacts:
+  - id: idea
+    generates: 1-idea.md
+  - id: proposition
+    generates: 2-proposition.md
+    x-requires-approval: [idea]
+    x-lines: [Claim]
+  - id: proposal
+    generates: 3-proposal.md
+    x-requires-approval: [proposition]
+    x-sections: [Done when]
+  - id: plan
+    generates: 4-plan.md
+    x-requires-approval: [proposal]
+  - id: execution
+    generates: 5-execution.md
+    x-requires-approval: [plan]
+`;
+
+function gatedRepo(): Repo {
+  const repo = makeRepo();
+  mkdirSync(join(repo.dir, 'openspec', 'schemas', 'gated'), { recursive: true });
+  writeFileSync(join(repo.dir, 'openspec', 'schemas', 'gated', 'schema.yaml'), GATED_SCHEMA);
+  change(repo, 'm1', 'schema: gated\nstatus: proposed\n');
+  return repo;
+}
+
+function draft(repo: Repo, slug: string, file: string, content: string): void {
+  writeFileSync(join(repo.dir, 'openspec', 'changes', slug, file), content);
+}
+
+test('grants: the full five-rung walk stamps in order and completes the ladder', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'pain and direction');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\n\nClaim: you will enjoy this\n');
+    draft(repo, 'm1', '3-proposal.md', '# Proposal\n\n## Done when\n');
+    draft(repo, 'm1', '4-plan.md', '# Plan\n');
+    draft(repo, 'm1', '5-execution.md', '# Execution\n');
+
+    assert.equal(run(repo, ['deal', 'm1']).status, 1, 'strict order: deal before propose fails');
+    assert.match(run(repo, ['deal', 'm1']).stdout, /strict order/);
+
+    const p = run(repo, ['propose', 'm1']);
+    assert.equal(p.status, 0);
+    assert.match(p.stdout, /granted m1 · idea/);
+
+    const again = run(repo, ['propose', 'm1']);
+    assert.equal(again.status, 1);
+    assert.match(again.stdout, /already granted/);
+
+    assert.equal(run(repo, ['deal', 'm1']).status, 0);
+    assert.equal(run(repo, ['plan', 'm1']).status, 0);
+    assert.equal(run(repo, ['order', 'm1']).status, 0);
+
+    const done = run(repo, ['execute', 'm1']);
+    assert.equal(done.status, 0);
+    assert.match(done.stdout, /ladder complete — status: approved/);
+
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /phases_approved: idea,proposition,proposal,plan,execution/);
+    assert.match(meta, /status: approved/);
+    assert.match(meta, /granted_execution:/);
+    assert.equal(existsSync(repo.log), false, 'grants never forward to openspec');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('grants: structure refusal — a Claim-less proposition will not stamp', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\nno claim line\n');
+    assert.equal(run(repo, ['propose', 'm1']).status, 0);
+    const deal = run(repo, ['deal', 'm1']);
+    assert.equal(deal.status, 1);
+    assert.match(deal.stdout, /missing declared structure: Claim/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('grants: you approve what you read — undrafted rungs refuse', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    assert.equal(run(repo, ['propose', 'm1']).status, 0);
+    const deal = run(repo, ['deal', 'm1']);
+    assert.equal(deal.status, 1);
+    assert.match(deal.stdout, /2-proposition.md not drafted yet/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('grants: approve <slug> <rung> canonical form and big-bang on gated schemas', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', 'Claim: x\n');
+    draft(repo, 'm1', '3-proposal.md', '## Done when\n');
+    draft(repo, 'm1', '4-plan.md', '# Plan\n');
+    draft(repo, 'm1', '5-execution.md', '# Execution\n');
+    assert.equal(run(repo, ['approve', 'm1', 'idea']).status, 0);
+    assert.equal(run(repo, ['approve', 'm1', 'proposition']).status, 0);
+
+    const bang = run(repo, ['approve', 'm1']);
+    assert.equal(bang.status, 0);
+    assert.match(bang.stdout, /all rungs · ladder complete/);
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /phases_approved: idea,proposition,proposal,plan,execution/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('cockpit: pending shows rung marks and the next grant; show is verbose', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', 'Claim: x\n');
+    run(repo, ['propose', 'm1']);
+    const pending = run(repo, ['pending']);
+    assert.match(pending.stdout, /\[gated\] ✓◻···/);
+    assert.match(pending.stdout, /read 2-proposition\.md → grant: pios-gate deal m1/);
+
+    const show = run(repo, ['inspect', 'm1']);
+    assert.match(show.stdout, /mission: m1 · schema: gated/);
+    assert.match(show.stdout, /structure ✓/);
+    assert.match(show.stdout, /next human act: read 2-proposition\.md/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('grants: focus teaches, ungated schema refuses verbs politely', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'legacy', 'status: proposed\n');
+    const focus = run(repo, ['focus']);
+    assert.equal(focus.status, 0);
+    assert.match(focus.stdout, /session instrument/);
+    const verb = run(repo, ['propose', 'legacy']);
+    assert.equal(verb.status, 2);
+    assert.match(verb.stdout, /schema declares no gates/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});

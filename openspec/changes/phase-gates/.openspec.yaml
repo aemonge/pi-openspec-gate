@@ -1,0 +1,9 @@
+schema: ramona-plan
+created: 2026-10-20
+skip_specs: true
+goal: Each mission rung is human-approved before the next drafts — gates declared in the schema, enforced by the gate
+
+status: approved
+created_by: assistant
+
+approved_at: 2026-10-20T12:52:54Z

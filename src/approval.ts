@@ -20,6 +20,29 @@ export type ChangeMeta = {
 
 export const APPROVED = 'approved';
 
+/** Meta keys of the phase-gate ladder (flat, comma-list value). */
+export const PHASES_KEY = 'phases_approved';
+
+/** Parse the cumulative `phases_approved: a,b` meta value into a set. */
+export function phasesApprovedSet(meta: ChangeMeta): Set<string> {
+  const raw = meta.raw[PHASES_KEY] ?? '';
+  return new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0),
+  );
+}
+
+/** Compose the meta values a grant writes: cumulative list + per-rung stamp. */
+export function grantValues(meta: ChangeMeta, rungs: string[], at: string): Record<string, string> {
+  const approved = phasesApprovedSet(meta);
+  for (const rung of rungs) approved.add(rung);
+  const values: Record<string, string> = { [PHASES_KEY]: [...approved].join(',') };
+  for (const rung of rungs) values[`granted_${rung}`] = at;
+  return values;
+}
+
 /** Path of a change's meta file. */
 export function changeMetaPath(openspecRoot: string, change: string): string {
   return join(openspecRoot, 'changes', change, '.openspec.yaml');

@@ -66,6 +66,51 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
       'openspec_focus',
       'stage',
       'subject',
+      // memory writes: never gated, always recorded (memory-instruments)
+      'mem_save',
+      'mem_update',
+      'mem_delete',
+      'mem_save_prompt',
+      'mem_session_summary',
+      'mem_session_end',
+      'mem_capture_passive',
     ]);
+  });
+
+  test('every memory write verb passes ungated and records an instrument fact', async () => {
+    const verbs = [
+      'mem_save',
+      'mem_update',
+      'mem_delete',
+      'mem_save_prompt',
+      'mem_session_summary',
+      'mem_session_end',
+      'mem_capture_passive',
+    ];
+    const config = loadGateConfig();
+    for (const verb of verbs) {
+      const fake = makeFakePi();
+      createGate(fake.pi as never, config);
+      const result = await fake.fire('tool_call', { toolName: verb, input: { title: 't', content: 'c' } }, ctx);
+      assert.equal(result, undefined, `${verb} passes ungated`);
+      const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.instrument.v1');
+      assert.ok(fact, `${verb} recorded as instrument`);
+      assert.equal((fact!.data as { tool: string }).tool, verb);
+    }
+  });
+
+  test('mem_delete included: never gated, still recorded', async () => {
+    const fake = makeFakePi();
+    createGate(fake.pi as never, loadGateConfig());
+    const result = await fake.fire('tool_call', { toolName: 'mem_delete', input: { id: 1 } }, ctx);
+    assert.equal(result, undefined);
+    assert.ok(fake.entries.some((e) => e.customType === 'pi-openspec-gate.instrument.v1'));
+  });
+
+  test('unknown memory tool still blocks — fail-safe untouched (no classifier change)', async () => {
+    const fake = makeFakePi();
+    createGate(fake.pi as never, loadGateConfig());
+    const result = await fake.fire('tool_call', { toolName: 'mem_hypothetical', input: {} }, ctx);
+    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
   });
 });

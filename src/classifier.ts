@@ -102,6 +102,14 @@ const GIT_READ_ONLY_ANCHORED = /^git\s+(?:status|diff|log|show|blame|ls-files|ls
 
 const OPENSPEC_READ_ONLY_ANCHORED = /^openspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
 
+// The gate's cockpit verbs surface through wrapper normalization as
+// `openspec pending|inspect|focus …` — read-only state views any session
+// may run unfocused (they are how the assistant relays state to the human;
+// live-caught 2026-10-20: inspect blocked as unknown-mutating). Bare
+// `openspec <verb>` harmlessly errors at runtime; approve/confirm/grants
+// never reach here (touch guard preempts all).
+const GATE_COCKPIT_READ_ONLY_ANCHORED = /^openspec\s+(?:pending|inspect|focus)\b/u;
+
 // graphify reads: the knowledge-graph CLI's query surface, anchored like
 // every other verb. Mutating verbs (update, add, watch, merge-graphs,
 // cluster-only, hook install, bare `graphify .`) stay fail-safe/attributed.
@@ -264,6 +272,7 @@ function bashVerdict(command: string): MutationVerdict {
       READ_ONLY_VERB_ANCHORED.test(body) ||
       GIT_READ_ONLY_ANCHORED.test(body) ||
       OPENSPEC_READ_ONLY_ANCHORED.test(body) ||
+      GATE_COCKPIT_READ_ONLY_ANCHORED.test(body) ||
       GRAPHIFY_READ_ONLY_ANCHORED.test(body);
     if (readVerbed) continue; // read verb: arguments are data, not commands
     for (const { pattern, basis } of BASH_COMMAND_PATTERNS) {

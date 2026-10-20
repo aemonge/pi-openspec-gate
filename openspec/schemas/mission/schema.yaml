@@ -1,0 +1,88 @@
+name: mission
+version: 1
+description: One human-validatable value slice as a five-rung ladder —
+  Idea (why) → Proposition (the claim) → Proposal (the contract) → Plan
+  (the method) → Execution (the ledger). Approvals flow down rung by
+  rung, evidence flows up inside each; the claim born at rung 2 is judged
+  by rung 5's final Human-validation checkbox. x- tags declare the human
+  gates that pi-openspec-gate enforces; openspec itself strips them
+  silently, so the gate validates its own tags.
+artifacts:
+  - id: idea
+    generates: 1-idea.md
+    description: Why and for whom — the situation that makes the mission matter
+    template: idea.md
+    instruction: |
+      Answer WHY this mission exists, never how or acceptance detail. Two
+      tight paragraphs: observed pain, then the chosen direction with hard
+      limits. The one-line Goal lives in .openspec.yaml (meta goal:), not
+      here. A parented mission may reduce this artifact to a single Parent
+      blockquote line. This rung is free — ladder entry, never gated.
+    requires: []
+  - id: proposition
+    generates: 2-proposition.md
+    description: The claim — one testable, falsifiable sentence
+    template: proposition.md
+    instruction: |
+      One line: Claim: {one sentence, testable, falsifiable} — the thing
+      the mission commits to believing. "You will enjoy at least 3 of my
+      5 game picks." "The gate blocks every unapproved source mutation
+      with a byte-stable remedy." Nothing else on this page. Born here,
+      judged by Execution's final Human-validation checkbox; falsifiability
+      itself is the Human's judgment, the machine checks only form.
+    requires:
+      - idea
+    x-requires-approval: [idea]
+    x-lines: [Claim]
+  - id: proposal
+    generates: 3-proposal.md
+    description: The contract — what done means, scope, and the deal's guardrails
+    template: proposal.md
+    instruction: |
+      The thing put in front of someone who can say yes or no. Four
+      protocol blockquote lines, one fact per line: Estimate (range ·
+      confidence), Evidence (one line, why cheap or risky), Human wait
+      (the one act only the Human can do), Parent (id). H2 sections: Done
+      when (observable criteria, the final one Human-verified), Scope
+      (what this mission touches), Out of Scope (explicit non-goals),
+      Guardrails (permissions granted, risks accepted, boundaries). One
+      page maximum — this is the page a Human skims to decide.
+    requires:
+      - proposition
+    x-requires-approval: [proposition]
+    x-sections: [Done when, Scope, Out of Scope, Guardrails]
+  - id: plan
+    generates: 4-plan.md
+    description: The method — skills, workflow, steps, verification, provenance
+    template: plan.md
+    instruction: |
+      The only home for implementation thinking; never repeat proposal
+      content — reference it. H2 sections in order: Skills (first, never
+      omitted — the declared knowledge informing the work, any format from
+      a one-line markdown skill to a full stack; nothing qualifies →
+      exactly one line `bare — <reason>`, visible debt, never a silent
+      skip), Workflow (one line: why this route), Steps (numbered, each
+      runnable), Verification (deterministic checks, then the concrete
+      Human validation), History (provenance — commit subject, or
+      prices-as-of-date). Depth scales with risk.
+    requires:
+      - proposal
+    x-requires-approval: [proposal]
+    x-sections: [Skills, Workflow, Steps, Verification, History]
+  - id: execution
+    generates: 5-execution.md
+    description: The ledger — what actually happened, receipts, and the verdict
+    template: execution.md
+    instruction: |
+      Record WHAT ACTUALLY HAPPENED. Literal H1 Execution, the step-states
+      legend line, one H2 per Task, checkbox steps carrying start,
+      elapsed, check, and paths-or-receipt slots filled in as work
+      proceeds. Gate-appended receipts (tool · paths · UTC) land in this
+      file while work runs. The final countable checkbox is always Human
+      validation — response, outcome, at; only a Human reply ticks it.
+      Keep every checkbox line machine-countable: timing and receipts on
+      indented non-checkbox lines. Status truth lives in counters, never
+      prose. Approving this rung completes the ladder.
+    requires:
+      - plan
+    x-requires-approval: [plan]

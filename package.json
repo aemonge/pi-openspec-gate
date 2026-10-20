@@ -18,6 +18,7 @@
     "index.ts",
     "src",
     "bin",
+    "skills",
     "config.json",
     "README.md",
     "CHANGELOG.md",

@@ -24,7 +24,7 @@ const EXPECTED = {
   ].join('\n'),
   humangate: [
     '⛔ human-validation flip requires a human act',
-    '   validate: pi-openspec-gate validate <slug>   ← your terminal',
+    '   confirm: pios-gate confirm <slug>   ← your terminal',
     '   or reply literally: VALID',
   ].join('\n'),
   archive: [

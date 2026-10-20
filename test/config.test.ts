@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { loadGateConfig, parseConfigString } from '../src/config.ts';
+import { loadGateConfig, parseApproval, parseConfigString } from '../src/config.ts';
 
 /**
  * Covers the live no-arg path that the 2026-10-14 protocol run proved broken:
@@ -43,4 +43,11 @@ describe('readOnlyTools (research escape hatch)', () => {
     const config = parseConfigString(JSON.stringify({ readOnlyTools: [] }));
     assert.equal(config.readOnlyTools, undefined);
   });
+});
+
+test('approval.phaseGates parses from config.json (regression: enumerated literal missed it)', () => {
+  const config = loadGateConfig();
+  assert.equal(config.approval.phaseGates, true);
+  const parsedOff = parseApproval({ enforce: true });
+  assert.equal(parsedOff.phaseGates, false, 'absent flag parses false, never undefined');
 });

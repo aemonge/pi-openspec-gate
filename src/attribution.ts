@@ -2,7 +2,7 @@
  * Attribution appender — durable, visible receipts on disk.
  *
  *   declaration → one debt line in <openspec-root>/bare-work.md
- *                 (`bare — <words> · at <UTC>`), exactly one per "do it"
+ *                 (`bare — <words> · at <UTC>`), exactly one per job command
  *   attribution → one receipt line in the focused change's 4-tasks.md
  *                 (tool · paths · at)
  *
