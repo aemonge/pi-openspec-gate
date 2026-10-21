@@ -5,6 +5,26 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+- **Generic schema engine** — all flow knowledge moves from code to
+  schema `x-` tags: `x-grant-verb` (verbs from data; positional grants
+  removed), `x-verdict-line`, `x-receives-receipts`, `x-completes`,
+  `x-unlocks-source`, and rich `x-sections` entries gating a rung's own
+  sections (`x-requires-written` / `x-requires-approval`, sub-grants
+  addressed as `artifact/section`); the canonical grant is id-addressed
+  (`pios-gate grant <slug> <rung>`); the approval-touch guard covers the
+  reserved surface plus every schema-declared verb; receipts land in the
+  declared artifact; source unlocks at the declared rung; the protocol
+  block, README, and skill teach the generic law with mission as the
+  shipped example; a grep-proof test keeps the vocabulary out of engine
+  code forever.
+  [generic-schema-engine](openspec/changes/generic-schema-engine)
+- **Quest-walk hardening** — live /tmp/test validation by the human:
+  headings match case-insensitively (prose, not ids), the structure
+  block says "phase gate" (the 'rung' sweep completed), the protocol
+  block teaches agents to STOP and report anomalous blocks instead of
+  debugging the engine, and wrapper `--help` reads the manual
+  (read-only). [generic-schema-engine](openspec/changes/generic-schema-engine)
+
 - Open receipt: focus-inheritance live proof — dispatch a named-session
   subagent in a focused gated repo and confirm
   `pi-openspec-gate.inherited.v1` + attribution (deferred from

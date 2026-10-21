@@ -6,7 +6,9 @@ description: One human-validatable value slice as a five-rung ladder —
   rung, evidence flows up inside each; the claim born at rung 2 is judged
   by rung 5's final Human-validation checkbox. x- tags declare the human
   gates that pi-openspec-gate enforces; openspec itself strips them
-  silently, so the gate validates its own tags.
+  silently, so the gate validates its own tags. Verbs, verdict line,
+  receipt target, completion stamp, and the source unlock are declared
+  here too — the engine hardcodes none of them.
 artifacts:
   - id: idea
     generates: 1-idea.md
@@ -19,6 +21,7 @@ artifacts:
       here. A parented mission may reduce this artifact to a single Parent
       blockquote line. This rung is free — ladder entry, never gated.
     requires: []
+    x-grant-verb: propose
   - id: proposition
     generates: 2-proposition.md
     description: The claim — one testable, falsifiable sentence
@@ -34,6 +37,7 @@ artifacts:
       - idea
     x-requires-approval: [idea]
     x-lines: [Claim]
+    x-grant-verb: deal
   - id: proposal
     generates: 3-proposal.md
     description: The contract — what done means, scope, and the deal's guardrails
@@ -51,6 +55,7 @@ artifacts:
       - proposition
     x-requires-approval: [proposition]
     x-sections: [Done when, Scope, Out of Scope, Guardrails]
+    x-grant-verb: plan
   - id: plan
     generates: 4-plan.md
     description: The method — skills, workflow, steps, verification, provenance
@@ -69,6 +74,7 @@ artifacts:
       - proposal
     x-requires-approval: [proposal]
     x-sections: [Skills, Workflow, Steps, Verification, History]
+    x-grant-verb: order
   - id: execution
     generates: 5-execution.md
     description: The ledger — what actually happened, receipts, and the verdict
@@ -86,3 +92,8 @@ artifacts:
     requires:
       - plan
     x-requires-approval: [plan]
+    x-grant-verb: execute
+    x-verdict-line: Human validation
+    x-receives-receipts: true
+    x-completes: approved
+    x-unlocks-source: true

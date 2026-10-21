@@ -1,0 +1,18 @@
+schema: mission
+created: 2026-10-21
+goal: The gate engine reads every step, verb, and gate from schema x- tags — zero hardcoded flow; the mission ladder ships as one example schema
+
+status: approved
+created_by: assistant
+
+phases_approved: idea,proposition,proposal,plan,execution
+granted_idea: 2026-10-21T09:44:51Z
+
+granted_proposition: 2026-10-21T09:48:51Z
+
+granted_proposal: 2026-10-21T09:54:47Z
+
+granted_plan: 2026-10-21T10:04:34Z
+
+granted_execution: 2026-10-21T10:10:53Z
+approved_at: 2026-10-21T10:10:53Z

@@ -37,17 +37,28 @@ The schema declares the gates; the gate enforces them:
 ```yaml
 - id: proposition
   generates: 2-proposition.md
+  x-grant-verb: deal
   x-requires-approval: [idea]
   x-lines: [Claim]
-- id: proposal
-  generates: 3-proposal.md
-  x-requires-approval: [proposition]
-  x-sections: [Done when, Scope, Out of Scope, Guardrails]
+- id: execution
+  generates: 5-execution.md
+  x-grant-verb: execute
+  x-requires-approval: [plan]
+  x-verdict-line: Human validation
+  x-receives-receipts: true
+  x-completes: approved
+  x-unlocks-source: true
 ```
 
 openspec strips unknown `x-` fields silently (non-strict schema); the gate
 is their only consumer and validates them loudly. Schemas without tags get
-no phase gates — legacy single-approve behavior.
+no phase gates — legacy single-approve behavior. The vocabulary in full —
+`x-grant-verb`, `x-sections` (bare or rich, gating a rung’s own sections
+with `x-requires-written` / `x-requires-approval`), `x-verdict-line`,
+`x-receives-receipts`, `x-completes`, `x-unlocks-source` — is documented in
+the shipped skill (`skills/mission-protocol.md`). Verbs, filenames,
+verdicts, and unlock points are schema data; the engine hardcodes none of
+them.
 
 ## Phase gates
 
@@ -58,23 +69,21 @@ written only when the ladder completes — attribution is still not
 approval.
 
 ```sh
-pios-gate propose <slug>   # read the idea       → the claim may draft
-pios-gate deal <slug>      # read the claim      → the contract may draft
-pios-gate plan <slug>      # read the contract   → the method may draft
-pios-gate order <slug>     # read the method     → the work order may draft
-pios-gate execute <slug>   # read the work order → work begins
-pios-gate approve <slug> [rung]   # canonical / big-bang (all rungs, same checks)
-pios-gate confirm <slug>   # permits Human-validation [x] flips
-pios-gate pending          # the cockpit — every mission, next acts
-pios-gate inspect <slug>   # one mission, verbose (rungs, stamps, structure)
-pios-gate focus            # teaching: focus is a session instrument
-pios-gate <anything else>  # exec openspec verbatim, exit code intact
+pios-gate grant <slug> <artifact-id>   # canonical: id or artifact/section path
+pios-gate <verb> <slug>                # an x-grant-verb the schema declares
+pios-gate approve <slug> [rung]        # canonical alias; no rung = big-bang
+pios-gate confirm <slug>               # permits the declared verdict-line flip
+pios-gate pending                      # the cockpit — every mission, next acts
+pios-gate inspect <slug>               # one mission, verbose (rungs, stamps, structure)
+pios-gate focus                        # teaching: focus is a session instrument
+pios-gate <anything else>              # exec openspec verbatim, exit code intact
 ```
 
 Grants are strictly next-rung-only, you approve what you read (undrafted
 rungs refuse), and the grant itself refuses to stamp artifacts missing
-declared structure. Any tool-call attempt to run an approval verb is
-itself blocked — approval is a human act.
+declared structure or carrying ungranted gated sections. Any tool-call
+attempt on the grant surface — approve, confirm, grant, or any verb the
+schemas declare — is itself blocked: approval is a human act.
 
 ```json
 "approval": { "enforce": true, "humanGateSteps": true,
@@ -148,10 +157,10 @@ just build     # loader smoke + packed-artifact gates
 just publish <version>   # gates → bump+commit+tag → npm publish → global install
 ```
 
-The ladder in one sentence: a mission is born free (idea), commits to a
+The shipped `mission` example in one sentence: a mission is born free (idea), commits to a
 falsifiable claim (proposition), is signed as a deal (proposal), exposes
 its method and knowledge (plan), and earns its debrief (execution) — where
-the human's verdict upholds or refutes the claim it opened with. The full
+the human's verdict upholds or refutes the claim it opened with. Write your own ladder the same way: declare it. The full
 ledger — every change ever built, with receipts — lives in
 `openspec/changes/archive/`, and [CHANGELOG.md](CHANGELOG.md) is its
 human-readable front door.

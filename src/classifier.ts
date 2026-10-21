@@ -105,10 +105,12 @@ const OPENSPEC_READ_ONLY_ANCHORED = /^openspec\s+(?:list|status|show|instruction
 // The gate's cockpit verbs surface through wrapper normalization as
 // `openspec pending|inspect|focus …` — read-only state views any session
 // may run unfocused (they are how the assistant relays state to the human;
-// live-caught 2026-10-20: inspect blocked as unknown-mutating). Bare
-// `openspec <verb>` harmlessly errors at runtime; approve/confirm/grants
-// never reach here (touch guard preempts all).
-const GATE_COCKPIT_READ_ONLY_ANCHORED = /^openspec\s+(?:pending|inspect|focus)\b/u;
+// live-caught 2026-10-20: inspect blocked as unknown-mutating). Help flags
+// read the manual — never a mutation (live-caught 2026-10-21: `pios-gate
+// --help` blocked as unaccounted). Bare `openspec <verb>` harmlessly
+// errors at runtime; approve/confirm/grants never reach here (touch guard
+// preempts all).
+const GATE_COCKPIT_READ_ONLY_ANCHORED = /^openspec\s+(?:pending|inspect|focus|help|--help|-h)\b/u;
 
 // graphify reads: the knowledge-graph CLI's query surface, anchored like
 // every other verb. Mutating verbs (update, add, watch, merge-graphs,

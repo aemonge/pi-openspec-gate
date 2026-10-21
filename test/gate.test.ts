@@ -57,6 +57,14 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     repo = mkdtempSync(join(tmpdir(), 'gate-repo-'));
     mkdirSync(join(repo, 'openspec', 'changes', 'c1'), { recursive: true });
     writeFileSync(join(repo, 'openspec', 'changes', 'c1', '4-tasks.md'), '# Tasks\n', 'utf8');
+    // schema-declared verdict line + receipt target (the engine carries none)
+    mkdirSync(join(repo, 'openspec', 'schemas', 'teeth'), { recursive: true });
+    writeFileSync(
+      join(repo, 'openspec', 'schemas', 'teeth', 'schema.yaml'),
+      'name: teeth\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
+      'utf8',
+    );
+    writeFileSync(join(repo, 'openspec', 'changes', 'c1', '.openspec.yaml'), 'schema: teeth\n', 'utf8');
     sessionEntries = [];
   });
 
@@ -206,17 +214,16 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
   });
 });
 
-test('touch-guard: grant verbs are human-terminal only (live-caught 2026-10-20)', async () => {
+test('touch-guard: the grant surface is human-terminal only — reserved words + schema-declared verbs', async () => {
   const fake = makeFakePi();
   createGate(fake.pi as never, { enabled: true, exempt: [], approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false } });
   const ctx = { cwd: '/tmp', sessionManager: { getEntries: () => [] } };
   for (const invocation of [
-    'pios-gate propose demo',
-    'pios-gate deal demo',
-    'node bin/pios-gate.js plan demo',
-    'pios-gate order demo',
-    'pios-gate execute demo',
     'pios-gate approve demo',
+    'pios-gate confirm demo',
+    'pios-gate grant demo some/one',
+    'node bin/pios-gate.js approve demo',
+    'pi-openspec-gate validate demo',
   ]) {
     const result = await fake.fire('tool_call', { toolName: 'bash', input: { command: invocation } }, ctx);
     assert.deepEqual(result, { block: true, reason: BLOCK_APPROVAL_TOUCH }, invocation);
@@ -224,4 +231,26 @@ test('touch-guard: grant verbs are human-terminal only (live-caught 2026-10-20)'
   // structure lint still forwards untouched
   const lint = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate validate demo' } }, ctx);
   assert.equal(lint, undefined);
+
+  // schema-declared verbs join the guard from data; undeclared words pass
+  const verbRepo = mkdtempSync(join(tmpdir(), 'touch-verbs-'));
+  try {
+    mkdirSync(join(verbRepo, 'openspec', 'schemas', 'verbful'), { recursive: true });
+    mkdirSync(join(verbRepo, 'openspec', 'changes'), { recursive: true }); // the root walker keys on it
+    writeFileSync(
+      join(verbRepo, 'openspec', 'schemas', 'verbful', 'schema.yaml'),
+      'name: verbful\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: kickoff\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n',
+      'utf8',
+    );
+    const verbCtx = { cwd: verbRepo, sessionManager: { getEntries: () => [] } };
+    const blocked = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate kickoff demo' } }, verbCtx);
+    assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'declared verb blocked');
+    const pass = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate someotherword demo' } }, verbCtx);
+    // undeclared words are not approval-touch — the touch guard passes
+    // them through; the base law may still block them as unaccounted
+    const reason = (pass as { reason?: string } | undefined)?.reason;
+    assert.notEqual(reason, BLOCK_APPROVAL_TOUCH, 'undeclared word is not approval-touch');
+  } finally {
+    rmSync(verbRepo, { recursive: true, force: true });
+  }
 });

@@ -82,7 +82,7 @@ test('wrapper: pending reports what needs the human', () => {
     const out = run(repo, ['pending']);
     assert.equal(out.status, 0);
     assert.match(out.stdout, /needs-approve\s+proposed\s+needs approve/);
-    assert.match(out.stdout, /needs-confirm\s+approved\s+needs confirm/);
+    assert.match(out.stdout, /needs-confirm\s+approved\s+1 open steps/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -163,19 +163,24 @@ version: 1
 artifacts:
   - id: idea
     generates: 1-idea.md
+    x-grant-verb: propose
   - id: proposition
     generates: 2-proposition.md
+    x-grant-verb: deal
     x-requires-approval: [idea]
     x-lines: [Claim]
   - id: proposal
     generates: 3-proposal.md
+    x-grant-verb: plan
     x-requires-approval: [proposition]
     x-sections: [Done when]
   - id: plan
     generates: 4-plan.md
+    x-grant-verb: order
     x-requires-approval: [proposal]
   - id: execution
     generates: 5-execution.md
+    x-grant-verb: execute
     x-requires-approval: [plan]
 `;
 
@@ -200,8 +205,8 @@ test('grants: the full five-rung walk stamps in order and completes the ladder',
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
-    assert.equal(run(repo, ['deal', 'm1']).status, 1, 'strict order: deal before propose fails');
-    assert.match(run(repo, ['deal', 'm1']).stdout, /strict order/);
+    assert.equal(run(repo, ['deal', 'm1']).status, 1, 'in sequence: deal before propose fails');
+    assert.match(run(repo, ['deal', 'm1']).stdout, /in sequence/);
 
     const p = run(repo, ['propose', 'm1']);
     assert.equal(p.status, 0);
@@ -303,8 +308,8 @@ test('grants: focus teaches, ungated schema refuses verbs politely', () => {
     const focus = run(repo, ['focus']);
     assert.equal(focus.status, 0);
     assert.match(focus.stdout, /session instrument/);
-    const verb = run(repo, ['propose', 'legacy']);
-    assert.equal(verb.status, 2);
+    const verb = run(repo, ['grant', 'legacy', 'a']);
+    assert.equal(verb.status, 1); // grant refused, not a usage error
     assert.match(verb.stdout, /schema declares no gates/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });

@@ -3,8 +3,9 @@
  *
  *   declaration → one debt line in <openspec-root>/bare-work.md
  *                 (`bare — <words> · at <UTC>`), exactly one per job command
- *   attribution → one receipt line in the focused change's 4-tasks.md
- *                 (tool · paths · at)
+ *   attribution → one receipt line in the change's declared receipt
+ *                 artifact (x-receives-receipts, else the completing
+ *                 artifact — the schema names the file, the engine does not)
  *
  * Writes are serialized through a single-flight queue; failures never break
  * the gate's verdict (the fact store still holds the event).
@@ -34,16 +35,17 @@ export function appendDebtLine(openspecRoot: string | undefined, words: string, 
   });
 }
 
-/** One attribution receipt into the focused change's 4-tasks.md. */
+/** One attribution receipt into the change's declared receipt artifact. */
 export function appendAttributionReceipt(
   openspecRoot: string | undefined,
   change: string,
   receipt: { tool: string; paths: string[]; at: string },
+  targetFile?: string,
 ): Promise<void> {
   return serialized(() => {
-    if (!openspecRoot) return;
+    if (!openspecRoot || !targetFile) return; // no declared target: the fact store still records
     appendLine(
-      join(openspecRoot, 'changes', change, '4-tasks.md'),
+      join(openspecRoot, 'changes', change, targetFile),
       `  gate-attributed · tool: ${receipt.tool} · paths: ${receipt.paths.join(', ') || '—'} · at ${receipt.at}`,
     );
   });

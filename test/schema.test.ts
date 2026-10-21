@@ -4,12 +4,13 @@ import { join } from 'node:path';
 
 import {
   artifactForFilename,
+  artifactForGrantVerb,
   findSchemaFile,
   ladderComplete,
   parseSchemaYaml,
   resolveChangeSchema,
-  rungForGrantVerb,
   schemaIsGated,
+  sectionTitles,
 } from '../src/schema.ts';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
@@ -22,24 +23,29 @@ artifacts:
     generates: 1-idea.md
     description: why
     requires: []
+    x-grant-verb: propose
   - id: proposition
     generates: 2-proposition.md
     requires: [idea]
+    x-grant-verb: deal
     x-requires-approval: [idea]
     x-lines: [Claim]
   - id: proposal
     generates: 3-proposal.md
     requires: [proposition]
+    x-grant-verb: plan
     x-requires-approval: [proposition]
     x-sections: [Done when, Scope, Out of Scope, Guardrails]
   - id: plan
     generates: 4-plan.md
     requires: [proposal]
+    x-grant-verb: order
     x-requires-approval: [proposal]
     x-sections: [Skills, Workflow, Steps, Verification, History]
   - id: execution
     generates: 5-execution.md
     requires: [plan]
+    x-grant-verb: execute
     x-requires-approval: [plan]
     instruction: |
       multi-line instruction with traps:
@@ -59,7 +65,7 @@ describe('schema reader: parsing', () => {
     assert.deepEqual(proposition?.requiresApproval, ['idea']);
     assert.deepEqual(proposition?.lines, ['Claim']);
     const proposal = artifactForFilename(schema, '3-proposal.md');
-    assert.deepEqual(proposal?.sections, ['Done when', 'Scope', 'Out of Scope', 'Guardrails']);
+    assert.deepEqual(sectionTitles(proposal!), ['Done when', 'Scope', 'Out of Scope', 'Guardrails']);
     // block-scalar traps must not leak fake artifacts
     assert.equal(schema.artifacts.length, 5);
   });
@@ -81,7 +87,7 @@ describe('schema reader: parsing', () => {
     const schema = parseSchemaYaml(yaml, 'fixture');
     const b = artifactForFilename(schema, '2-b.md');
     assert.deepEqual(b?.requiresApproval, ['a']);
-    assert.deepEqual(b?.sections, ['One', 'Two']);
+    assert.deepEqual(sectionTitles(b!), ['One', 'Two']);
   });
 
   test('unknown x-requires-approval reference fails loudly', () => {
@@ -132,12 +138,12 @@ describe('schema reader: resolution and ladder semantics', () => {
     assert.equal(ladderComplete(schema, four), true);
   });
 
-  test('grant verbs stamp positionally: propose→rung1 … execute→rung5', () => {
+  test('grant verbs resolve from declared x-grant-verb, not position', () => {
     const schema = parseSchemaYaml(MISSION_YAML, 'fixture');
-    assert.equal(rungForGrantVerb(schema, 'propose')?.id, 'idea');
-    assert.equal(rungForGrantVerb(schema, 'deal')?.id, 'proposition');
-    assert.equal(rungForGrantVerb(schema, 'plan')?.id, 'proposal');
-    assert.equal(rungForGrantVerb(schema, 'order')?.id, 'plan');
-    assert.equal(rungForGrantVerb(schema, 'execute')?.id, 'execution');
+    assert.equal(artifactForGrantVerb(schema, 'propose')?.id, 'idea');
+    assert.equal(artifactForGrantVerb(schema, 'deal')?.id, 'proposition');
+    assert.equal(artifactForGrantVerb(schema, 'plan')?.id, 'proposal');
+    assert.equal(artifactForGrantVerb(schema, 'order')?.id, 'plan');
+    assert.equal(artifactForGrantVerb(schema, 'execute')?.id, 'execution');
   });
 });

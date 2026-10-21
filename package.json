@@ -1,6 +1,6 @@
 {
   "name": "@aemonge-dev/pi-openspec-gate",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "description": "Ladder gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer.",
   "type": "module",
   "license": "MIT",

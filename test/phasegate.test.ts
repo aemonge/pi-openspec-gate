@@ -70,9 +70,9 @@ describe('rung gates: creating ladder artifacts', () => {
     assert.deepEqual(result, {
       block: true,
       reason: [
-        '⛔ rung gate — a not granted yet',
-        '   grant:   pios-gate propose c1   ← your terminal',
-        '   docs:    the schema gates this rung (x-requires-approval)',
+        '⛔ phase gate — a not granted yet',
+        '   grant:   pios-gate approve c1 a   ← your terminal',
+        '   docs:    the schema gates this artifact (x-requires-approval)',
       ].join('\n'),
     });
     const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
@@ -115,7 +115,7 @@ describe('rung gates: creating ladder artifacts', () => {
     assert.deepEqual(result, {
       block: true,
       reason: [
-        '⛔ rung gate — 2-b.md is missing declared structure',
+        '⛔ phase gate — 2-b.md is missing declared structure',
         '   missing: Done when · Claim',
         '   add it — the grant will refuse to stamp until it exists',
       ].join('\n'),

@@ -25,13 +25,13 @@ export type ExemptRule = {
 export type ApprovalConfig = {
   /** Focused change must be status: approved for source (non-exempt) mutations. */
   enforce: boolean;
-  /** [ ]→[x] flips on "Human validation" lines require a human act (meta `validated` or literal VALID reply). */
+  /** [ ]→[x] flips on the schema-declared verdict line require a human act (meta `validated` or literal VALID reply). */
   humanGateSteps: boolean;
   /** openspec archive of an unapproved change blocks unless --i-am-the-human. */
   archiveGuard: boolean;
   /** Witnessed assistant `openspec new` creations get status: proposed + created_by: assistant. */
   stampCreations: boolean;
-  /** Rung gates: creating ladder artifact N+1 needs rung N granted; declared sections/lines checked at birth. */
+  /** Phase gates: creating a gated artifact needs its declared precedents granted; declared sections/lines checked at birth. */
   phaseGates: boolean;
 };
 

@@ -37,10 +37,14 @@ import {
 import { extractPaths } from './paths.ts';
 import { matchExemption } from './exemptions.ts';
 import {
-  GRANT_VERBS,
   artifactForFilename,
+  receiptArtifactFor,
   resolveChangeSchema,
   schemaIsGated,
+  schemaVerdictLine,
+  scanGrantVerbs,
+  sectionTitles,
+  unlockGranted,
 } from './schema.ts';
 
 export const BLOCK_MESSAGE = [
@@ -73,17 +77,18 @@ export const BLOCK_UNAPPROVED = [
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
-export function blockRungApproval(slug: string, missing: string[], verb: string): string {
+export function blockRungApproval(slug: string, missing: string[], verb?: string): string {
+  const grant = verb ? `pios-gate ${verb} ${slug}` : `pios-gate approve ${slug} ${missing[0] ?? '<artifact>'}`;
   return [
-    `⛔ rung gate — ${missing.join(', ')} not granted yet`,
-    `   grant:   pios-gate ${verb} ${slug}   ← your terminal`,
-    '   docs:    the schema gates this rung (x-requires-approval)',
+    `⛔ phase gate — ${missing.join(', ')} not granted yet`,
+    `   grant:   ${grant}   ← your terminal`,
+    '   docs:    the schema gates this artifact (x-requires-approval)',
   ].join('\n');
 }
 
 export function blockRungSections(filename: string, missing: string[]): string {
   return [
-    `⛔ rung gate — ${filename} is missing declared structure`,
+    `⛔ phase gate — ${filename} is missing declared structure`,
     `   missing: ${missing.join(' · ')}`,
     '   add it — the grant will refuse to stamp until it exists',
   ].join('\n');
@@ -98,33 +103,50 @@ const DECLARE_MAX_LENGTH = 200;
 const VALID_PATTERN = /\bVALID\b/u;
 const VALID_MAX_LENGTH = 200;
 
-/** Any tool-call attempt to run an approval or grant CLI — blocked before
- *  all else. Old surface: pi-openspec-gate approve|validate. New surface:
- *  pios-gate approve|confirm plus the five grants (propose/deal/plan/
- *  order/execute) — grants are human-terminal only, exactly like approval
- *  (live-caught 2026-10-20: an assistant ran grant verbs through `node
- *  bin/pios-gate.js` in a scratch repo). `pios-gate validate` forwards to
- *  openspec's structure lint and is NOT touch-guarded. */
-const APPROVAL_TOUCH_PATTERN =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|propose|deal|plan|order|execute))\b/u;
+/** Any tool-call attempt to reach the approval surface — blocked before
+ *  all else. Reserved surface: pi-openspec-gate approve|validate (old),
+ *  pios-gate approve|confirm|grant (new). Beyond the reserved words the
+ *  vocabulary is data: every x-grant-verb declared by any resolvable
+ *  schema joins the guard (scanGrantVerbs, cached per root).
+ *  `pios-gate validate` forwards to openspec's structure lint and is NOT
+ *  touch-guarded. */
+const APPROVAL_TOUCH_RESERVED =
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant))\b/u;
+
+const verbTouchCache = new Map<string, RegExp | null>();
+function approvalTouchVerbs(openspecRoot: string): RegExp | null {
+  if (verbTouchCache.has(openspecRoot)) return verbTouchCache.get(openspecRoot) ?? null;
+  const verbs = [...scanGrantVerbs(openspecRoot)];
+  let pattern: RegExp | null = null;
+  if (verbs.length > 0) {
+    const alternation = verbs
+      .sort((a, b) => b.length - a.length)
+      .map((v) => v.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+      .join('|');
+    pattern = new RegExp(`pios-gate(?:\\.\\w+)?\\s+(?:${alternation})\\b`, 'u');
+  }
+  verbTouchCache.set(openspecRoot, pattern);
+  return pattern;
+}
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
-const HUMAN_GATE_LINE_PATTERN = /human\s+validation/iu;
 const CHANGE_FROM_PATH_PATTERN = /(?:^|\/)changes\/([^/]+)\//u;
 
-/** True when the text flips a "Human validation" step to complete. */
-export function flipsHumanValidationStep(text: string): boolean {
+/** True when the text flips the schema-declared verdict line to complete. */
+export function flipsVerdictLine(text: string, verdictLine: string): boolean {
+  const declared = new RegExp(verdictLine.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'iu');
   for (const line of text.split('\n')) {
-    if (HUMAN_GATE_FLIP_PATTERN.test(line) && HUMAN_GATE_LINE_PATTERN.test(line)) return true;
+    if (HUMAN_GATE_FLIP_PATTERN.test(line) && declared.test(line)) return true;
   }
   return false;
 }
 
-/** A declared H2 section heading, present anywhere in the text. */
+/** A declared H2 section heading, present anywhere in the text. Headings
+ *  are prose, not identifiers — the match is case-insensitive. */
 export function sectionHeadingPresent(text: string, section: string): boolean {
   const escaped = section.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-  return new RegExp(`^#{2,}\\s*${escaped}\\s*$`, 'mu').test(text);
+  return new RegExp(`^#{2,}\\s*${escaped}\\s*$`, 'imu').test(text);
 }
 
 /** A declared top-level `Key:` line, present anywhere in the text. */
@@ -257,9 +279,13 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       input !== null && typeof input === 'object' && !Array.isArray(input)
         ? String((input as Record<string, unknown>).command ?? '')
         : '';
-    if (bashCommand && APPROVAL_TOUCH_PATTERN.test(bashCommand)) {
-      appendFact(FACT.unapproved, { kind: 'approval-touch', tool: toolName, paths: [], at: utcNow() });
-      return { block: true, reason: BLOCK_APPROVAL_TOUCH };
+    if (bashCommand) {
+      const touchRoot = openspecRootOf(cwd);
+      const verbs = touchRoot ? approvalTouchVerbs(touchRoot) : null;
+      if (APPROVAL_TOUCH_RESERVED.test(bashCommand) || (verbs && verbs.test(bashCommand))) {
+        appendFact(FACT.unapproved, { kind: 'approval-touch', tool: toolName, paths: [], at: utcNow() });
+        return { block: true, reason: BLOCK_APPROVAL_TOUCH };
+      }
     }
 
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
@@ -280,17 +306,24 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     const paths = extractPaths(toolName, input, cwd);
     const openspecRoot = openspecRootOf(cwd);
 
-    // 0.7 human-gate flip guard — a [x] flip on a "Human validation" line
-    // needs a human act; runs before exempt (tasks files are openspec/**)
+    // 0.7 human-gate flip guard — a [x] flip on the schema-declared
+    // verdict line needs a human act; runs before exempt (ladder files
+    // are openspec/**)
     if (approval.humanGateSteps && (toolName === 'edit' || toolName === 'write')) {
       const record = input as Record<string, unknown> | null;
       const newText = typeof record?.newText === 'string' ? record.newText : '';
       const content = typeof record?.content === 'string' ? record.content : '';
-      if ((newText && flipsHumanValidationStep(newText)) || (content && flipsHumanValidationStep(content))) {
-        const slug =
-          paths.map((p) => CHANGE_FROM_PATH_PATTERN.exec(p)?.[1]).find(Boolean) ??
-          activeFocus(ctx.sessionManager, cwd)?.change;
-        const meta = slug && openspecRoot ? readChangeMeta(openspecRoot, slug) : undefined;
+      const flipSlug =
+        paths.map((p) => CHANGE_FROM_PATH_PATTERN.exec(p)?.[1]).find(Boolean) ??
+        activeFocus(ctx.sessionManager, cwd)?.change;
+      const flipMeta = flipSlug && openspecRoot ? readChangeMeta(openspecRoot, flipSlug) : undefined;
+      const flipResolution = flipMeta && openspecRoot ? resolveChangeSchema(openspecRoot, flipMeta.raw.schema) : undefined;
+      const verdictLine = flipResolution?.ok ? schemaVerdictLine(flipResolution.schema) : undefined;
+      if (
+        verdictLine &&
+        ((newText && flipsVerdictLine(newText, verdictLine)) || (content && flipsVerdictLine(content, verdictLine)))
+      ) {
+        const meta = flipMeta;
         if (meta?.validated) {
           appendFact(FACT.humangate, { tool: toolName, paths, permit: 'meta', at: utcNow() });
         } else if (state.validationPermit) {
@@ -315,9 +348,9 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       }
     }
 
-    // 0.9 rung gates — creating ladder artifact N+1 requires rung N
-    // granted (schema x-requires-approval), and declared sections/lines
-    // must exist at birth. Runs BEFORE exempt: ladder artifacts live in
+    // 0.9 phase gates — creating a gated artifact requires its declared
+    // precedents granted (schema x-requires-approval), and declared
+    // sections/lines must exist at birth. Runs BEFORE exempt: ladder artifacts live in
     // exempt openspec/** territory — the gate is the only carrier of the
     // schema's declarations. Existing files stay editable (grandfathered,
     // receipts flow); bash creations get the approval check (heredoc
@@ -335,8 +368,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         const approved = phasesApprovedSet(meta);
         const missingApproval = artifact.requiresApproval.filter((rung) => !approved.has(rung));
         if (missingApproval.length > 0) {
-          const firstMissing = resolution.schema.artifacts.findIndex((a) => a.id === missingApproval[0]);
-          const verb = GRANT_VERBS[firstMissing] ?? 'approve';
+          const verb = resolution.schema.artifacts.find((a) => a.id === missingApproval[0])?.grantVerb;
           appendFact(FACT.phasegate, {
             kind: 'missing-approval',
             tool: toolName,
@@ -356,7 +388,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
                 ? record.content
                 : '';
           const missingStructure = [
-            ...artifact.sections.filter((s) => !sectionHeadingPresent(text, s)),
+            ...sectionTitles(artifact).filter((s) => !sectionHeadingPresent(text, s)),
             ...artifact.lines.filter((l) => !lineKeyPresent(text, l)),
           ];
           if (text.length > 0 && missingStructure.length > 0) {
@@ -392,9 +424,16 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     if (focusIsActive(focus, openspecRoot)) {
       // 2a. approval teeth — attribution is not approval; source mutations
       // on a focused-but-unapproved change block with the terminal remedy
+      const meta = readChangeMeta(openspecRoot!, focus.change);
       if (approval.enforce) {
-        const meta = readChangeMeta(openspecRoot!, focus.change);
-        if (!changeIsApproved(meta)) {
+        // unlock is data: any granted x-unlocks-source artifact, else
+        // (no declaration) ladder completion — attribution is not approval
+        const unlockResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
+        const unlocked =
+          unlockResolution.ok && schemaIsGated(unlockResolution.schema)
+            ? unlockGranted(unlockResolution.schema, phasesApprovedSet(meta))
+            : changeIsApproved(meta);
+        if (!unlocked) {
           appendFact(FACT.unapproved, {
             kind: 'source-mutation',
             tool: toolName,
@@ -414,7 +453,11 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         basis: verdict.basis,
         at,
       });
-      void appendAttributionReceipt(openspecRoot, focus.change, { tool: toolName, paths, at });
+      // receipts land where the schema declares (x-receives-receipts,
+      // else the completing artifact); undeclared → facts only
+      const receiptResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
+      const receiptTarget = receiptResolution.ok ? receiptArtifactFor(receiptResolution.schema)?.generates : undefined;
+      void appendAttributionReceipt(openspecRoot, focus.change, { tool: toolName, paths, at }, receiptTarget);
       return undefined;
     }
 

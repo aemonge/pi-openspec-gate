@@ -10,7 +10,7 @@ import {
   BLOCK_HUMANGATE,
   BLOCK_ARCHIVE,
   BLOCK_UNAPPROVED,
-  flipsHumanValidationStep,
+  flipsVerdictLine,
 } from '../src/gate.ts';
 import { changeMetaPath, readChangeMeta, writeChangeMeta } from '../src/approval.ts';
 import type { GateConfig } from '../src/config.ts';
@@ -79,6 +79,15 @@ describe('approval teeth: attribution is not approval', () => {
     root = join(repo, 'openspec');
     mkdirSync(join(root, 'changes', 'c1'), { recursive: true });
     writeFileSync(join(root, 'changes', 'c1', '4-tasks.md'), '# Tasks\n', 'utf8');
+    // the schema carries the declarations the guard reads: verdict line +
+    // receipt target — the engine carries none of it
+    mkdirSync(join(root, 'schemas', 'teeth'), { recursive: true });
+    writeFileSync(
+      join(root, 'schemas', 'teeth', 'schema.yaml'),
+      'name: teeth\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
+      'utf8',
+    );
+    writeChangeMeta(root, 'c1', { schema: 'teeth' });
     sessionEntries = [];
   });
 
@@ -230,6 +239,7 @@ describe('approval teeth: attribution is not approval', () => {
 
   test('human-gate: literal VALID reply latches exactly one flip', async () => {
     rmSync(changeMetaPath(root, 'c1'), { force: true }); // isolate from prior tests
+    writeChangeMeta(root, 'c1', { schema: 'teeth' }); // the verdict line is schema-declared
     const { fire, ctx, entries } = freshGate();
     await fire('message_end', { message: { role: 'user', content: 'VALID' } }, ctx);
     const flip = (mark: string) =>
@@ -277,8 +287,8 @@ describe('approval teeth: attribution is not approval', () => {
       ctx,
     );
     assert.equal(pass, undefined);
-    assert.ok(flipsHumanValidationStep('- [x] Step 9 — Human validation — review'));
-    assert.ok(!flipsHumanValidationStep('- [x] Step 3 — classifier module'));
+    assert.ok(flipsVerdictLine('- [x] Step 9 — Human validation — review', 'Human validation'));
+    assert.ok(!flipsVerdictLine('- [x] Step 3 — classifier module', 'Human validation'));
   });
 
   test('archive guard: unapproved change blocks, approved or --i-am-the-human pass', async () => {
