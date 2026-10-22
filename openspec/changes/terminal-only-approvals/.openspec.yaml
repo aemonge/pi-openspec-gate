@@ -1,0 +1,6 @@
+schema: spec
+created: 2026-10-22
+goal: Approval is a terminal-only act; the agent always names the next act
+
+status: proposed
+created_by: assistant
