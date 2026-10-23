@@ -21,6 +21,10 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
       start: 2026-10-23T11:22:00Z · elapsed: 4m · check: schema.test.ts 12/12 — spec gated, all six verbs resolve, block lists populated; mission flow lists unchanged
       paths: bin/gate-lib.js
       commit: e5185fb · cli-schema-tag-parity: Task 2 Step 1 — capture rule [x]
+- [x] Step 2 — Extension by human ruling (terminal 2026-10-23, "1"): the symmetric capture fix in `src/schema.ts` — the parity test exposed the shared gap; the extension's phase gates were silently inert for the spec schema
+      start: 2026-10-23T11:50:00Z · elapsed: 5m · check: parity bin ≡ src green — 29/29 with the shipped-schema pins
+      paths: src/schema.ts, openspec/changes/cli-schema-tag-parity/4-refined-requirements.md
+      commit: — · cli-schema-tag-parity: Task 2 Step 2 — src capture rule [x]
 
 ## Task 3 — Loud grant-shaped dispatch
 

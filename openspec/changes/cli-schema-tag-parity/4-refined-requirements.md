@@ -17,7 +17,7 @@
 
 ## Scope
 
-> Delta: the parity question is closed — two parsers stay (A1); the fix is the capture rule, not tag mapping; the proven side is untouched.
+> Delta: the parity question is closed — two parsers stay (A1); the fix is the capture rule, not tag mapping; the proven side is untouched. **Amended by human ruling (terminal 2026-10-23, "1")**: the parity test exposed the same capture gap in `src/schema.ts` (phase gates were inert for the spec schema) — the symmetric fix joins this slice; F5 of the Research stands corrected.
 
 - `bin/gate-lib.js`: the pending-block capture rule — strictly-deeper items, plus same/shallower entries that are not `id:` artifact starts.
 - `bin/pios-gate.js`: verb-path loud failure; `grant`/`approve` semantics per the ruling; no silent fall-through for grant-shaped input on resolvable changes.
@@ -43,4 +43,4 @@
 - Fail closed on undeterminable gates — the legacy-approve fallback is the named regression to pin; it must never fire on a parse gap again.
 - No silent fall-through to verbatim `openspec` for grant-shaped input once change and schema resolve.
 - Existing meta stamps are never rewritten — set-only write semantics preserved.
-- Two parsers by design (A1): parity is pinned by tests, not structure; `src/schema.ts` is not touched by this slice.
+- Two parsers by design (A1): parity is pinned by tests, not structure. ~~`src/schema.ts` is not touched by this slice~~ — lifted by the same ruling: the symmetric capture fix lands here because the phase gates were silently inert, which is this change's own fail-open class.
