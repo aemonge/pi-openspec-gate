@@ -195,3 +195,26 @@ describe('bin parser reads the shipped schemas', () => {
     assert.equal(execution?.receivesReceipts, true);
   });
 });
+
+describe('parity: bin ≡ src on the shipped schemas', () => {
+  test('projections equal over spec and mission — drift fails loudly', () => {
+    const project = (schema: any) =>
+      schema.artifacts.map((a: any) => ({
+        id: a.id,
+        generates: a.generates,
+        requiresApproval: a.requiresApproval,
+        grantVerb: a.grantVerb,
+        sections: (a.sections ?? []).map((s: any) => s.id),
+        lines: a.lines ?? [],
+        verdictLine: a.verdictLine,
+        completes: a.completes,
+        receivesReceipts: !!a.receivesReceipts,
+        unlocksSource: !!a.unlocksSource,
+      }));
+    for (const name of ['spec', 'mission']) {
+      const srcSchema = parseSchemaYaml(SHIPPED(name), name);
+      const binSchema = parseSchemaYamlBin(SHIPPED(name), name);
+      assert.deepEqual(project(binSchema), project(srcSchema), `parity broken on ${name}`);
+    }
+  });
+});

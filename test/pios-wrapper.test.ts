@@ -319,3 +319,82 @@ test('grants: focus teaches, ungated schema refuses verbs politely', () => {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
+
+// ── cli-schema-tag-parity — the SHIPPED schemas through the CLI ────────
+// F6 closed: no fixture ever parsed a shipped schema through the bin
+// parser. These pin the live 2026-10-23 symptoms on the real thing.
+
+function shippedRepo(): Repo {
+  const repo = makeRepo();
+  for (const name of ['spec', 'mission']) {
+    const dir = join(repo.dir, 'openspec', 'schemas', name);
+    mkdirSync(dir, { recursive: true });
+    copyFileSync(
+      join(import.meta.dirname, '..', 'openspec', 'schemas', name, 'schema.yaml'),
+      join(dir, 'schema.yaml'),
+    );
+  }
+  return repo;
+}
+
+function specChange(repo: Repo, slug: string): void {
+  change(repo, slug, 'schema: spec\nstatus: proposed\ncreated_by: assistant\n');
+  draft(repo, slug, '1-idea.md', '# Idea: fixture\n\n## Pain\n\nfixture\n\n## Questions\n\n- fixture\n');
+}
+
+test('parity live: verb grant works on the shipped spec schema', () => {
+  const repo = shippedRepo();
+  try {
+    specChange(repo, 'fx');
+    const p = run(repo, ['propose', 'fx']);
+    assert.equal(p.status, 0, p.stdout);
+    assert.match(p.stdout, /granted fx · idea · at/);
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /phases_approved: idea/);
+    assert.match(meta, /granted_idea:/);
+    assert.equal(existsSync(repo.log), false, 'a grant verb never forwards to openspec');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('parity live: grant <slug> <step> on the shipped spec schema', () => {
+  const repo = shippedRepo();
+  try {
+    specChange(repo, 'fx');
+    const g = run(repo, ['grant', 'fx', 'idea']);
+    assert.equal(g.status, 0, g.stdout);
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /granted_idea:/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('parity live: wrong-schema verb fails loudly, never passthrough', () => {
+  const repo = shippedRepo();
+  try {
+    specChange(repo, 'fx');
+    const deal = run(repo, ['deal', 'fx']);
+    assert.equal(deal.status, 1);
+    assert.match(deal.stdout, /'deal' is declared by schema 'mission', not by 'spec'/);
+    assert.equal(existsSync(repo.log), false, 'grant-shaped input never reaches openspec');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('parity live: bare approve refuses on the shipped spec schema — fail-open pinned', () => {
+  const repo = shippedRepo();
+  try {
+    specChange(repo, 'fx');
+    const bare = run(repo, ['approve', 'fx']);
+    assert.equal(bare.status, 1);
+    assert.match(bare.stdout, /'spec' is gated — approve is per-step/);
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
+    assert.doesNotMatch(meta, /status: approved/); // the 2026-10-23 fail-open, pinned dead
+    assert.doesNotMatch(meta, /approved_at:/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});

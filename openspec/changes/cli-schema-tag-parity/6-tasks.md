@@ -24,7 +24,7 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 2 — Extension by human ruling (terminal 2026-10-23, "1"): the symmetric capture fix in `src/schema.ts` — the parity test exposed the shared gap; the extension's phase gates were silently inert for the spec schema
       start: 2026-10-23T11:50:00Z · elapsed: 5m · check: parity bin ≡ src green — 29/29 with the shipped-schema pins
       paths: src/schema.ts, openspec/changes/cli-schema-tag-parity/4-refined-requirements.md
-      commit: — · cli-schema-tag-parity: Task 2 Step 2 — src capture rule [x]
+      commit: 0cb37ca · cli-schema-tag-parity: Task 2 Step 2 — src capture rule [x]
 
 ## Task 3 — Loud grant-shaped dispatch
 
@@ -42,14 +42,14 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 1 — Bare `approve <slug>` refuses on gated schemas (usage names verbs + `grant <slug> <step>`); `approve <slug> <step-id>` = single-step grant; ungated schemas unchanged
       start: 2026-10-23T11:32:00Z · elapsed: 4m · check: wrapper 12/12 — bare approve refuses and stamps nothing (fail-open pinned); ungated legacy approve still green
       paths: bin/pios-gate.js, test/pios-wrapper.test.ts
-      commit: — · cli-schema-tag-parity: Task 4 Step 1 — per-step approve [x]
+      commit: 7065482 · cli-schema-tag-parity: Task 4 Step 1 — per-step approve [x]
 
 ## Task 5 — Pins: symptoms, fail-open regression, parity assertions
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — Symptom trio on a spec-schema fixture in a temp repo (verb grants; `grant` single-step; bare approve refuses) + fail-open regression (a parse gap can never yield a whole-change stamp) + parity: bin-parse ≡ src-parse over `spec` and `mission`
-      start: — · elapsed: — · check: all pins green
+- [x] Step 1 — Symptom trio on a spec-schema fixture in a temp repo (verb grants; `grant` single-step; bare approve refuses) + fail-open regression (a parse gap can never yield a whole-change stamp) + parity: bin-parse ≡ src-parse over `spec` and `mission`
+      start: 2026-10-23T11:38:00Z · elapsed: 15m · check: 29/29 — shipped-schema pins green (verb grant, grant step, wrong-schema loud, bare approve stamps nothing); the parity pin caught the src-side twin on its maiden run
       paths: test/pios-wrapper.test.ts, test/schema.test.ts
       commit: — · cli-schema-tag-parity: Task 5 Step 1 — pins and parity [x]
 
