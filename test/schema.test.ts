@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -12,6 +13,11 @@ import {
   schemaIsGated,
   sectionTitles,
 } from '../src/schema.ts';
+import {
+  artifactForGrantVerb as artifactForGrantVerbBin,
+  parseSchemaYaml as parseSchemaYamlBin,
+  schemaIsGated as schemaIsGatedBin,
+} from '../bin/gate-lib.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
 
@@ -145,5 +151,47 @@ describe('schema reader: resolution and ladder semantics', () => {
     assert.equal(artifactForGrantVerb(schema, 'plan')?.id, 'proposal');
     assert.equal(artifactForGrantVerb(schema, 'order')?.id, 'plan');
     assert.equal(artifactForGrantVerb(schema, 'execute')?.id, 'execution');
+  });
+});
+
+// ── cli-schema-tag-parity — the shipped schemas through the bin parser ──
+// Red first (2026-10-23, live-caught): un-indented block lists parsed empty
+// ⇒ schemaIsGated false, verbs unreachable, x-sections lost. The mission
+// test pins no-regression: its flow lists always parsed.
+
+const SHIPPED = (name: string): string =>
+  readFileSync(findSchemaFile(join(REPO_ROOT, 'openspec'), name)!, 'utf8');
+
+describe('bin parser reads the shipped schemas', () => {
+  test('spec: gated, every verb resolves, un-indented block lists populate', () => {
+    const schema = parseSchemaYamlBin(SHIPPED('spec'), 'spec');
+    assert.equal(schemaIsGatedBin(schema), true, 'spec schema must be gated on the CLI side');
+    assert.equal(artifactForGrantVerbBin(schema, 'propose')?.id, 'idea');
+    assert.equal(artifactForGrantVerbBin(schema, 'draft')?.id, 'requirements');
+    assert.equal(artifactForGrantVerbBin(schema, 'research')?.id, 'research');
+    assert.equal(artifactForGrantVerbBin(schema, 'refine')?.id, 'refined-requirements');
+    assert.equal(artifactForGrantVerbBin(schema, 'plan')?.id, 'plan');
+    assert.equal(artifactForGrantVerbBin(schema, 'execute')?.id, 'tasks');
+    const requirements = schema.artifacts.find((a: any) => a.id === 'requirements');
+    assert.deepEqual(requirements?.requiresApproval, ['idea']);
+    assert.deepEqual(
+      requirements?.sections.map((s: any) => s.id),
+      ['Done when', 'Scope', 'Out of Scope', 'Guardrails'],
+    );
+    const idea = schema.artifacts.find((a: any) => a.id === 'idea');
+    assert.deepEqual(
+      idea?.sections.map((s: any) => s.id),
+      ['Pain', 'Questions'],
+    );
+  });
+
+  test('mission: flow lists still parse — verbs, verdict line, receipts', () => {
+    const schema = parseSchemaYamlBin(SHIPPED('mission'), 'mission');
+    assert.equal(schemaIsGatedBin(schema), true);
+    assert.equal(artifactForGrantVerbBin(schema, 'deal')?.id, 'proposition');
+    assert.equal(artifactForGrantVerbBin(schema, 'order')?.id, 'plan');
+    const execution = schema.artifacts.find((a: any) => a.id === 'execution');
+    assert.equal(execution?.verdictLine, 'Human validation');
+    assert.equal(execution?.receivesReceipts, true);
   });
 });

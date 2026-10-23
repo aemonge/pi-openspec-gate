@@ -6,8 +6,8 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — Add failing tests: parse `openspec/schemas/spec/schema.yaml` through `bin/gate-lib.js` — `schemaIsGated` true, `artifactForGrantVerb('propose')` → `idea`, `x-requires-approval`/`x-sections` block lists populated, mission flow lists unchanged
-      start: — · elapsed: — · check: suite red for exactly the diagnosed reasons
+- [x] Step 1 — Add failing tests: parse `openspec/schemas/spec/schema.yaml` through `bin/gate-lib.js` — `schemaIsGated` true, `artifactForGrantVerb('propose')` → `idea`, `x-requires-approval`/`x-sections` block lists populated, mission flow lists unchanged
+      start: 2026-10-23T11:14:00Z · elapsed: 5m · check: schema.test.ts red — `spec schema must be gated on the CLI side` (the diagnosed failure, verbatim); mission no-regression test green
       paths: test/schema.test.ts
       commit: — · cli-schema-tag-parity: Task 1 Step 1 — red tests [x]
 
