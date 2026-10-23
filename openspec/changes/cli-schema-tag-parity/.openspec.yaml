@@ -1,0 +1,14 @@
+schema: spec
+created: 2026-10-23
+goal: gate-lib parses every gate tag the schema declares — one schema, one truth; a scoped approval never approves more than its scope
+
+status: approved
+created_by: assistant
+
+phases_approved: idea,requirements,research,refined-requirements,plan,tasks
+granted_idea: 2026-10-23T10:23:50Z
+granted_research: 2026-10-23T11:10:00Z
+granted_requirements: 2026-10-23T10:40:00Z
+granted_refined-requirements: 2026-10-23T11:15:00Z
+granted_plan: 2026-10-23T11:20:00Z
+granted_tasks: 2026-10-23T11:25:00Z
