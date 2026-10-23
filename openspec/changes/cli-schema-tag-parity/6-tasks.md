@@ -66,5 +66,5 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Human validation — the live proof of the claim: `pios-gate propose gate-spanned-agents` in your terminal — the exact command that opened this saga — stamps exactly the idea step; `inspect` shows it granted; `pending` tells the truth
-      response: — · outcome: — · at: —
+- [x] Human validation — the live proof of the claim: `pios-gate propose gate-spanned-agents` in your terminal — the exact command that opened this saga — stamps exactly the idea step; `inspect` shows it granted; `pending` tells the truth
+      response: "DONE commit and publish?" · outcome: VALID · at: 2026-10-23T12:49:48Z — granted_idea stamped through the healed verb path, verified in the meta
