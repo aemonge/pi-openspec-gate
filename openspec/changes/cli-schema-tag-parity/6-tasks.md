@@ -2,6 +2,8 @@
 
 Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 
+Receipts: each tick is exactly one commit; its hash lands with the next ledger commit — history is immutable here (`--amend` is denied, and a commit cannot contain its own hash). Visible by design, never silent debt.
+
 ## Task 1 — Red: the shipped spec schema fails through the bin parser
 
 > Spec: cli-schema-tag-parity
@@ -9,14 +11,14 @@ Step states: `[ ]` Pending, `[-]` Running/interrupted/failed, `[x]` Complete.
 - [x] Step 1 — Add failing tests: parse `openspec/schemas/spec/schema.yaml` through `bin/gate-lib.js` — `schemaIsGated` true, `artifactForGrantVerb('propose')` → `idea`, `x-requires-approval`/`x-sections` block lists populated, mission flow lists unchanged
       start: 2026-10-23T11:14:00Z · elapsed: 5m · check: schema.test.ts red — `spec schema must be gated on the CLI side` (the diagnosed failure, verbatim); mission no-regression test green
       paths: test/schema.test.ts
-      commit: — · cli-schema-tag-parity: Task 1 Step 1 — red tests [x]
+      commit: f269eff · cli-schema-tag-parity: Task 1 Step 1 — red tests [x]
 
 ## Task 2 — Capture rule: un-indented block lists are captured
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — Generalize the pending-block capture in `bin/gate-lib.js`: an entry `- <content>` at any indent is a block item unless its content is an `id:`-headed artifact entry; `sectionsKeyIndent` stays the boundary for `x-sections` chunk sub-keys only
-      start: — · elapsed: — · check: Task 1's parse criteria green
+- [x] Step 1 — Generalize the pending-block capture in `bin/gate-lib.js`: an entry `- <content>` at any indent is a block item unless its content is an `id:`-headed artifact entry; `sectionsKeyIndent` stays the boundary for `x-sections` chunk sub-keys only
+      start: 2026-10-23T11:22:00Z · elapsed: 4m · check: schema.test.ts 12/12 — spec gated, all six verbs resolve, block lists populated; mission flow lists unchanged
       paths: bin/gate-lib.js
       commit: — · cli-schema-tag-parity: Task 2 Step 1 — capture rule [x]
 

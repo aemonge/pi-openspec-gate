@@ -177,15 +177,19 @@ export function parseSchemaYaml(content, source) {
 
     const entry = ARTIFACT_ENTRY.exec(line.trimStart());
     if (entry) {
-      if (pendingKey && indent > sectionsKeyIndent) {
-        // a deeper entry is a list item of the pending x- key; anything
-        // at or above its indent ends the block and starts a new artifact
+      // A deeper entry is a list item of the pending x- key; an entry at
+      // or above the key's indent is ALSO a list item unless it is an
+      // `id:`-headed artifact start — the un-indented block style
+      // (live-caught 2026-10-23: `- idea` under `x-requires-approval:`
+      // parsed empty ⇒ schemaIsGated false ⇒ approve fail-open).
+      const rest = KEY_LINE.exec(entry[1].trim());
+      const artifactStart = rest !== null && rest[1] === 'id';
+      if (pendingKey && (indent > sectionsKeyIndent || !artifactStart)) {
         if (pendingKey === 'x-sections') sectionChunks.push({ head: entry[1].trim(), keys: [] });
         else pendingBlockItems.push(entry[1].trim());
         continue;
       }
-      const rest = KEY_LINE.exec(entry[1].trim());
-      if (rest && rest[1] === 'id') {
+      if (artifactStart) {
         flushPending();
         current = newArtifact();
         current.id = rest[2].trim();
