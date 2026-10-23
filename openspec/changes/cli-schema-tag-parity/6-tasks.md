@@ -60,7 +60,7 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 1 — `npm test` — every test green, no skips; `./bin/pios-gate inspect gate-spanned-agents` unchanged-truthful
       start: 2026-10-23T12:00:00Z · elapsed: 6m · check: 132/132 (one live-caught fix en route: the vocabulary grep-proof rejected a verb literal in a comment — reworded); inspect truthful, idea shows structure ✓
       paths: bin/pios-gate.js
-      commit: — · cli-schema-tag-parity: Task 6 Step 1 — suite green [x]
+      commit: c8f8c93 · cli-schema-tag-parity: Task 6 Step 1 — suite green [x]
 
 ## Task 7 — Human validation — the healed walk
 
