@@ -20,14 +20,14 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 1 — Generalize the pending-block capture in `bin/gate-lib.js`: an entry `- <content>` at any indent is a block item unless its content is an `id:`-headed artifact entry; `sectionsKeyIndent` stays the boundary for `x-sections` chunk sub-keys only
       start: 2026-10-23T11:22:00Z · elapsed: 4m · check: schema.test.ts 12/12 — spec gated, all six verbs resolve, block lists populated; mission flow lists unchanged
       paths: bin/gate-lib.js
-      commit: — · cli-schema-tag-parity: Task 2 Step 1 — capture rule [x]
+      commit: e5185fb · cli-schema-tag-parity: Task 2 Step 1 — capture rule [x]
 
 ## Task 3 — Loud grant-shaped dispatch
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — Verb vocabulary from resolvable schemas (cached per root) in `bin/pios-gate.js`; vocabulary commands grant the matching step or fail loudly — never passthrough; foreign commands keep verbatim `openspec` exec
-      start: — · elapsed: — · check: vocabulary never reaches the fallback; passthrough test green
+- [x] Step 1 — Verb vocabulary from resolvable schemas (cached per root) in `bin/pios-gate.js`; vocabulary commands grant the matching step or fail loudly — never passthrough; foreign commands keep verbatim `openspec` exec
+      start: 2026-10-23T11:26:00Z · elapsed: 5m · check: node --check both CLIs; wrapper tests 12/12 — passthrough intact; vocabulary pins land in Task 5
       paths: bin/pios-gate.js, bin/gate-lib.js
       commit: — · cli-schema-tag-parity: Task 3 Step 1 — loud dispatch [x]
 

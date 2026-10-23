@@ -355,6 +355,34 @@ export function artifactForGrantVerb(schema, verb) {
   return schema.artifacts.find((a) => a.grantVerb === verb);
 }
 
+const verbVocabCache = new Map();
+
+/** Every x-grant-verb across the root's resolvable schemas → schema name.
+ *  Grant-shaped commands resolve against this vocabulary and never fall
+ *  through to verbatim openspec (live-caught 2026-10-23: the silent skip
+ *  printed openspec's "unknown command" for our own verbs). */
+export function grantVerbVocabulary(openspecRoot) {
+  if (verbVocabCache.has(openspecRoot)) return verbVocabCache.get(openspecRoot);
+  const vocab = new Map();
+  const schemasDir = join(openspecRoot, 'schemas');
+  if (existsSync(schemasDir)) {
+    for (const name of readdirSync(schemasDir)) {
+      const file = findSchemaFile(openspecRoot, name);
+      if (!file) continue;
+      try {
+        const schema = parseSchemaYaml(readFileSync(file, 'utf8'), file);
+        for (const a of schema.artifacts) {
+          if (a.grantVerb && !vocab.has(a.grantVerb)) vocab.set(a.grantVerb, name);
+        }
+      } catch {
+        // invalid schemas fail loudly when addressed by name
+      }
+    }
+  }
+  verbVocabCache.set(openspecRoot, vocab);
+  return vocab;
+}
+
 export function schemaIsGated(schema) {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0);
 }

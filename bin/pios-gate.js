@@ -19,7 +19,10 @@
  *                               stays openspec's passthrough)
  *   pios-gate focus             teaching: focus is a session instrument
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
- *                               intact — exec, never interpretation
+ *                               intact — exec, never interpretation —
+ *                               EXCEPT grant-shaped verbs (any schema's
+ *                               x-grant-verb): those resolve or fail loudly,
+ *                               never passthrough (live-caught 2026-10-23)
  *
  * Reserved words never forward. Human terminal only: the gate's
  * approval-touch guard blocks tool-call invocations of every grant
@@ -34,6 +37,7 @@ import {
   artifactForGrantVerb,
   findOpenspecRoot,
   grantRung,
+  grantVerbVocabulary,
   pendingReport,
   readChangeMeta,
   resolveChangeSchema,
@@ -135,15 +139,41 @@ if (command === 'approve') {
 }
 
 // schema-declared verb: pios-gate <x-grant-verb> <slug>
+// Grant-shaped input never falls through to openspec verbatim
+// (live-caught 2026-10-23: the silent skip printed openspec's
+// "unknown command 'propose'" for our own verbs).
 if (command && slug) {
   const root = findOpenspecRoot(process.cwd());
-  if (root && existsSync(join(root, 'changes', slug))) {
+  const vocab = root ? grantVerbVocabulary(root) : new Map();
+  if (vocab.has(command)) {
+    if (!root) {
+      console.error('pios-gate: no openspec/changes/ found (walked up from cwd)');
+      process.exit(1);
+    }
+    if (!existsSync(join(root, 'changes', slug))) {
+      console.error(`no such change: ${slug} (under ${root}/changes/)`);
+      process.exit(1);
+    }
     const meta = readChangeMeta(root, slug);
     const resolution = resolveChangeSchema(root, meta.schema);
-    if (resolution.ok && schemaIsGated(resolution.schema)) {
-      const artifact = artifactForGrantVerb(resolution.schema, command);
-      if (artifact) doGrant(root, slug, artifact.id);
+    if (!resolution.ok) {
+      console.error(`pios-gate: schema problem for '${slug}' — ${resolution.reason}`);
+      process.exit(1);
     }
+    if (!schemaIsGated(resolution.schema)) {
+      console.error(`pios-gate: schema '${meta.schema}' declares no gates — use: pios-gate approve ${slug}`);
+      process.exit(1);
+    }
+    const artifact = artifactForGrantVerb(resolution.schema, command);
+    if (!artifact) {
+      const verbs = resolution.schema.artifacts
+        .filter((a) => a.grantVerb)
+        .map((a) => a.grantVerb)
+        .join(', ');
+      console.error(`pios-gate: '${command}' is declared by schema '${vocab.get(command)}', not by '${meta.schema}' — verbs here: ${verbs}`);
+      process.exit(1);
+    }
+    doGrant(root, slug, artifact.id);
   }
 }
 
