@@ -51,15 +51,15 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 1 — Symptom trio on a spec-schema fixture in a temp repo (verb grants; `grant` single-step; bare approve refuses) + fail-open regression (a parse gap can never yield a whole-change stamp) + parity: bin-parse ≡ src-parse over `spec` and `mission`
       start: 2026-10-23T11:38:00Z · elapsed: 15m · check: 29/29 — shipped-schema pins green (verb grant, grant step, wrong-schema loud, bare approve stamps nothing); the parity pin caught the src-side twin on its maiden run
       paths: test/pios-wrapper.test.ts, test/schema.test.ts
-      commit: — · cli-schema-tag-parity: Task 5 Step 1 — pins and parity [x]
+      commit: 4ce69f2 · cli-schema-tag-parity: Task 5 Step 1 — pins and parity [x]
 
 ## Task 6 — Full suite green
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — `npm test` — every test green, no skips; `./bin/pios-gate inspect gate-spanned-agents` unchanged-truthful
-      start: — · elapsed: — · check: exit 0
-      paths: —
+- [x] Step 1 — `npm test` — every test green, no skips; `./bin/pios-gate inspect gate-spanned-agents` unchanged-truthful
+      start: 2026-10-23T12:00:00Z · elapsed: 6m · check: 132/132 (one live-caught fix en route: the vocabulary grep-proof rejected a verb literal in a comment — reworded); inspect truthful, idea shows structure ✓
+      paths: bin/pios-gate.js
       commit: — · cli-schema-tag-parity: Task 6 Step 1 — suite green [x]
 
 ## Task 7 — Human validation — the healed walk

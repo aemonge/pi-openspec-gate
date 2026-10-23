@@ -141,8 +141,8 @@ if (command === 'approve') {
 
 // schema-declared verb: pios-gate <x-grant-verb> <slug>
 // Grant-shaped input never falls through to openspec verbatim
-// (live-caught 2026-10-23: the silent skip printed openspec's
-// "unknown command 'propose'" for our own verbs).
+// (live-caught 2026-10-23: the silent skip let openspec answer
+// "unknown command" for the schema's own verbs).
 if (command && slug) {
   const root = findOpenspecRoot(process.cwd());
   const vocab = root ? grantVerbVocabulary(root) : new Map();
