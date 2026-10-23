@@ -5,6 +5,22 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+## 0.6.0 — 2026-10-23
+
+- **The CLI reads the gates the schema declares — one schema, one truth** —
+  the un-indented YAML block-list style parses on BOTH sides (bin and
+  extension: the phase gates had been silently inert for the spec
+  schema — caught live by the new parity pin on its maiden run);
+  grant-shaped verbs resolve or fail loudly and never fall through to
+  verbatim `openspec`; bare `approve` refuses on gated schemas (per-step
+  only — human ruling 2026-10-23) and a scoped intent never approves
+  more than its scope — the fail-open observed live 2026-10-23, pinned
+  dead; shipped-schema symptom pins and bin ≡ src parity tests close
+  the fixture-≠-shipped gap.
+  [cli-schema-tag-parity](openspec/changes/cli-schema-tag-parity)
+
+## 0.5.1 — 2026-10-21
+
 - **Generic schema engine** — all flow knowledge moves from code to
   schema `x-` tags: `x-grant-verb` (verbs from data; positional grants
   removed), `x-verdict-line`, `x-receives-receipts`, `x-completes`,
