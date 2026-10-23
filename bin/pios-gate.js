@@ -121,17 +121,18 @@ if (command === 'approve') {
   const resolution = resolveChangeSchema(root, meta.schema);
   const at = utcNowStamp();
   if (resolution.ok && schemaIsGated(resolution.schema)) {
-    // big-bang on a gated schema: every artifact, in sequence, same strict checks
-    for (const artifact of resolution.schema.artifacts) {
-      if (meta[`granted_${artifact.id}`]) continue;
-      const result = grantRung(root, slug, artifact.id);
-      if (!result.ok) {
-        console.error(`big-bang stopped at '${artifact.id}': ${result.error}`);
-        process.exit(1);
-      }
-    }
-    console.log(`granted ${slug} · all rungs · ladder complete — status: approved · at ${at}`);
-    process.exit(0);
+    // Human ruling 2026-10-23: approve is per-step on gated schemas — a
+    // single approve for all steps is unacceptable, and scoped intent
+    // must never approve more than its scope (the fail-open this change
+    // cures once let a parse gap land here as a whole-change stamp).
+    const verbs = resolution.schema.artifacts
+      .filter((a) => a.grantVerb)
+      .map((a) => a.grantVerb)
+      .join(', ');
+    console.error(`pios-gate: '${meta.schema}' is gated — approve is per-step:`);
+    console.error(`   pios-gate <verb> ${slug}   (verbs: ${verbs})`);
+    console.error(`   pios-gate grant ${slug} <step-id>`);
+    process.exit(1);
   }
   writeChangeMeta(root, slug, { status: 'approved', approved_at: at });
   console.log(`approved ${slug} · at ${at}`);

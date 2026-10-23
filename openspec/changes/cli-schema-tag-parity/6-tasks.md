@@ -29,15 +29,15 @@ Receipts: each tick is exactly one commit; its hash lands with the next ledger c
 - [x] Step 1 — Verb vocabulary from resolvable schemas (cached per root) in `bin/pios-gate.js`; vocabulary commands grant the matching step or fail loudly — never passthrough; foreign commands keep verbatim `openspec` exec
       start: 2026-10-23T11:26:00Z · elapsed: 5m · check: node --check both CLIs; wrapper tests 12/12 — passthrough intact; vocabulary pins land in Task 5
       paths: bin/pios-gate.js, bin/gate-lib.js
-      commit: — · cli-schema-tag-parity: Task 3 Step 1 — loud dispatch [x]
+      commit: 14fce77 · cli-schema-tag-parity: Task 3 Step 1 — loud dispatch [x]
 
 ## Task 4 — Per-step approve on gated schemas
 
 > Spec: cli-schema-tag-parity
 
-- [ ] Step 1 — Bare `approve <slug>` refuses on gated schemas (usage names verbs + `grant <slug> <step>`); `approve <slug> <step-id>` = single-step grant; ungated schemas unchanged
-      start: — · elapsed: — · check: ruling behavior pinned; ungated legacy test green
-      paths: bin/pios-gate.js
+- [x] Step 1 — Bare `approve <slug>` refuses on gated schemas (usage names verbs + `grant <slug> <step>`); `approve <slug> <step-id>` = single-step grant; ungated schemas unchanged
+      start: 2026-10-23T11:32:00Z · elapsed: 4m · check: wrapper 12/12 — bare approve refuses and stamps nothing (fail-open pinned); ungated legacy approve still green
+      paths: bin/pios-gate.js, test/pios-wrapper.test.ts
       commit: — · cli-schema-tag-parity: Task 4 Step 1 — per-step approve [x]
 
 ## Task 5 — Pins: symptoms, fail-open regression, parity assertions

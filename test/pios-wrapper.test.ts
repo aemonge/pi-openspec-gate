@@ -261,7 +261,7 @@ test('grants: you approve what you read — undrafted rungs refuse', () => {
   }
 });
 
-test('grants: approve <slug> <rung> canonical form and big-bang on gated schemas', () => {
+test('grants: approve <slug> <step> is per-step; bare approve refuses on gated schemas', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -272,11 +272,15 @@ test('grants: approve <slug> <rung> canonical form and big-bang on gated schemas
     assert.equal(run(repo, ['approve', 'm1', 'idea']).status, 0);
     assert.equal(run(repo, ['approve', 'm1', 'proposition']).status, 0);
 
-    const bang = run(repo, ['approve', 'm1']);
-    assert.equal(bang.status, 0);
-    assert.match(bang.stdout, /all rungs · ladder complete/);
+    // Human ruling 2026-10-23: a single approve for all steps is
+    // unacceptable — bare approve refuses and stamps NOTHING (the
+    // fail-open regression: intent never approves more than its scope)
+    const bare = run(repo, ['approve', 'm1']);
+    assert.equal(bare.status, 1);
+    assert.match(bare.stdout, /is gated — approve is per-step/);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /phases_approved: idea,proposition,proposal,plan,execution/);
+    assert.match(meta, /phases_approved: idea,proposition\n/);
+    assert.doesNotMatch(meta, /status: approved/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
