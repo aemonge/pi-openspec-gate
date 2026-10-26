@@ -1,14 +1,14 @@
 {
   "name": "@aemonge-dev/pi-openspec-gate",
   "version": "0.6.0",
-  "description": "Ladder gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer.",
+  "description": "Declared-work gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer; never a prompt. Flow vocabulary is schema data (x- tags), never engine code.",
   "type": "module",
   "license": "MIT",
   "keywords": [
     "pi-package",
     "pi-extension",
     "openspec",
-    "ladder",
+    "gate",
     "accounting"
   ],
   "engines": {
@@ -18,7 +18,7 @@
     "index.ts",
     "src",
     "bin",
-    "skills",
+    "example",
     "config.json",
     "README.md",
     "CHANGELOG.md",

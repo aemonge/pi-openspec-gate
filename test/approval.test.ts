@@ -100,7 +100,7 @@ describe('approval teeth: attribution is not approval', () => {
     const config: GateConfig = {
       enabled: true,
       approval,
-      exempt: [{ prefix: '**/openspec/**', category: 'ladder-artifacts' }],
+      exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
     };
     createGate(fake.pi as never, config);
     const ctx = { cwd: repo, sessionManager: { getEntries: () => sessionEntries } };

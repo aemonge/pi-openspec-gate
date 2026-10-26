@@ -10,10 +10,12 @@
  *
  * The engine carries zero flow knowledge: every verb, gate, section
  * rule, receipt target, verdict line, unlock point, and completion
- * stamp lives here, in data. Parsing is line-based (zero deps, house
+ * stamp lives here, in data. Declaration phrases (x-declares) too —
+ * the human's latch vocabulary is schema data, not engine words.
+ * Parsing is line-based (zero deps, house
  * style): block scalars (`instruction: |`) are skipped by indentation,
  * artifacts are collected in declaration order — that order IS the
- * ladder. Flow lists (`[a, b]`) and block lists (`- a`) both parse.
+ * grant sequence. Flow lists (`[a, b]`) and block lists (`- a`) both parse.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -28,36 +30,41 @@ export type SectionSpec = {
   requiresApproval: string[];
 };
 
-export type PhaseArtifact = {
+export type Artifact = {
   id: string;
   /** filename relative to the change dir, e.g. "2-proposition.md" */
   generates: string;
   /** x-requires-approval — artifact ids that must be granted before this drafts */
   requiresApproval: string[];
+  /** x-requires-written — artifact ids whose files must exist before this drafts */
+  requiresWritten: string[];
   /** x-sections — H2 headings; rich entries may declare their own gates */
   sections: SectionSpec[];
   /** x-lines — top-level `Key:` lines the artifact must carry */
   lines: string[];
-  /** x-grant-verb — the human's terminal alias for granting this artifact */
+  /** x-grant / x-grant-verb — the human's terminal alias for granting this artifact */
   grantVerb?: string;
   /** x-verdict-line — the checkbox line only a human may tick */
   verdictLine?: string;
   /** x-receives-receipts — attribution receipts land in this artifact */
   receivesReceipts: boolean;
-  /** x-completes — status stamp written when this grant completes the ladder */
+  /** x-completes — status stamp written when this grant completes the schema */
   completes?: string;
-  /** x-unlocks-source — this artifact's grant begins source work */
-  unlocksSource: boolean;
+  /** x-unlocks — capability classes this artifact's grant opens (research, writes);
+   *  the legacy x-unlocks-source: true folds into [writes] */
+  unlocks: string[];
 };
 
-export type MissionSchema = {
+export type Schema = {
   name: string;
-  /** declaration order = ladder order */
-  artifacts: PhaseArtifact[];
+  /** x-declares — human phrases that latch one declared (bare) mutation */
+  declares: string[];
+  /** declaration order = grant order */
+  artifacts: Artifact[];
 };
 
 export type SchemaResolution =
-  | { ok: true; schema: MissionSchema; source: string }
+  | { ok: true; schema: Schema; source: string }
   | { ok: false; reason: string };
 
 const KEY_LINE = /^([A-Za-z_][\w-]*):\s*(.*)$/u;
@@ -71,6 +78,11 @@ export const RESERVED_WORDS = new Set([
   'approve', 'confirm', 'grant', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
+
+/** capability classes the engine enforces — x-unlocks entries must name one.
+ *  The engine owns the classes (what they mean at the tool boundary);
+ *  schemas own the timing (which grant opens which). */
+const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 
 function parseList(raw: string, blockItems: string[]): string[] {
   const flow = FLOW_LIST.exec(raw.trim());
@@ -132,28 +144,38 @@ function buildSections(chunks: SectionChunk[], source: string, artifactId: strin
   return specs;
 }
 
-/** Parse schema YAML into a MissionSchema; throws on structural violations. */
-export function parseSchemaYaml(content: string, source: string): MissionSchema {
+/** Parse schema YAML into a Schema; throws on structural violations. */
+export function parseSchemaYaml(content: string, source: string): Schema {
   const lines = content.split('\n');
   let name = '';
-  const artifacts: PhaseArtifact[] = [];
-  let current: PhaseArtifact | undefined;
+  let declares: string[] = [];
+  const artifacts: Artifact[] = [];
+  let current: Artifact | undefined;
   let pendingKey: string | undefined;
   let pendingBlockItems: string[] = [];
   let sectionChunks: SectionChunk[] = [];
   let sectionsKeyIndent = -1;
 
-  const newArtifact = (): PhaseArtifact => ({
-    id: '', generates: '', requiresApproval: [], sections: [], lines: [],
-    receivesReceipts: false, unlocksSource: false,
+  const newArtifact = (): Artifact => ({
+    id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
+    receivesReceipts: false, unlocks: [],
   });
 
   const flushPending = () => {
-    if (current && pendingKey === 'x-sections') {
+    if (pendingKey === 'x-declares') {
+      declares = parseList('', pendingBlockItems);
+    } else if (current && pendingKey === 'x-sections') {
       current.sections = buildSections(sectionChunks, source, current.id || '(unnamed)');
     } else if (current && pendingKey) {
       const value = parseList('', pendingBlockItems);
       if (pendingKey === 'x-requires-approval') current.requiresApproval = value;
+      else if (pendingKey === 'x-requires-written') current.requiresWritten = value;
+      else if (pendingKey === 'x-unlocks') {
+        if (current.unlocks.length > 0) {
+          throw new Error(`${source}: artifact '${current.id}' declares x-unlocks (or x-unlocks-source) more than once — choose one form`);
+        }
+        current.unlocks = value;
+      }
       else if (pendingKey === 'x-lines') current.lines = value;
     }
     pendingKey = undefined;
@@ -211,6 +233,15 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
       name = v.trim();
       continue;
     }
+    if (k === 'x-declares') {
+      flushPending();
+      if (v.trim().length > 0) declares = parseList(v, []);
+      else {
+        pendingKey = 'x-declares';
+        sectionsKeyIndent = indent; // block items live deeper; anything shallower ends it
+      }
+      continue;
+    }
     if (k === 'artifacts') {
       flushPending();
       current = newArtifact(); // sentinel until first entry
@@ -234,10 +265,13 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
       current.generates = v.trim();
       continue;
     }
-    if (k === 'x-grant-verb') {
+    if (k === 'x-grant-verb' || k === 'x-grant') {
       flushPending();
       const verb = v.trim();
-      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' x-grant-verb must be one word`);
+      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' ${k} must be one word`);
+      if (current.grantVerb !== undefined) {
+        throw new Error(`${source}: artifact '${current.id}' declares x-grant and x-grant-verb both — choose one`);
+      }
       current.grantVerb = verb;
       continue;
     }
@@ -260,14 +294,26 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
     }
     if (k === 'x-unlocks-source') {
       flushPending();
-      current.unlocksSource = parseFlag(v.trim(), k, source, current.id);
+      if (parseFlag(v.trim(), k, source, current.id)) {
+        if (current.unlocks.length > 0) {
+          throw new Error(`${source}: artifact '${current.id}' declares x-unlocks and x-unlocks-source both — choose one form`);
+        }
+        current.unlocks = ['writes'];
+      }
       continue;
     }
-    if (k === 'x-requires-approval' || k === 'x-sections' || k === 'x-lines') {
+    if (k === 'x-requires-approval' || k === 'x-requires-written' || k === 'x-unlocks' || k === 'x-sections' || k === 'x-lines') {
       flushPending();
       if (v.trim().length > 0) {
         const value = parseList(v, []);
         if (k === 'x-requires-approval') current.requiresApproval = value;
+        else if (k === 'x-requires-written') current.requiresWritten = value;
+        else if (k === 'x-unlocks') {
+          if (current.unlocks.length > 0) {
+            throw new Error(`${source}: artifact '${current.id}' declares x-unlocks (or x-unlocks-source) more than once — choose one form`);
+          }
+          current.unlocks = value;
+        }
         else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [], requiresApproval: [] }));
         else current.lines = value;
       } else {
@@ -284,16 +330,35 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
   const artifactsReal = artifacts.filter((a) => a.id.length > 0);
   if (name.length === 0) throw new Error(`${source}: missing name`);
   if (artifactsReal.length === 0) throw new Error(`${source}: no artifacts`);
+  for (const phrase of declares) {
+    if (phrase.length === 0 || phrase.length > 120) {
+      throw new Error(`${source}: x-declares phrases must be 1–120 characters`);
+    }
+  }
   const ids = new Set<string>();
   for (const a of artifactsReal) {
     if (ids.has(a.id)) throw new Error(`${source}: duplicate artifact id '${a.id}'`);
     ids.add(a.id);
     if (a.generates.length === 0) throw new Error(`${source}: artifact '${a.id}' missing generates`);
   }
+  // declaration sequence IS grant sequence: a dependency on a later (or the
+  // same) artifact is a graph nothing can ever satisfy — fail loudly
+  const orderOf = new Map(artifactsReal.map((a, i) => [a.id, i] as const));
   for (const a of artifactsReal) {
-    for (const req of a.requiresApproval) {
-      if (!ids.has(req)) {
-        throw new Error(`${source}: x-requires-approval references unknown artifact '${req}'`);
+    const selfIndex = orderOf.get(a.id)!;
+    for (const [tag, refs] of [
+      ['x-requires-approval', a.requiresApproval],
+      ['x-requires-written', a.requiresWritten],
+    ] as const) {
+      for (const req of refs) {
+        if (!orderOf.has(req)) {
+          throw new Error(`${source}: ${tag} references unknown artifact '${req}'`);
+        }
+        if (orderOf.get(req)! >= selfIndex) {
+          throw new Error(
+            `${source}: artifact '${a.id}' ${tag} references '${req}', declared at or after it — dependencies must point to earlier artifacts (declaration sequence is grant sequence)`,
+          );
+        }
       }
     }
     const sectionIds = new Set<string>();
@@ -309,6 +374,13 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
         if (!sectionIds.has(ref)) {
           throw new Error(`${source}: section '${a.id}/${s.id}' references unknown sibling section '${ref}'`);
         }
+      }
+    }
+  }
+  for (const a of artifactsReal) {
+    for (const cap of a.unlocks) {
+      if (!KNOWN_CAPABILITIES.has(cap)) {
+        throw new Error(`${source}: artifact '${a.id}' x-unlocks names unknown capability '${cap}' — known: ${[...KNOWN_CAPABILITIES].join(', ')}`);
       }
     }
   }
@@ -334,18 +406,31 @@ export function parseSchemaYaml(content: string, source: string): MissionSchema 
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
     }
   }
-  return { name, artifacts: artifactsReal };
+  return { name, declares, artifacts: artifactsReal };
 }
 
 function configDir(): string {
   return process.env.OPENSPEC_CONFIG_DIR ?? process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config');
 }
 
-/** Resolve a schema by name: project-local first, then user-global. */
+/** openspec's own global schema home (XDG data dir) — where the openspec
+ *  CLI actually installs user-global schemas. */
+function dataDir(): string {
+  return process.env.XDG_DATA_HOME ?? join(homedir(), '.local', 'share');
+}
+
+/** Global schema search dirs: openspec's data home first, then the
+ *  config dir (the gate's original global location). */
+function globalSchemaDirs(): string[] {
+  return [join(dataDir(), 'openspec', 'schemas'), join(configDir(), 'openspec', 'schemas')];
+}
+
+/** Resolve a schema by name: project-local first, then openspec's global
+ *  data home, then the config dir. */
 export function findSchemaFile(openspecRoot: string, schemaName: string): string | undefined {
   const candidates = [
     join(openspecRoot, 'schemas', schemaName, 'schema.yaml'),
-    join(configDir(), 'openspec', 'schemas', schemaName, 'schema.yaml'),
+    ...globalSchemaDirs().map((dir) => join(dir, schemaName, 'schema.yaml')),
   ];
   return candidates.find((p) => existsSync(p));
 }
@@ -363,53 +448,90 @@ export function resolveChangeSchema(openspecRoot: string, schemaName: string | u
 }
 
 /** Artifact whose generates filename matches (basename compare). */
-export function artifactForFilename(schema: MissionSchema, filename: string): PhaseArtifact | undefined {
+export function artifactForFilename(schema: Schema, filename: string): Artifact | undefined {
   const base = filename.split('/').pop() ?? filename;
   return schema.artifacts.find((a) => a.generates === base || a.generates.endsWith(`/${base}`));
 }
 
 /** Artifact addressed by a declared x-grant-verb. */
-export function artifactForGrantVerb(schema: MissionSchema, verb: string): PhaseArtifact | undefined {
+export function artifactForGrantVerb(schema: Schema, verb: string): Artifact | undefined {
   return schema.artifacts.find((a) => a.grantVerb === verb);
 }
 
-/** True when any artifact declares a gate — verbs and guards activate only then. */
-export function schemaIsGated(schema: MissionSchema): boolean {
-  return schema.artifacts.some((a) => a.requiresApproval.length > 0);
+/** True when any artifact declares any gate — approval or written evidence;
+ *  verbs and guards activate only then. */
+export function schemaIsGated(schema: Schema): boolean {
+  return schema.artifacts.some((a) => a.requiresApproval.length > 0 || a.requiresWritten.length > 0);
 }
 
-/** Ladder complete when every declared rung bears a grant (order enforced elsewhere). */
-export function ladderComplete(schema: MissionSchema, approved: ReadonlySet<string>): boolean {
+/** Schema complete when every declared artifact bears a grant (order enforced elsewhere). */
+export function allArtifactsGranted(schema: Schema, approved: ReadonlySet<string>): boolean {
   return schema.artifacts.every((a) => approved.has(a.id));
 }
 
 /** Declared heading titles, for structure checks. */
-export function sectionTitles(artifact: PhaseArtifact): string[] {
+export function sectionTitles(artifact: Artifact): string[] {
   return artifact.sections.map((s) => s.id);
 }
 
 /** Artifact carrying attribution receipts: the declared target, else the completing artifact. */
-export function receiptArtifactFor(schema: MissionSchema): PhaseArtifact | undefined {
+export function receiptArtifactFor(schema: Schema): Artifact | undefined {
   return schema.artifacts.find((a) => a.receivesReceipts) ?? schema.artifacts.find((a) => a.completes);
 }
 
 /** The single declared verdict line, when any artifact carries one. */
-export function schemaVerdictLine(schema: MissionSchema): string | undefined {
+export function schemaVerdictLine(schema: Schema): string | undefined {
   return schema.artifacts.find((a) => a.verdictLine)?.verdictLine;
 }
 
-/** Source work may begin when a declared unlock artifact bears a grant;
- *  schemas declaring none unlock at ladder completion (legacy behavior). */
-export function unlockGranted(schema: MissionSchema, approved: ReadonlySet<string>): boolean {
-  const unlockers = schema.artifacts.filter((a) => a.unlocksSource);
-  if (unlockers.length === 0) return ladderComplete(schema, approved);
+/** Writes (source work) may begin when a declared writes-unlock artifact
+ *  bears a grant; schemas declaring none unlock at full completion
+ *  (legacy behavior). */
+export function writesUnlocked(schema: Schema, approved: ReadonlySet<string>): boolean {
+  const unlockers = schema.artifacts.filter((a) => a.unlocks.includes('writes'));
+  if (unlockers.length === 0) return allArtifactsGranted(schema, approved);
   return unlockers.some((a) => approved.has(a.id)); // any granted one unlocks
+}
+
+/** A capability class is open when any artifact declaring it bears a grant
+ *  (monotonic: unlocked stays unlocked). */
+export function capabilityUnlocked(schema: Schema, approved: ReadonlySet<string>, capability: string): boolean {
+  return schema.artifacts.some((a) => a.unlocks.includes(capability) && approved.has(a.id));
 }
 
 /** Sub-grant id path: 'artifact/section'. */
 export function parseSectionPath(path: string): { artifactId: string; sectionId: string } | undefined {
   const match = /^([\w-]+)\/([\w-]+)$/u.exec(path);
   return match ? { artifactId: match[1]!, sectionId: match[2]! } : undefined;
+}
+
+const declareScanCache = new Map<string, Set<string>>();
+
+/** Every x-declares phrase across the root's resolvable schemas (project
+ *  + user-global) — the declaration latch's vocabulary, from data. Cached
+ *  per root; unparseable schemas contribute nothing (their own resolution
+ *  fails loudly elsewhere). */
+export function scanDeclares(openspecRoot: string): Set<string> {
+  const cached = declareScanCache.get(openspecRoot);
+  if (cached) return cached;
+  const phrases = new Set<string>();
+  for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
+    if (!existsSync(dir)) continue;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const file = join(dir, entry.name, 'schema.yaml');
+      if (!existsSync(file)) continue;
+      try {
+        for (const phrase of parseSchemaYaml(readFileSync(file, 'utf8'), file).declares) {
+          phrases.add(phrase);
+        }
+      } catch {
+        // invalid schema: contributes no phrases; loud failure happens at resolution
+      }
+    }
+  }
+  declareScanCache.set(openspecRoot, phrases);
+  return phrases;
 }
 
 const grantVerbCache = new Map<string, Set<string>>();
@@ -422,7 +544,7 @@ export function scanGrantVerbs(openspecRoot: string): Set<string> {
   const cached = grantVerbCache.get(openspecRoot);
   if (cached) return cached;
   const verbs = new Set<string>();
-  for (const dir of [join(openspecRoot, 'schemas'), join(configDir(), 'openspec', 'schemas')]) {
+  for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
     if (!existsSync(dir)) continue;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;

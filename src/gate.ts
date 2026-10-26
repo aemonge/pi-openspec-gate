@@ -5,7 +5,7 @@
  * Decision order for every mutating call:
  *   1. exempt?    (path-scoped, every target path covered) → record fact, pass
  *   2. focused?   (this session or inherited from parent)  → attribute, pass
- *   3. declared?  (human job command, latch consumed)       → debt line, pass
+ *   3. declared?  (schema-declared phrase or "do it", latch consumed) → debt line, pass
  *   4. otherwise  → block, exact copy, all three remedies
  * Creation commands (openspec new/init) pass ungated.
  * Handler failure blocks the call as a fail-safe.
@@ -18,7 +18,7 @@ import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
 import {
   changeIsApproved,
   changeMetaPath,
-  phasesApprovedSet,
+  grantedSet,
   readChangeMeta,
   writeChangeMeta,
 } from './approval.ts';
@@ -38,20 +38,22 @@ import { extractPaths } from './paths.ts';
 import { matchExemption } from './exemptions.ts';
 import {
   artifactForFilename,
+  capabilityUnlocked,
   receiptArtifactFor,
   resolveChangeSchema,
+  scanDeclares,
   schemaIsGated,
   schemaVerdictLine,
   scanGrantVerbs,
   sectionTitles,
-  unlockGranted,
+  writesUnlocked,
 } from './schema.ts';
 
 export const BLOCK_MESSAGE = [
   '⛔ unaccounted mutation — no active change',
   '   focus:   set the focus fact via your cockpit/status tool',
-  '   create:  openspec new change <slug> --schema mission',
-  '   or say "action the job" / "execute the job" — recorded as declared work, proceeds',
+  '   create:  openspec new change <slug> --schema <schema-name>',
+  '   or say the schema-declared phrase or "do it" — recorded as declared work, proceeds',
 ].join('\n');
 
 export const BLOCK_APPROVAL_TOUCH = [
@@ -77,7 +79,7 @@ export const BLOCK_UNAPPROVED = [
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
-export function blockRungApproval(slug: string, missing: string[], verb?: string): string {
+export function blockArtifactApproval(slug: string, missing: string[], verb?: string): string {
   const grant = verb ? `pios-gate ${verb} ${slug}` : `pios-gate approve ${slug} ${missing[0] ?? '<artifact>'}`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
@@ -86,7 +88,7 @@ export function blockRungApproval(slug: string, missing: string[], verb?: string
   ].join('\n');
 }
 
-export function blockRungSections(filename: string, missing: string[]): string {
+export function blockArtifactSections(filename: string, missing: string[]): string {
   return [
     `⛔ phase gate — ${filename} is missing declared structure`,
     `   missing: ${missing.join(' · ')}`,
@@ -94,10 +96,61 @@ export function blockRungSections(filename: string, missing: string[]): string {
   ].join('\n');
 }
 
-/** A human job command latches exactly one declared mutation.
- *  Primary: "action/execute the mission" ("…the job" legacy); "do it" stays as an alias. */
-const DECLARE_PATTERN = /\b(?:(?:action|execute)\s+the\s+(?:mission|job)|do\s+it)\b/iu;
+export function blockArtifactWritten(filename: string, missing: string[]): string {
+  return [
+    `⛔ phase gate — ${filename} awaits declared evidence`,
+    `   missing: ${missing.join(' · ')}`,
+    '   draft those first — the schema declares the creation sequence (x-requires-written)',
+  ].join('\n');
+}
+
+export function blockResearchWindow(slug: string, grantCommand: string): string {
+  return [
+    `⛔ research window closed — '${slug}' has not reached its research step`,
+    `   grant:   ${grantCommand}   ← your terminal`,
+    '   or:      research without a focused change stays free — clear the focus',
+    '   the schema declares when research opens (x-unlocks: [research])',
+  ].join('\n');
+}
+
+/** A human declaration latches exactly one declared mutation. The
+ *  vocabulary is data: every x-declares phrase of any resolvable schema
+ *  joins the built-in alias "do it". */
+const DECLARE_ALIAS_PATTERN = /\bdo\s+it\b/iu;
 const DECLARE_MAX_LENGTH = 200;
+
+const declareCache = new Map<string, RegExp | null>();
+function declarePhrases(openspecRoot: string): RegExp | null {
+  if (declareCache.has(openspecRoot)) return declareCache.get(openspecRoot) ?? null;
+  const phrases = [...scanDeclares(openspecRoot)];
+  let pattern: RegExp | null = null;
+  if (phrases.length > 0) {
+    const alternation = phrases
+      .sort((a, b) => b.length - a.length)
+      .map((p) => p.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+      .join('|');
+    pattern = new RegExp(`\\b(?:${alternation})\\b`, 'iu');
+  }
+  declareCache.set(openspecRoot, pattern);
+  return pattern;
+}
+
+/** Research instruments the `research` capability class gates. Defaults:
+ *  the web/docs tool set; config `unlocks.research` replaces either side
+ *  (tools + bash command verbs like graphify, wget). */
+const RESEARCH_TOOLS_DEFAULT = new Set(['web_explore', 'web_search', 'web_fetch', 'resolve-library-id', 'query-docs']);
+
+function researchCallMatches(toolName: string, bashCommand: string, config: GateConfig): boolean {
+  const conf = config.unlocks?.research;
+  const tools = conf?.tools ? new Set(conf.tools) : RESEARCH_TOOLS_DEFAULT;
+  if (tools.has(toolName)) return true;
+  const verbs = conf?.commands ?? [];
+  if (bashCommand.length > 0 && verbs.length > 0) {
+    const first = bashCommand.trim().split(/\s+/u)[0] ?? '';
+    return verbs.some((v) => first === v);
+  }
+  return false;
+}
 
 /** A literal "VALID" reply latches exactly one human-gate flip. */
 const VALID_PATTERN = /\bVALID\b/u;
@@ -225,7 +278,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
   });
 
   // Declaration latch: the human's own words, user messages only.
-  pi.on('message_end', (event) => {
+  pi.on('message_end', (event, ctx) => {
     // resolve witnessed creations BEFORE anything else: the stamp lands
     // only after the call ran (dir exists) — pre-creating the dir broke
     // `openspec new`'s scaffolder ("already exists" error, no docs written)
@@ -253,7 +306,9 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
               .join(' ')
           : '';
     if (text.length === 0 || text.length > DECLARE_MAX_LENGTH) return;
-    if (DECLARE_PATTERN.test(text)) {
+    const declareRoot = openspecRootOf((ctx as { cwd?: string } | undefined)?.cwd ?? process.cwd());
+    const phrases = declareRoot ? declarePhrases(declareRoot) : null;
+    if ((phrases && phrases.test(text)) || DECLARE_ALIAS_PATTERN.test(text)) {
       state.declarationWords = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
     }
     if (VALID_PATTERN.test(text)) {
@@ -289,6 +344,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
 
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
+    const openspecRoot = openspecRootOf(cwd);
 
     // creation stamping — assistant-witnessed `openspec new change <slug>`
     // (or its `pios-gate` wrapper form): the change enters the world as
@@ -301,13 +357,43 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         state.pendingCreation = { slug, root, tool: toolName, at: utcNow() };
       }
     }
-    if (!verdict.mutating) return undefined; // read-only or creation: pass
+    if (!verdict.mutating) {
+      // 0.85 research window — schema-declared instruments (x-unlocks:
+      //  [research]) open at their artifact's grant. Reads stay free unless
+      //  a FOCUSED change's schema declares the window — idle research is
+      //  never gated
+      if (approval.phaseGates && openspecRoot) {
+        const focusNow = activeFocus(ctx.sessionManager, cwd);
+        if (focusNow && focusIsActive(focusNow, openspecRoot)) {
+          const meta = readChangeMeta(openspecRoot, focusNow.change);
+          const res = resolveChangeSchema(openspecRoot, meta.raw.schema);
+          if (
+            res.ok &&
+            res.schema.artifacts.some((a) => a.unlocks.includes('research')) &&
+            !capabilityUnlocked(res.schema, grantedSet(meta), 'research') &&
+            researchCallMatches(toolName, bashCommand, config)
+          ) {
+            const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
+            const grant = bearer.grantVerb
+              ? `pios-gate ${bearer.grantVerb} ${focusNow.change}`
+              : `pios-gate grant ${focusNow.change} ${bearer.id}`;
+            appendFact(FACT.phasegate, {
+              kind: 'research-window',
+              tool: toolName,
+              change: focusNow.change,
+              at: utcNow(),
+            });
+            return { block: true, reason: blockResearchWindow(focusNow.change, grant) };
+          }
+        }
+      }
+      return undefined; // read-only or creation: pass
+    }
 
     const paths = extractPaths(toolName, input, cwd);
-    const openspecRoot = openspecRootOf(cwd);
 
     // 0.7 human-gate flip guard — a [x] flip on the schema-declared
-    // verdict line needs a human act; runs before exempt (ladder files
+    // verdict line needs a human act; runs before exempt (change files
     // are openspec/**)
     if (approval.humanGateSteps && (toolName === 'edit' || toolName === 'write')) {
       const record = input as Record<string, unknown> | null;
@@ -349,8 +435,10 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
 
     // 0.9 phase gates — creating a gated artifact requires its declared
-    // precedents granted (schema x-requires-approval), and declared
-    // sections/lines must exist at birth. Runs BEFORE exempt: ladder artifacts live in
+    // precedents granted (x-requires-approval), its declared evidence on
+    // disk (x-requires-written), and declared sections/lines at birth.
+    // Runs BEFORE exempt: change
+    // artifacts live in
     // exempt openspec/** territory — the gate is the only carrier of the
     // schema's declarations. Existing files stay editable (grandfathered,
     // receipts flow); bash creations get the approval check (heredoc
@@ -364,22 +452,41 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         const resolution = resolveChangeSchema(openspecRoot, meta.raw.schema);
         if (!resolution.ok || !schemaIsGated(resolution.schema)) continue;
         const artifact = artifactForFilename(resolution.schema, path);
-        if (!artifact || artifact.requiresApproval.length === 0) continue; // ladder entry drafts free
-        const approved = phasesApprovedSet(meta);
-        const missingApproval = artifact.requiresApproval.filter((rung) => !approved.has(rung));
+        if (!artifact || (artifact.requiresApproval.length === 0 && artifact.requiresWritten.length === 0)) {
+          continue; // declares no gates: drafts free
+        }
+        const approved = grantedSet(meta);
+        const missingApproval = artifact.requiresApproval.filter((id) => !approved.has(id));
         if (missingApproval.length > 0) {
           const verb = resolution.schema.artifacts.find((a) => a.id === missingApproval[0])?.grantVerb;
           appendFact(FACT.phasegate, {
             kind: 'missing-approval',
             tool: toolName,
             change: slug,
-            rung: artifact.id,
+            artifact: artifact.id,
             missing: missingApproval,
             at: utcNow(),
           });
-          return { block: true, reason: blockRungApproval(slug, missingApproval, verb) };
+          return { block: true, reason: blockArtifactApproval(slug, missingApproval, verb) };
         }
-        if (toolName === 'edit' || toolName === 'write') {
+        // x-requires-written — declared evidence must already exist on disk;
+        // evidence, not approval: no grant needed, only the files
+        const missingWritten = artifact.requiresWritten
+          .map((id) => resolution.schema.artifacts.find((a) => a.id === id)?.generates)
+          .filter((file): file is string => file !== undefined)
+          .filter((file) => !exists(join(openspecRoot, 'changes', slug, file)));
+        if (missingWritten.length > 0) {
+          appendFact(FACT.phasegate, {
+            kind: 'missing-written',
+            tool: toolName,
+            change: slug,
+            artifact: artifact.id,
+            missing: missingWritten,
+            at: utcNow(),
+          });
+          return { block: true, reason: blockArtifactWritten(artifact.generates, missingWritten) };
+        }
+        if (artifact.requiresApproval.length > 0 && (toolName === 'edit' || toolName === 'write')) {
           const record = input as Record<string, unknown> | null;
           const text =
             typeof record?.newText === 'string'
@@ -396,11 +503,11 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
               kind: 'missing-sections',
               tool: toolName,
               change: slug,
-              rung: artifact.id,
+              artifact: artifact.id,
               missing: missingStructure,
               at: utcNow(),
             });
-            return { block: true, reason: blockRungSections(artifact.generates, missingStructure) };
+            return { block: true, reason: blockArtifactSections(artifact.generates, missingStructure) };
           }
         }
       }
@@ -426,12 +533,13 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       // on a focused-but-unapproved change block with the terminal remedy
       const meta = readChangeMeta(openspecRoot!, focus.change);
       if (approval.enforce) {
-        // unlock is data: any granted x-unlocks-source artifact, else
-        // (no declaration) ladder completion — attribution is not approval
+        // unlock is data: any granted writes-unlock artifact (x-unlocks:
+        //  [writes], legacy x-unlocks-source), else (no declaration) full
+        // completion — attribution is not approval
         const unlockResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
         const unlocked =
           unlockResolution.ok && schemaIsGated(unlockResolution.schema)
-            ? unlockGranted(unlockResolution.schema, phasesApprovedSet(meta))
+            ? writesUnlocked(unlockResolution.schema, grantedSet(meta))
             : changeIsApproved(meta);
         if (!unlocked) {
           appendFact(FACT.unapproved, {

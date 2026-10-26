@@ -1,9 +1,9 @@
 /**
- * The vocabulary suite — the claim's live proof. A custom three-rung
+ * The vocabulary suite — the claim's live proof. A custom three-step
  * schema with verbs unlike any the engine ever knew, section sub-grants,
- * an early source unlock, a declared verdict line, and a declared
- * receipt target. Ends with the grep-proof: the engine's own code may
- * never carry the flow vocabulary it enforces.
+ * an early source unlock, a declared verdict line, a declared receipt
+ * target, and declared latch phrases. Ends with the grep-proof: the
+ * engine's own code may never carry the flow vocabulary it enforces.
  */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -14,13 +14,14 @@ import { describe, test } from 'node:test';
 
 import {
   artifactForGrantVerb,
-  ladderComplete,
+  allArtifactsGranted,
   parseSchemaYaml,
   parseSectionPath,
   receiptArtifactFor,
   schemaVerdictLine,
   sectionTitles,
-  unlockGranted,
+  capabilityUnlocked,
+  writesUnlocked,
 } from '../src/schema.ts';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
@@ -30,6 +31,7 @@ const WRAPPER = join(REPO_ROOT, 'bin', 'pios-gate');
 
 const RICH_SCHEMA = [
   'name: rich',
+  'x-declares: [launch the rich thing, ship the rich thing]',
   'artifacts:',
   '  - id: dream',
   '    generates: 1-dream.md',
@@ -38,7 +40,8 @@ const RICH_SCHEMA = [
   '    generates: 2-build.md',
   '    x-grant-verb: build-it',
   '    x-requires-approval: [dream]',
-  '    x-unlocks-source: true',
+  '    x-requires-written: [dream]',
+  '    x-unlocks: [research, writes]',
   '    x-sections:',
   '      - id: alpha',
   '      - id: beta',
@@ -52,35 +55,39 @@ const RICH_SCHEMA = [
 ].join('\n');
 
 describe('vocabulary: parsing and validation', () => {
-  test('rich sections, verbs, verdict, receipts, completes, unlock all parse', () => {
+  test('rich sections, verbs, verdict, receipts, completes, unlock, declares all parse', () => {
     const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
+    assert.deepEqual(schema.declares, ['launch the rich thing', 'ship the rich thing']);
     const build = schema.artifacts[1]!;
     assert.deepEqual(sectionTitles(build), ['alpha', 'beta']);
     assert.deepEqual(build.sections[1]!.requiresApproval, ['alpha']);
+    assert.deepEqual(build.requiresWritten, ['dream']);
     assert.equal(artifactForGrantVerb(schema, 'dream-up')?.id, 'dream');
     assert.equal(artifactForGrantVerb(schema, 'build-it')?.id, 'build');
     assert.equal(schemaVerdictLine(schema), 'Owner acceptance');
     assert.equal(receiptArtifactFor(schema)?.id, 'ship');
     assert.equal(schema.artifacts[2]!.completes, 'approved');
-    assert.equal(schema.artifacts[1]!.unlocksSource, true); // build unlocks early
-    assert.equal(schema.artifacts[2]!.unlocksSource, false);
+    assert.deepEqual(schema.artifacts[1]!.unlocks, ['research', 'writes']); // build unlocks early
+    assert.deepEqual(schema.artifacts[2]!.unlocks, []);
   });
 
-  test('unlockGranted: the declared rung unlocks before the ladder completes', () => {
+  test('unlocks: the declared artifact opens writes and research before the schema completes', () => {
     const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
     const afterBuild = new Set(['dream', 'build', 'build/alpha', 'build/beta']);
-    assert.equal(ladderComplete(schema, afterBuild), false);
-    assert.equal(unlockGranted(schema, afterBuild), true); // early unlock
-    assert.equal(unlockGranted(schema, new Set(['dream'])), false);
+    assert.equal(allArtifactsGranted(schema, afterBuild), false);
+    assert.equal(writesUnlocked(schema, afterBuild), true); // early writes unlock
+    assert.equal(capabilityUnlocked(schema, afterBuild, 'research'), true); // research opened at the same grant
+    assert.equal(writesUnlocked(schema, new Set(['dream'])), false);
+    assert.equal(capabilityUnlocked(schema, new Set(['dream']), 'research'), false);
   });
 
-  test('absent unlock declaration falls back to ladder completion (legacy)', () => {
+  test('absent unlock declaration falls back to full completion (legacy)', () => {
     const schema = parseSchemaYaml(
       'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n',
       'fixture',
     );
-    assert.equal(unlockGranted(schema, new Set(['a'])), false);
-    assert.equal(unlockGranted(schema, new Set(['a', 'b'])), true);
+    assert.equal(writesUnlocked(schema, new Set(['a'])), false);
+    assert.equal(writesUnlocked(schema, new Set(['a', 'b'])), true);
   });
 
   test('loud validation: unknown sibling, self-reference, duplicate verb, reserved verb, doubled tags, spaced gated id', () => {
@@ -155,7 +162,7 @@ function run(dir: string, args: string[]): { status: number; stdout: string } {
 }
 
 describe('vocabulary: the CLI walk on a custom schema', () => {
-  test('grants by declared verb, sub-grants by id-path, unlock at the declared rung', () => {
+  test('grants by declared verb, sub-grants by id-path, unlock at the declared artifact', () => {
     const dir = customRepo();
     try {
       const changeDir = join(dir, 'openspec', 'changes', 'm2');
@@ -163,7 +170,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       writeFileSync(join(changeDir, '2-build.md'), '# Build\n\n## alpha\n\n## beta\n', 'utf8');
       writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [ ] Owner acceptance — reply VALID\n', 'utf8');
 
-      // a declared verb grants rung 1 — the engine never knew this word
+      // a declared verb grants artifact 1 — the engine never knew this word
       assert.match(run(dir, ['dream-up', 'm2']).stdout, /granted m2 · dream/);
 
       // the artifact grant refuses while its gated section waits
@@ -180,21 +187,21 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       assert.match(run(dir, ['grant', 'm2', 'build/beta']).stdout, /granted m2 · build\/beta/);
       assert.match(run(dir, ['build-it', 'm2']).stdout, /granted m2 · build/);
 
-      // early unlock: source may begin though the ladder is incomplete
+      // early unlock: source may begin though grants are incomplete
       const meta = readFileSync(join(changeDir, '.openspec.yaml'), 'utf8');
-      assert.match(meta, /phases_approved: dream,build\/alpha,build\/beta,build/);
+      assert.match(meta, /granted: dream,build\/alpha,build\/beta,build/);
       assert.doesNotMatch(meta, /status: approved/); // ship still ungranted
       const approvedList = meta
         .split('\n')
-        .find((l) => l.startsWith('phases_approved:'))!
-        .slice('phases_approved:'.length)
+        .find((l) => l.startsWith('granted:'))!
+        .slice('granted:'.length)
         .trim()
         .split(',');
       const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
-      assert.equal(unlockGranted(schema, new Set(approvedList)), true);
+      assert.equal(writesUnlocked(schema, new Set(approvedList)), true);
 
       // completion grants by bare id (no verb declared) → status approved
-      assert.match(run(dir, ['grant', 'm2', 'ship']).stdout, /ladder complete — status: approved/);
+      assert.match(run(dir, ['grant', 'm2', 'ship']).stdout, /all artifacts granted — status: approved/);
       assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /status: approved/);
 
       // the cockpit names the declared verdict, never a hardcoded one
@@ -208,7 +215,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
 // ── the claim, self-enforcing ──────────────────────────────────────────
 
 describe('grep-proof: the engine carries no flow vocabulary', () => {
-  test('src/, bin/, index.ts are clean of step names and verb lists', () => {
+  test('src/, bin/, index.ts are clean of flow words and declaration phrases', () => {
     const engineFiles = [
       join(REPO_ROOT, 'index.ts'),
       ...readdirSync(join(REPO_ROOT, 'src'))
@@ -218,11 +225,11 @@ describe('grep-proof: the engine carries no flow vocabulary', () => {
         .filter((f) => f.endsWith('.js'))
         .map((f) => join(REPO_ROOT, 'bin', f)),
     ];
-    // the vocabulary the engine must never know again. 'execute' and
-    // 'plan' stay out of the forbidden set — ordinary English words the
-    // declaration latch owns ("execute the mission"); 'order' is
-    // enforced where it lived, the CLI layer.
-    const forbidden = /\b(?:GRANT_VERBS|rungForGrantVerb|propose|deal)\b|4-tasks\.md|human\s+validation|rung\s+gate/iu;
+    // the vocabulary the engine must never know again: the shipped
+    // example's flow words (mission|ladder|rung), the first-generation
+    // verbs, and the hardcoded verdict/filenames they owned.
+    const forbidden =
+      /\b(?:GRANT_VERBS|rungForGrantVerb|propose|deal)\b|4-tasks\.md|human\s+validation|rung\s+gate|\b(?:mission|ladders?|rungs?)\b/iu;
     const cliForbidden = /\b(?:order|rung)\b/iu;
     for (const file of engineFiles) {
       const content = readFileSync(file, 'utf8');

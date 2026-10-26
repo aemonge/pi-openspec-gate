@@ -5,6 +5,55 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+- **Promptless and vocabulary-free** — the `context` handler and its
+  injected protocol block are gone, and the shipped skill
+  (`skills/mission-protocol.md`) no longer ships: the package injects
+  nothing into LLM context, and block reasons carry their own remedies.
+  The declaration latch's vocabulary moves to data — top-level
+  `x-declares` per schema (union across resolvable schemas joins the
+  built-in alias "do it"), and the block remedy names no schema.
+  Vocabulary sweep across the engine: `MissionSchema`→`Schema`,
+  `PhaseArtifact`→`Artifact`, `ladderComplete`→`allArtifactsGranted`,
+  `grantRung`→`grantArtifact`, the `rung:` fact key→`artifact:`, and
+  the `phases_approved` meta key→`granted` (breaking: rename the key in
+  existing change meta). The grep-proof law now forbids
+  mission|ladder|rung across src/, bin/, index.ts, and `just lint`
+  pins the same statically. Dependency graphs hardened:
+  `x-requires-approval` accepts multi-dependency lists (artifact N
+  requiring both earlier artifacts blocks until each is granted), and
+  self- or forward-references now fail loudly at parse (declaration
+  sequence is grant sequence — previously a silent deadlock) on both
+  parsers. New evidence gate: artifact-level `x-requires-written` —
+  creation blocks until the listed artifacts' files exist (evidence, not
+  approval; enforced by the extension at birth and fail-safe at stamp
+  time when declared evidence vanishes), with the same earlier-artifact
+  validation and bin≡src mirror; `schemaIsGated` now counts written-only
+  gates. Ships `example/` — a self-contained starter (its own three-
+  artifact schema exercising every tag) with `example/try.sh`, a self-
+  verifying walkthrough (negatives first, then the full lifecycle;
+  `just try`), pinned by `test/example.test.ts` and shipped in the npm
+  tarball. Real-schema interop: the short `x-grant` tag is accepted as
+  an alias of `x-grant-verb` (both on one artifact fails loudly), and
+  schemas resolve from openspec's global home
+  (`~/.local/share/openspec/schemas/`, XDG data) as well as the config
+  dir — the shipped example now carries the real spec schema (v3,
+  seven artifacts ending in `learnings`/`learn`) and its walkthrough
+  runs it end to end. **Capability unlocks**: `x-unlocks: [research, writes]`
+  — the schema declares WHEN a capability opens (which grant), config
+declares WHAT it means (`unlocks.research` tools + bash command verbs;
+  `writes` = all non-exempt mutations, no config needed); the legacy
+  `x-unlocks-source: true` folds into `[writes]`; unknown capabilities and
+  both-forms-at-once fail loudly on both parsers; the extension enforces
+  the research window (research instruments block until the declaring
+  artifact is granted; idle, unfocused research stays free) and the
+  writes boundary (`writesUnlocked`, monotonic). The example now ships
+  the **v4 spec schema** — brainstorm (open) → investigate (dig, unlocks
+  research, journal free) → plan (commit, unlocks writes, six declared
+  sections) → execute (build, receipts, verdict) — with slice-anatomy
+templates (checkpoint → hash-evidenced commit → final human verdict,
+  `surfaced:` routed to learnings), and `pios-gate pending` counts
+  ticked commits without a hash as visible debt.
+
 ## 0.6.0 — 2026-10-23
 
 - **The CLI reads the gates the schema declares — one schema, one truth** —

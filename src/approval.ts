@@ -20,12 +20,12 @@ export type ChangeMeta = {
 
 export const APPROVED = 'approved';
 
-/** Meta keys of the phase-gate ladder (flat, comma-list value). */
-export const PHASES_KEY = 'phases_approved';
+/** Cumulative grant key of the change meta (flat, comma-list value). */
+export const GRANTS_KEY = 'granted';
 
-/** Parse the cumulative `phases_approved: a,b` meta value into a set. */
-export function phasesApprovedSet(meta: ChangeMeta): Set<string> {
-  const raw = meta.raw[PHASES_KEY] ?? '';
+/** Parse the cumulative `granted: a,b` meta value into a set. */
+export function grantedSet(meta: ChangeMeta): Set<string> {
+  const raw = meta.raw[GRANTS_KEY] ?? '';
   return new Set(
     raw
       .split(',')
@@ -34,12 +34,12 @@ export function phasesApprovedSet(meta: ChangeMeta): Set<string> {
   );
 }
 
-/** Compose the meta values a grant writes: cumulative list + per-rung stamp. */
-export function grantValues(meta: ChangeMeta, rungs: string[], at: string): Record<string, string> {
-  const approved = phasesApprovedSet(meta);
-  for (const rung of rungs) approved.add(rung);
-  const values: Record<string, string> = { [PHASES_KEY]: [...approved].join(',') };
-  for (const rung of rungs) values[`granted_${rung}`] = at;
+/** Compose the meta values a grant writes: cumulative list + per-artifact stamp. */
+export function grantValues(meta: ChangeMeta, ids: string[], at: string): Record<string, string> {
+  const approved = grantedSet(meta);
+  for (const id of ids) approved.add(id);
+  const values: Record<string, string> = { [GRANTS_KEY]: [...approved].join(',') };
+  for (const id of ids) values[`granted_${id}`] = at;
   return values;
 }
 

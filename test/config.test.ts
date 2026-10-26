@@ -51,3 +51,13 @@ test('approval.phaseGates parses from config.json (regression: enumerated litera
   const parsedOff = parseApproval({ enforce: true });
   assert.equal(parsedOff.phaseGates, false, 'absent flag parses false, never undefined');
 });
+
+test('unlocks.research parses: tools and command verbs, absent means defaults', () => {
+  const config = parseConfigString(
+    JSON.stringify({ unlocks: { research: { tools: ['web_explore'], commands: ['graphify', 'wget'] } } }),
+  );
+  assert.deepEqual(config.unlocks?.research?.tools, ['web_explore']);
+  assert.deepEqual(config.unlocks?.research?.commands, ['graphify', 'wget']);
+  const absent = parseConfigString(JSON.stringify({ enabled: true }));
+  assert.equal(absent.unlocks, undefined, 'absent unlocks = built-in defaults, never an override');
+});

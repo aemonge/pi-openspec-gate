@@ -1,10 +1,11 @@
 name: mission
 version: 1
-description: One human-validatable value slice as a five-rung ladder —
+x-declares: [action the mission, execute the mission, action the job, execute the job]
+description: One human-validatable value slice as a five-step flow —
   Idea (why) → Proposition (the claim) → Proposal (the contract) → Plan
-  (the method) → Execution (the ledger). Approvals flow down rung by
-  rung, evidence flows up inside each; the claim born at rung 2 is judged
-  by rung 5's final Human-validation checkbox. x- tags declare the human
+  (the method) → Execution (the ledger). Approvals flow down step by
+  step, evidence flows up inside each; the claim born at step 2 is judged
+  by step 5's final Human-validation checkbox. x- tags declare the human
   gates that pi-openspec-gate enforces; openspec itself strips them
   silently, so the gate validates its own tags. Verbs, verdict line,
   receipt target, completion stamp, and the source unlock are declared
@@ -19,7 +20,7 @@ artifacts:
       tight paragraphs: observed pain, then the chosen direction with hard
       limits. The one-line Goal lives in .openspec.yaml (meta goal:), not
       here. A parented mission may reduce this artifact to a single Parent
-      blockquote line. This rung is free — ladder entry, never gated.
+      blockquote line. This step is free — schema entry, never gated.
     requires: []
     x-grant-verb: propose
   - id: proposition
@@ -88,7 +89,7 @@ artifacts:
       validation — response, outcome, at; only a Human reply ticks it.
       Keep every checkbox line machine-countable: timing and receipts on
       indented non-checkbox lines. Status truth lives in counters, never
-      prose. Approving this rung completes the ladder.
+      prose. Approving this artifact completes the schema.
     requires:
       - plan
     x-requires-approval: [plan]

@@ -44,8 +44,22 @@ export type GateConfig = {
    *  set) — the escape hatch for new research tools without a package
    *  release. Absent key = no override. */
   readOnlyTools?: readonly string[];
+  /** Capability-class definitions for `x-unlocks` — what each class MEANS at
+   *  the tool boundary. The schema owns WHEN (which grant opens which);
+   *  this owns the matchers. Absent = built-in defaults. */
+  unlocks?: UnlockClasses;
   /** Approval teeth; absent section = all off (legacy behavior). */
   approval: ApprovalConfig;
+};
+
+export type UnlockClasses = {
+  /** `research` — divergent/external instruments. Defaults: the web/docs
+   *  tool set, no commands. */
+  research?: {
+    tools?: readonly string[];
+    /** bash command verbs (first token), e.g. "graphify", "wget" */
+    commands?: readonly string[];
+  };
 };
 
 const DEFAULT_CONFIG: GateConfig = { enabled: true, exempt: [], approval: approvalOff() };
@@ -104,13 +118,27 @@ function parseConfig(raw: string, source: string): GateConfig {
         (name): name is string => typeof name === 'string' && name.length > 0,
       )
     : [];
+  const unlocks = parseUnlocks(parsed.unlocks);
   return {
     enabled: parsed.enabled !== false,
     exempt: Object.freeze(exempt),
     accountingTools: Object.freeze(accountingTools),
     ...(readOnlyTools.length > 0 ? { readOnlyTools: Object.freeze(readOnlyTools) } : {}),
+    ...(unlocks ? { unlocks } : {}),
     approval: parseApproval(parsed.approval),
   };
+}
+
+function parseUnlocks(raw: unknown): UnlockClasses | undefined {
+  if (!isRecord(raw)) return undefined;
+  const strings = (v: unknown): readonly string[] | undefined =>
+    Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string' && s.length > 0) : undefined;
+  if (!isRecord(raw.research)) return undefined;
+  const research = raw.research as Record<string, unknown>;
+  const tools = strings(research.tools);
+  const commands = strings(research.commands);
+  if (!tools && !commands) return undefined;
+  return { research: { ...(tools ? { tools } : {}), ...(commands ? { commands } : {}) } };
 }
 
 /** Parse a config JSON string directly (test surface; same rules as file load). */

@@ -1,11 +1,12 @@
 name: spec
 version: 2
-description: One human-validatable value slice as a six-step ladder — Idea (why) → Requirements drafted
+x-declares: [action the spec, execute the spec]
+description: One human-validatable value slice as a six-step flow — Idea (why) → Requirements drafted
   (the first pass) → Research (what we know — several alternatives) → Requirements refined (the research-driven
   steering) → Plan (how — estimate and the committed route) → Tasks (the ledger). Approvals flow down
   step by step, evidence flows up; the claim born at the refined requirements' final Done-when criterion
   is judged by Tasks' final Human-validation checkbox. Files are number-prefixed in grant order so the
-  directory sorts as the ladder. x- tags declare the human gates that pi-openspec-gate enforces; openspec
+  directory sorts in grant order. x- tags declare the human gates that pi-openspec-gate enforces; openspec
   itself strips them silently, so the gate validates its own tags.
 artifacts:
 - id: idea
@@ -26,7 +27,7 @@ artifacts:
 
     lives in .openspec.yaml (meta goal:), not here. Free step —
 
-    ladder entry, never gated.
+    schema entry, never gated.
 
     '
   requires: []
@@ -174,7 +175,7 @@ artifacts:
 
     lives in counters, never prose. Approving this step completes
 
-    the ladder.
+    the schema.
 
 
     Every checkbox state change lands as exactly one git commit — message

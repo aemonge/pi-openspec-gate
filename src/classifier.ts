@@ -17,7 +17,7 @@
  *
  * openspec change creation (`openspec new` / `openspec init`) is classified
  * as creation, not an unaccounted mutation: creating a change is the act of
- * entering the ladder and is never gated (plan: light-change flow, later
+ * entering declared work and is never gated (plan: light-change flow, later
  * slice — creation must not block entry into declaredness).
  */
 
@@ -25,7 +25,7 @@ export type MutationVerdict = {
   mutating: boolean;
   /** Human-readable basis, recorded on facts. Never fuzzy. */
   basis: string;
-  /** true when the call is ladder entry (openspec new/init), skipped by the gate. */
+  /** true when the call is change entry (openspec new/init), skipped by the gate. */
   creation: boolean;
 };
 

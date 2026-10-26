@@ -10,12 +10,12 @@
  *   pios-gate <verb> <slug>    an x-grant-verb the change's schema
  *                               declares (vocabulary from data, not code)
  *   pios-gate approve <slug> [artifact-id]
- *                               canonical stamp; none given = big-bang (all
- *                               remaining rungs on a gated schema, legacy
+ *                               canonical stamp; none given = all
+ *                               remaining artifacts on a gated schema, legacy
  *                               status-only otherwise)
  *   pios-gate confirm <slug>    permits verdict-line [x] flips
- *   pios-gate pending           the cockpit — every mission, next acts
- *   pios-gate inspect <slug>    one mission, verbose (own verb: `show`
+ *   pios-gate pending           the cockpit — every change, next acts
+ *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
  *   pios-gate focus             teaching: focus is a session instrument
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
@@ -36,7 +36,7 @@ import { join } from 'node:path';
 import {
   artifactForGrantVerb,
   findOpenspecRoot,
-  grantRung,
+  grantArtifact,
   grantVerbVocabulary,
   pendingReport,
   readChangeMeta,
@@ -47,7 +47,7 @@ import {
   writeChangeMeta,
 } from './gate-lib.js';
 
-const [command, slug, rungArg] = process.argv.slice(2);
+const [command, slug, artifactArg] = process.argv.slice(2);
 
 const rootOf = () => {
   const root = findOpenspecRoot(process.cwd());
@@ -70,14 +70,14 @@ const changeOrDie = (root, s, usage) => {
 };
 
 const doGrant = (root, s, artifactId) => {
-  const result = grantRung(root, s, artifactId);
+  const result = grantArtifact(root, s, artifactId);
   if (!result.ok) {
     console.error(result.error);
     process.exit(1);
   }
   console.log(
     result.completed
-      ? `granted ${s} · ${result.granted} · ladder complete — status: approved · at ${result.at}`
+      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}`
       : `granted ${s} · ${result.granted} · at ${result.at}`,
   );
   process.exit(0);
@@ -104,18 +104,18 @@ if (command === 'focus') {
 if (command === 'grant') {
   const root = rootOf();
   changeOrDie(root, slug, 'usage: pios-gate grant <change-slug> <artifact-id | artifact/section>');
-  if (!rungArg) {
+  if (!artifactArg) {
     console.error('usage: pios-gate grant <change-slug> <artifact-id | artifact/section>');
     process.exit(2);
   }
-  doGrant(root, slug, rungArg);
+  doGrant(root, slug, artifactArg);
 }
 
 if (command === 'approve') {
   const root = rootOf();
   changeOrDie(root, slug, `usage: pios-gate approve <change-slug> [artifact-id]`);
-  if (rungArg) {
-    doGrant(root, slug, rungArg);
+  if (artifactArg) {
+    doGrant(root, slug, artifactArg);
   }
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);

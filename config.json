@@ -1,12 +1,18 @@
 {
   "enabled": true,
   "exempt": [
-    { "prefix": "**/openspec/**", "category": "ladder-artifacts" },
+    { "prefix": "**/openspec/**", "category": "openspec-artifacts" },
     { "prefix": "**/docs/**", "category": "documentation" },
     { "prefix": "**/skills/**", "category": "declared-skills" }
   ],
   "accountingTools": ["work_focus", "openspec_focus", "stage", "subject", "mem_save", "mem_update", "mem_delete", "mem_save_prompt", "mem_session_summary", "mem_session_end", "mem_capture_passive"],
   "readOnlyTools": [],
+  "unlocks": {
+    "research": {
+      "tools": ["web_explore", "web_search", "web_fetch", "resolve-library-id", "query-docs"],
+      "commands": ["graphify"]
+    }
+  },
   "approval": {
     "enforce": true,
     "humanGateSteps": true,

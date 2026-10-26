@@ -10,8 +10,8 @@
  * Schema mirror contract: the x- vocabulary parsing, validation, and
  * helpers below mirror src/schema.ts exactly (contract-tested). The
  * engine carries zero flow knowledge — verbs, section gates, receipt
- * targets, verdict lines, unlock points, and completion stamps all come
- * from the schema, in data.
+ * targets, verdict lines, unlock points, declaration phrases, and
+ * completion stamps all come from the schema, in data.
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -81,6 +81,8 @@ const ARTIFACT_ENTRY = /^-\s+(.*)$/u;
 const FLOW_LIST = /^\[(.*)\]$/u;
 const WORD_ID = /^[\w-]+$/u;
 const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
+/** capability classes the engine enforces — x-unlocks entries must name one */
+const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
   'approve', 'confirm', 'grant', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
@@ -138,6 +140,7 @@ function buildSections(chunks, source, artifactId) {
 export function parseSchemaYaml(content, source) {
   const lines = content.split('\n');
   let name = '';
+  let declares = [];
   const artifacts = [];
   let current;
   let pendingKey;
@@ -146,16 +149,25 @@ export function parseSchemaYaml(content, source) {
   let sectionsKeyIndent = -1;
 
   const newArtifact = () => ({
-    id: '', generates: '', requiresApproval: [], sections: [], lines: [],
-    receivesReceipts: false, unlocksSource: false,
+    id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
+    receivesReceipts: false, unlocks: [],
   });
 
   const flushPending = () => {
-    if (current && pendingKey === 'x-sections') {
+    if (pendingKey === 'x-declares') {
+      declares = parseListValue('', pendingBlockItems);
+    } else if (current && pendingKey === 'x-sections') {
       current.sections = buildSections(sectionChunks, source, current.id || '(unnamed)');
     } else if (current && pendingKey) {
       const value = parseListValue('', pendingBlockItems);
       if (pendingKey === 'x-requires-approval') current.requiresApproval = value;
+      else if (pendingKey === 'x-requires-written') current.requiresWritten = value;
+      else if (pendingKey === 'x-unlocks') {
+        if (current.unlocks.length > 0) {
+          throw new Error(`${source}: artifact '${current.id}' declares x-unlocks (or x-unlocks-source) more than once — choose one form`);
+        }
+        current.unlocks = value;
+      }
       else if (pendingKey === 'x-lines') current.lines = value;
     }
     pendingKey = undefined;
@@ -210,6 +222,15 @@ export function parseSchemaYaml(content, source) {
       name = v.trim();
       continue;
     }
+    if (k === 'x-declares') {
+      flushPending();
+      if (v.trim().length > 0) declares = parseListValue(v, []);
+      else {
+        pendingKey = 'x-declares';
+        sectionsKeyIndent = indent; // block items live deeper; anything shallower ends it
+      }
+      continue;
+    }
     if (k === 'artifacts') {
       flushPending();
       current = newArtifact();
@@ -231,10 +252,13 @@ export function parseSchemaYaml(content, source) {
       current.generates = v.trim();
       continue;
     }
-    if (k === 'x-grant-verb') {
+    if (k === 'x-grant-verb' || k === 'x-grant') {
       flushPending();
       const verb = v.trim();
-      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' x-grant-verb must be one word`);
+      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' ${k} must be one word`);
+      if (current.grantVerb !== undefined) {
+        throw new Error(`${source}: artifact '${current.id}' declares x-grant and x-grant-verb both — choose one`);
+      }
       current.grantVerb = verb;
       continue;
     }
@@ -257,14 +281,26 @@ export function parseSchemaYaml(content, source) {
     }
     if (k === 'x-unlocks-source') {
       flushPending();
-      current.unlocksSource = parseFlag(v.trim(), k, source, current.id);
+      if (parseFlag(v.trim(), k, source, current.id)) {
+        if (current.unlocks.length > 0) {
+          throw new Error(`${source}: artifact '${current.id}' declares x-unlocks and x-unlocks-source both — choose one form`);
+        }
+        current.unlocks = ['writes'];
+      }
       continue;
     }
-    if (k === 'x-requires-approval' || k === 'x-sections' || k === 'x-lines') {
+    if (k === 'x-requires-approval' || k === 'x-requires-written' || k === 'x-unlocks' || k === 'x-sections' || k === 'x-lines') {
       flushPending();
       if (v.trim().length > 0) {
         const value = parseListValue(v, []);
         if (k === 'x-requires-approval') current.requiresApproval = value;
+        else if (k === 'x-requires-written') current.requiresWritten = value;
+        else if (k === 'x-unlocks') {
+          if (current.unlocks.length > 0) {
+            throw new Error(`${source}: artifact '${current.id}' declares x-unlocks (or x-unlocks-source) more than once — choose one form`);
+          }
+          current.unlocks = value;
+        }
         else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [], requiresApproval: [] }));
         else current.lines = value;
       } else {
@@ -279,15 +315,32 @@ export function parseSchemaYaml(content, source) {
   const real = artifacts.filter((a) => a.id.length > 0);
   if (name.length === 0) throw new Error(`${source}: missing name`);
   if (real.length === 0) throw new Error(`${source}: no artifacts`);
+  for (const phrase of declares) {
+    if (phrase.length === 0 || phrase.length > 120) {
+      throw new Error(`${source}: x-declares phrases must be 1–120 characters`);
+    }
+  }
   const ids = new Set();
   for (const a of real) {
     if (ids.has(a.id)) throw new Error(`${source}: duplicate artifact id '${a.id}'`);
     ids.add(a.id);
     if (a.generates.length === 0) throw new Error(`${source}: artifact '${a.id}' missing generates`);
   }
+  // declaration sequence IS grant sequence: a dependency on a later (or the
+  // same) artifact is a graph nothing can ever satisfy — fail loudly
+  const orderOf = new Map(real.map((a, i) => [a.id, i]));
   for (const a of real) {
-    for (const req of a.requiresApproval) {
-      if (!ids.has(req)) throw new Error(`${source}: x-requires-approval references unknown artifact '${req}'`);
+    const selfIndex = orderOf.get(a.id);
+    for (const [tag, refs] of [
+      ['x-requires-approval', a.requiresApproval],
+      ['x-requires-written', a.requiresWritten],
+    ]) {
+      for (const req of refs) {
+        if (!orderOf.has(req)) throw new Error(`${source}: ${tag} references unknown artifact '${req}'`);
+        if (orderOf.get(req) >= selfIndex) {
+          throw new Error(`${source}: artifact '${a.id}' ${tag} references '${req}', declared at or after it — dependencies must point to earlier artifacts (declaration sequence is grant sequence)`);
+        }
+      }
     }
     const sectionIds = new Set();
     for (const s of a.sections) {
@@ -298,6 +351,13 @@ export function parseSchemaYaml(content, source) {
       for (const ref of [...s.requiresWritten, ...s.requiresApproval]) {
         if (ref === s.id) throw new Error(`${source}: section '${a.id}/${s.id}' cannot require itself`);
         if (!sectionIds.has(ref)) throw new Error(`${source}: section '${a.id}/${s.id}' references unknown sibling section '${ref}'`);
+      }
+    }
+  }
+  for (const a of real) {
+    for (const cap of a.unlocks) {
+      if (!KNOWN_CAPABILITIES.has(cap)) {
+        throw new Error(`${source}: artifact '${a.id}' x-unlocks names unknown capability '${cap}' — known: ${[...KNOWN_CAPABILITIES].join(', ')}`);
       }
     }
   }
@@ -320,17 +380,26 @@ export function parseSchemaYaml(content, source) {
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
     }
   }
-  return { name, artifacts: real };
+  return { name, declares, artifacts: real };
 }
 
 function configDir() {
   return process.env.OPENSPEC_CONFIG_DIR ?? process.env.XDG_CONFIG_HOME ?? join(homedir(), '.config');
 }
 
+/** openspec's own global schema home (XDG data dir). */
+function dataDir() {
+  return process.env.XDG_DATA_HOME ?? join(homedir(), '.local', 'share');
+}
+
+function globalSchemaDirs() {
+  return [join(dataDir(), 'openspec', 'schemas'), join(configDir(), 'openspec', 'schemas')];
+}
+
 export function findSchemaFile(openspecRoot, schemaName) {
   const candidates = [
     join(openspecRoot, 'schemas', schemaName, 'schema.yaml'),
-    join(configDir(), 'openspec', 'schemas', schemaName, 'schema.yaml'),
+    ...globalSchemaDirs().map((dir) => join(dir, schemaName, 'schema.yaml')),
   ];
   return candidates.find((p) => existsSync(p));
 }
@@ -357,15 +426,16 @@ export function artifactForGrantVerb(schema, verb) {
 
 const verbVocabCache = new Map();
 
-/** Every x-grant-verb across the root's resolvable schemas → schema name.
- *  Grant-shaped commands resolve against this vocabulary and never fall
- *  through to verbatim openspec (live-caught 2026-10-23: the silent skip
- *  printed openspec's "unknown command" for our own verbs). */
+/** Every x-grant / x-grant-verb across the root's resolvable schemas
+ *  (project + global homes) → schema name. Grant-shaped commands resolve
+ *  against this vocabulary and never fall through to verbatim openspec
+ *  (live-caught 2026-10-23: the silent skip printed openspec's "unknown
+ *  command" for our own verbs). */
 export function grantVerbVocabulary(openspecRoot) {
   if (verbVocabCache.has(openspecRoot)) return verbVocabCache.get(openspecRoot);
   const vocab = new Map();
-  const schemasDir = join(openspecRoot, 'schemas');
-  if (existsSync(schemasDir)) {
+  for (const schemasDir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
+    if (!existsSync(schemasDir)) continue;
     for (const name of readdirSync(schemasDir)) {
       const file = findSchemaFile(openspecRoot, name);
       if (!file) continue;
@@ -384,10 +454,10 @@ export function grantVerbVocabulary(openspecRoot) {
 }
 
 export function schemaIsGated(schema) {
-  return schema.artifacts.some((a) => a.requiresApproval.length > 0);
+  return schema.artifacts.some((a) => a.requiresApproval.length > 0 || (a.requiresWritten ?? []).length > 0);
 }
 
-export function ladderComplete(schema, approvedSet) {
+export function allArtifactsGranted(schema, approvedSet) {
   return schema.artifacts.every((a) => approvedSet.has(a.id));
 }
 
@@ -404,10 +474,14 @@ export function schemaVerdictLine(schema) {
   return bearer ? bearer.verdictLine : undefined;
 }
 
-export function unlockGranted(schema, approvedSet) {
-  const unlockers = schema.artifacts.filter((a) => a.unlocksSource);
-  if (unlockers.length === 0) return ladderComplete(schema, approvedSet);
+export function writesUnlocked(schema, approvedSet) {
+  const unlockers = schema.artifacts.filter((a) => (a.unlocks ?? []).includes('writes'));
+  if (unlockers.length === 0) return allArtifactsGranted(schema, approvedSet);
   return unlockers.some((a) => approvedSet.has(a.id));
+}
+
+export function capabilityUnlocked(schema, approvedSet, capability) {
+  return schema.artifacts.some((a) => (a.unlocks ?? []).includes(capability) && approvedSet.has(a.id));
 }
 
 export function parseSectionPath(path) {
@@ -435,8 +509,8 @@ export function lineKeyPresent(text, key) {
   return new RegExp(`^${escaped}:`, 'mu').test(text);
 }
 
-export function phasesApprovedSet(meta) {
-  const raw = meta.phases_approved ?? '';
+export function grantedSet(meta) {
+  const raw = meta.granted ?? '';
   return new Set(
     raw
       .split(',')
@@ -449,17 +523,17 @@ export function phasesApprovedSet(meta) {
  *  sequence, file must exist, declared structure must be present, gated
  *  sections must bear sub-grants. Returns { ok, granted, completed } or
  *  { ok: false, error }. */
-export function grantRung(root, slug, rungId) {
+export function grantArtifact(root, slug, artifactRef) {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     return { ok: false, error: `schema declares no gates (${resolution.ok ? resolution.schema.name : resolution.reason}) — use: pios-gate approve ${slug}` };
   }
   const schema = resolution.schema;
-  const approved = phasesApprovedSet(meta);
+  const approved = grantedSet(meta);
 
   // sub-grant: artifact/section id-path
-  const sectionPath = parseSectionPath(rungId);
+  const sectionPath = parseSectionPath(artifactRef);
   if (sectionPath) {
     const artifact = schema.artifacts.find((a) => a.id === sectionPath.artifactId);
     if (!artifact) return { ok: false, error: `no artifact '${sectionPath.artifactId}' in schema ${schema.name}` };
@@ -471,7 +545,7 @@ export function grantRung(root, slug, rungId) {
         error: `no section '${sectionPath.sectionId}' in artifact '${artifact.id}'${grantable.length > 0 ? ` — grantable: ${grantable.join(' · ')}` : ' (no addressable sections)'}`,
       };
     }
-    if (approved.has(rungId)) return { ok: false, error: `artifact '${rungId}' already granted ${meta[`granted_${rungId.replace('/', '_')}`] ?? ''}`.trim() };
+    if (approved.has(artifactRef)) return { ok: false, error: `artifact '${artifactRef}' already granted ${meta[`granted_${artifactRef.replace('/', '_')}`] ?? ''}`.trim() };
     const file = join(root, 'changes', slug, artifact.generates);
     if (!existsSync(file)) return { ok: false, error: `${artifact.generates} not drafted yet — you approve what you read` };
     const text = readFileSync(file, 'utf8');
@@ -487,18 +561,18 @@ export function grantRung(root, slug, rungId) {
       return { ok: false, error: `in sequence — grant '${artifact.id}/${ungranted[0]}' first: pios-gate grant ${slug} ${artifact.id}/${ungranted[0]}` };
     }
     const at = utcNowStamp();
-    approved.add(rungId);
+    approved.add(artifactRef);
     writeChangeMeta(root, slug, {
-      phases_approved: [...approved].join(','),
-      [`granted_${rungId.replace('/', '_')}`]: at,
+      granted: [...approved].join(','),
+      [`granted_${artifactRef.replace('/', '_')}`]: at,
     });
-    return { ok: true, granted: rungId, completed: false, at };
+    return { ok: true, granted: artifactRef, completed: false, at };
   }
 
   // artifact grant
-  const index = schema.artifacts.findIndex((a) => a.id === rungId);
-  if (index < 0) return { ok: false, error: `no artifact '${rungId}' in schema ${schema.name}` };
-  if (approved.has(rungId)) return { ok: false, error: `artifact '${rungId}' already granted ${meta[`granted_${rungId}`] ?? ''}`.trim() };
+  const index = schema.artifacts.findIndex((a) => a.id === artifactRef);
+  if (index < 0) return { ok: false, error: `no artifact '${artifactRef}' in schema ${schema.name}` };
+  if (approved.has(artifactRef)) return { ok: false, error: `artifact '${artifactRef}' already granted ${meta[`granted_${artifactRef}`] ?? ''}`.trim() };
   const predecessor = schema.artifacts.slice(0, index).find((a) => !approved.has(a.id));
   if (predecessor) {
     return { ok: false, error: `in sequence — grant '${predecessor.id}' first: ${grantHint(schema, predecessor.id, slug)}` };
@@ -507,6 +581,14 @@ export function grantRung(root, slug, rungId) {
   const file = join(root, 'changes', slug, artifact.generates);
   if (!existsSync(file)) {
     return { ok: false, error: `${artifact.generates} not drafted yet — you approve what you read` };
+  }
+  // x-requires-written — declared evidence must still be on disk (fail-safe
+  // on the stamp: a dependency deleted after its grant refuses this one)
+  const unwrittenDeps = artifact.requiresWritten
+    .map((id) => schema.artifacts.find((a) => a.id === id)?.generates)
+    .filter((dep) => dep !== undefined && !existsSync(join(root, 'changes', slug, dep)));
+  if (unwrittenDeps.length > 0) {
+    return { ok: false, error: `${artifact.generates} awaits declared evidence: ${unwrittenDeps.join(' · ')} not on disk (x-requires-written)` };
   }
   const text = readFileSync(file, 'utf8');
   const missing = [
@@ -524,15 +606,15 @@ export function grantRung(root, slug, rungId) {
     };
   }
   const at = utcNowStamp();
-  approved.add(rungId);
-  const values = { phases_approved: [...approved].join(','), [`granted_${rungId}`]: at };
-  const completed = ladderComplete(schema, approved);
+  approved.add(artifactRef);
+  const values = { granted: [...approved].join(','), [`granted_${artifactRef}`]: at };
+  const completed = allArtifactsGranted(schema, approved);
   if (completed) {
     const completing = schema.artifacts.find((a) => a.completes);
     Object.assign(values, { status: completing?.completes ?? 'approved', approved_at: at });
   }
   writeChangeMeta(root, slug, values);
-  return { ok: true, granted: rungId, completed, verb: artifact.grantVerb, at };
+  return { ok: true, granted: artifactRef, completed, verb: artifact.grantVerb, at };
 }
 
 /** Human-terminal cockpit: which changes need a human act. */
@@ -547,16 +629,26 @@ export function pendingReport(root) {
     const gated = resolution.ok && schemaIsGated(resolution.schema);
 
     let open = 0;
+    let unhashed = 0;
     let humanWait = false;
     if (gated) {
       const schema = resolution.schema;
-      const approved = phasesApprovedSet(meta);
+      const approved = grantedSet(meta);
       const verdictLine = schemaVerdictLine(schema);
       const counterArtifact = receiptArtifactFor(schema) ?? schema.artifacts[schema.artifacts.length - 1];
       const counterFile = join(changesDir, dir.name, counterArtifact.generates);
       if (existsSync(counterFile)) {
         const tasks = readFileSync(counterFile, 'utf8');
         open = (tasks.match(/^- \[ \]/gmu) ?? []).length;
+        // the commit is the receipt: a ticked conventional commit without
+        // a hash slot (or an explicit n/a) is visible debt
+        const commitTick = /^- \[x\] (?:feat|fix|docs|style|refactor|test|chore|perf|ci|build)\(/u;
+        const ledgerLines = tasks.split('\n');
+        for (let li = 0; li < ledgerLines.length; li += 1) {
+          if (!commitTick.test(ledgerLines[li])) continue;
+          const hashLine = ledgerLines[li + 1] ?? '';
+          if (!/hash:\s*\S/u.test(hashLine) || /hash:\s*n\/a/u.test(hashLine)) unhashed += 1;
+        }
         if (verdictLine) {
           const escaped = verdictLine.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
           humanWait = new RegExp(`^- \\[ \\][^\\n]*${escaped}`, 'mu').test(tasks);
@@ -576,7 +668,7 @@ export function pendingReport(root) {
 
     if (gated && status !== 'approved') {
       const schema = resolution.schema;
-      const approved = phasesApprovedSet(meta);
+      const approved = grantedSet(meta);
       const marks = schema.artifacts.map((a) => (approved.has(a.id) ? '✓' : existsSync(join(changesDir, dir.name, a.generates)) ? '◻' : '·')).join('');
       const nextIndex = schema.artifacts.findIndex((a) => !approved.has(a.id));
       let nextAct = '';
@@ -596,25 +688,27 @@ export function pendingReport(root) {
             ? 'needs confirm (verdict open)'
             : open > 0
               ? `${open} open steps`
-              : 'ready to archive?';
+              : unhashed > 0
+                ? `${unhashed} unhashed commits`
+                : 'ready to archive?';
       rows.push(`${dir.name.padEnd(36)}${status.padEnd(10)}${legacyNeed}${approvedSuffix}`);
     }
   }
   return rows.length === 0 ? 'nothing pending — no active changes' : rows.join('\n');
 }
 
-/** Verbose one-mission view: rungs, drafts, grants, structure, next act. */
+/** Verbose one-change view: artifacts, drafts, grants, structure, next act. */
 export function showReport(root, slug) {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok) {
-    return [`mission: ${slug}`, `  schema: ${meta.schema ?? 'none'} (${resolution.reason})`, `  status: ${meta.status ?? 'no-meta'}`].join('\n');
+    return [`change: ${slug}`, `  schema: ${meta.schema ?? 'none'} (${resolution.reason})`, `  status: ${meta.status ?? 'no-meta'}`].join('\n');
   }
   const schema = resolution.schema;
-  const approved = phasesApprovedSet(meta);
+  const approved = grantedSet(meta);
   const verdictLine = schemaVerdictLine(schema);
-  const lines = [`mission: ${slug} · schema: ${schema.name} · status: ${meta.status ?? 'no-meta'}`];
-  if (meta.phases_approved) lines.push(`phases_approved: ${meta.phases_approved}`);
+  const lines = [`change: ${slug} · schema: ${schema.name} · status: ${meta.status ?? 'no-meta'}`];
+  if (meta.granted) lines.push(`granted: ${meta.granted}`);
   schema.artifacts.forEach((a, i) => {
     const file = join(root, 'changes', slug, a.generates);
     const drafted = existsSync(file);
@@ -644,7 +738,7 @@ export function showReport(root, slug) {
           : `next human act: awaiting draft of ${next.generates} (artifact ${next.id})`,
       );
     } else {
-      lines.push(`ladder complete — ${meta.validated ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`);
+      lines.push(`all artifacts granted — ${meta.validated ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`);
     }
   }
   return lines.join('\n');

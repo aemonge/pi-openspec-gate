@@ -30,7 +30,7 @@ function appendLine(file: string, line: string): void {
 /** One visible debt line for a declared (bare) mutation. Exactly one line per call. */
 export function appendDebtLine(openspecRoot: string | undefined, words: string, at: string): Promise<void> {
   return serialized(() => {
-    if (!openspecRoot) return; // no ladder root on disk: the fact store still records it
+    if (!openspecRoot) return; // no openspec root on disk: the fact store still records it
     appendLine(join(openspecRoot, 'bare-work.md'), `bare — ${words} · at ${at}`);
   });
 }

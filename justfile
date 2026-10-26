@@ -3,11 +3,16 @@
 # Static gate: the vocabulary law (permission words are forbidden here).
 lint:
     @! grep -riE 'waiver|sanitiz|trust' src/ test/ config.json index.ts
+    @! grep -rniEw 'mission|ladder|rung|rungs|ladders' src/ bin/ index.ts config.json
     @echo "vocabulary law holds"
 
 # Full test suite.
 test:
     npm test
+
+# The shipped example: full gate lifecycle walkthrough in a scratch repo.
+try:
+    ./example/try.sh
 
 # Packed-artifact gates: real-loader smoke + pack contents.
 build:

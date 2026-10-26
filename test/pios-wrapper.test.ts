@@ -196,7 +196,7 @@ function draft(repo: Repo, slug: string, file: string, content: string): void {
   writeFileSync(join(repo.dir, 'openspec', 'changes', slug, file), content);
 }
 
-test('grants: the full five-rung walk stamps in order and completes the ladder', () => {
+test('grants: the full five-step walk stamps in order and completes the schema', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'pain and direction');
@@ -222,10 +222,10 @@ test('grants: the full five-rung walk stamps in order and completes the ladder',
 
     const done = run(repo, ['execute', 'm1']);
     assert.equal(done.status, 0);
-    assert.match(done.stdout, /ladder complete — status: approved/);
+    assert.match(done.stdout, /all artifacts granted — status: approved/);
 
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /phases_approved: idea,proposition,proposal,plan,execution/);
+    assert.match(meta, /granted: idea,proposition,proposal,plan,execution/);
     assert.match(meta, /status: approved/);
     assert.match(meta, /granted_execution:/);
     assert.equal(existsSync(repo.log), false, 'grants never forward to openspec');
@@ -248,7 +248,53 @@ test('grants: structure refusal — a Claim-less proposition will not stamp', ()
   }
 });
 
-test('grants: you approve what you read — undrafted rungs refuse', () => {
+test('grants: x-requires-written — a deleted dependency file refuses the stamp', () => {
+  const repo = makeRepo();
+  try {
+    mkdirSync(join(repo.dir, 'openspec', 'schemas', 'ev'), { recursive: true });
+    writeFileSync(
+      join(repo.dir, 'openspec', 'schemas', 'ev', 'schema.yaml'),
+      'name: ev\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-grant-verb: seal\n    x-requires-approval: [a]\n    x-requires-written: [a]\n',
+    );
+    change(repo, 'e1', 'schema: ev\nstatus: proposed\n');
+    draft(repo, 'e1', '1-a.md', '# A\n');
+    draft(repo, 'e1', '2-b.md', '# B\n');
+    assert.equal(run(repo, ['approve', 'e1', 'a']).status, 0);
+    // evidence vanished after its grant: the next stamp refuses (fail-safe)
+    rmSync(join(repo.dir, 'openspec', 'changes', 'e1', '1-a.md'));
+    const seal = run(repo, ['seal', 'e1']);
+    assert.equal(seal.status, 1);
+    assert.match(seal.stdout, /2-b\.md awaits declared evidence: 1-a\.md not on disk/u);
+    assert.equal(existsSync(repo.log), false, 'refusals never forward to openspec');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('cockpit: ticked commits without a hash are visible debt', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', 'Claim: x\n');
+    draft(repo, 'm1', '3-proposal.md', '## Done when\n');
+    draft(repo, 'm1', '4-plan.md', '# Plan\n');
+    draft(
+      repo,
+      'm1',
+      '5-execution.md',
+      '# Execution\n\n- [x] fix(core): thing\n      hash: \n- [x] feat(x): other\n      hash: abc123\n',
+    );
+    for (const step of ['propose', 'deal', 'plan', 'order', 'execute']) {
+      assert.equal(run(repo, [step, 'm1']).status, 0);
+    }
+    const pending = run(repo, ['pending']);
+    assert.match(pending.stdout, /1 unhashed commits/u); // empty hash slot = debt; abc123 = receipt
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('grants: you approve what you read — undrafted artifacts refuse', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -279,14 +325,14 @@ test('grants: approve <slug> <step> is per-step; bare approve refuses on gated s
     assert.equal(bare.status, 1);
     assert.match(bare.stdout, /is gated — approve is per-step/);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /phases_approved: idea,proposition\n/);
+    assert.match(meta, /granted: idea,proposition\n/);
     assert.doesNotMatch(meta, /status: approved/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('cockpit: pending shows rung marks and the next grant; show is verbose', () => {
+test('cockpit: pending shows grant marks and the next grant; show is verbose', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -297,7 +343,7 @@ test('cockpit: pending shows rung marks and the next grant; show is verbose', ()
     assert.match(pending.stdout, /read 2-proposition\.md → grant: pios-gate deal m1/);
 
     const show = run(repo, ['inspect', 'm1']);
-    assert.match(show.stdout, /mission: m1 · schema: gated/);
+    assert.match(show.stdout, /change: m1 · schema: gated/);
     assert.match(show.stdout, /structure ✓/);
     assert.match(show.stdout, /next human act: read 2-proposition\.md/);
   } finally {
@@ -350,7 +396,7 @@ test('parity live: verb grant works on the shipped spec schema', () => {
     assert.equal(p.status, 0, p.stdout);
     assert.match(p.stdout, /granted fx · idea · at/);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /phases_approved: idea/);
+    assert.match(meta, /granted: idea/);
     assert.match(meta, /granted_idea:/);
     assert.equal(existsSync(repo.log), false, 'a grant verb never forwards to openspec');
   } finally {

@@ -5,7 +5,7 @@ import { matchExemption } from '../src/exemptions.ts';
 import { extractPaths } from '../src/paths.ts';
 
 const RULES = [
-  { prefix: '**/openspec/**', category: 'ladder-artifacts' },
+  { prefix: '**/openspec/**', category: 'openspec-artifacts' },
   { prefix: '**/docs/**', category: 'documentation' },
   { prefix: 'vendor', category: 'vendored' },
 ];
@@ -15,7 +15,7 @@ const CWD = '/work/repo';
 test('segment rule matches any depth', () => {
   const verdict = matchExemption('write', ['/work/repo/openspec/changes/x/4-tasks.md'], RULES, CWD);
   assert.equal(verdict.exempt, true);
-  assert.equal(verdict.category, 'ladder-artifacts');
+  assert.equal(verdict.category, 'openspec-artifacts');
 });
 
 test('mixed targets are not exempt', () => {

@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import {
   artifactForFilename,
   artifactForGrantVerb,
+  allArtifactsGranted,
   findSchemaFile,
-  ladderComplete,
   parseSchemaYaml,
   resolveChangeSchema,
   schemaIsGated,
@@ -24,6 +24,7 @@ const REPO_ROOT = join(import.meta.dirname, '..');
 const MISSION_YAML = `
 name: mission
 version: 1
+x-declares: [action the mission, execute the mission]
 artifacts:
   - id: idea
     generates: 1-idea.md
@@ -60,9 +61,10 @@ artifacts:
 `;
 
 describe('schema reader: parsing', () => {
-  test('mission ladder parses with declaration order and x- tags intact', () => {
+  test('mission flow parses with declaration order, declares, and x- tags intact', () => {
     const schema = parseSchemaYaml(MISSION_YAML, 'fixture');
     assert.equal(schema.name, 'mission');
+    assert.deepEqual(schema.declares, ['action the mission', 'execute the mission']);
     assert.deepEqual(
       schema.artifacts.map((a) => a.id),
       ['idea', 'proposition', 'proposal', 'plan', 'execution'],
@@ -96,9 +98,91 @@ describe('schema reader: parsing', () => {
     assert.deepEqual(sectionTitles(b!), ['One', 'Two']);
   });
 
+  test('x-grant is an alias for x-grant-verb; declaring both fails loudly', () => {
+    const short = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: go\n';
+    const schema = parseSchemaYaml(short, 'fixture');
+    assert.equal(artifactForGrantVerb(schema, 'go')?.id, 'a');
+    assert.equal(parseSchemaYamlBin(short, 'fixture').artifacts[0]!.grantVerb, 'go');
+    const both = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: go\n    x-grant-verb: go\n';
+    assert.throws(() => parseSchemaYaml(both, 'fixture'), /declares x-grant and x-grant-verb both/u);
+    assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one/u);
+  });
+
   test('unknown x-requires-approval reference fails loudly', () => {
     const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-approval: [ghost]\n';
     assert.throws(() => parseSchemaYaml(yaml, 'fixture'), /unknown artifact 'ghost'/u);
+  });
+
+  test('self- or forward-references fail loudly — declaration sequence is grant sequence', () => {
+    const selfRef = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-approval: [a]\n';
+    assert.throws(() => parseSchemaYaml(selfRef, 'fixture'), /references 'a', declared at or after it/u);
+    const forwardRef =
+      'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-approval: [b]\n  - id: b\n    generates: 2-b.md\n';
+    assert.throws(() => parseSchemaYaml(forwardRef, 'fixture'), /dependencies must point to earlier artifacts/u);
+    const forwardWritten =
+      'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-written: [b]\n  - id: b\n    generates: 2-b.md\n';
+    assert.throws(() => parseSchemaYaml(forwardWritten, 'fixture'), /x-requires-written references 'b', declared at or after it/u);
+    // the bin twin refuses the same graphs (mirror contract)
+    assert.throws(() => parseSchemaYamlBin(selfRef, 'fixture'), /declared at or after it/u);
+    assert.throws(() => parseSchemaYamlBin(forwardRef, 'fixture'), /dependencies must point to earlier artifacts/u);
+    assert.throws(() => parseSchemaYamlBin(forwardWritten, 'fixture'), /x-requires-written references 'b'/u);
+  });
+
+  test('x-unlocks lists parse — capability classes, with the source alias', () => {
+    const list = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks: [research, writes]\n';
+    const schema = parseSchemaYaml(list, 'fixture');
+    assert.deepEqual(artifactForFilename(schema, '1-a.md')?.unlocks, ['research', 'writes']);
+    // the legacy boolean folds into [writes]
+    const alias = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks-source: true\n';
+    assert.deepEqual(parseSchemaYaml(alias, 'fixture').artifacts[0]!.unlocks, ['writes']);
+    assert.deepEqual(parseSchemaYamlBin(alias, 'fixture').artifacts[0]!.unlocks, ['writes']);
+    // unknown capability, and both forms at once — loud on both parsers
+    assert.throws(
+      () => parseSchemaYaml('name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks: [fly]\n', 'fixture'),
+      /unknown capability 'fly'.*known: research, writes/u,
+    );
+    assert.throws(
+      () => parseSchemaYamlBin('name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks: [fly]\n', 'fixture'),
+      /unknown capability 'fly'/u,
+    );
+    const both = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks-source: true\n    x-unlocks: [writes]\n';
+    assert.throws(() => parseSchemaYaml(both, 'fixture'), /choose one form/u);
+    assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one form/u);
+    // the mirrored order — list first, then the legacy flag — is equally loud
+    const flipped = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-unlocks: [writes]\n    x-unlocks-source: true\n';
+    assert.throws(() => parseSchemaYaml(flipped, 'fixture'), /x-unlocks and x-unlocks-source both/u);
+    assert.throws(() => parseSchemaYamlBin(flipped, 'fixture'), /choose one form/u);
+  });
+
+  test('multi-dependency lists parse — artifact three requires [one, two]', () => {
+    const yaml = [
+      'name: deps',
+      'artifacts:',
+      '  - id: one',
+      '    generates: 1-one.md',
+      '  - id: two',
+      '    generates: 2-two.md',
+      '  - id: three',
+      '    generates: 3-three.md',
+      '    x-requires-approval: [one, two]',
+    ].join('\n');
+    const schema = parseSchemaYaml(yaml, 'fixture');
+    assert.deepEqual(artifactForFilename(schema, '3-three.md')?.requiresApproval, ['one', 'two']);
+  });
+
+  test('x-requires-written lists parse — evidence deps, distinct from grants', () => {
+    const yaml = [
+      'name: ev',
+      'artifacts:',
+      '  - id: one',
+      '    generates: 1-one.md',
+      '  - id: two',
+      '    generates: 2-two.md',
+      '    x-requires-written: [one]',
+    ].join('\n');
+    const schema = parseSchemaYaml(yaml, 'fixture');
+    assert.deepEqual(artifactForFilename(schema, '2-two.md')?.requiresWritten, ['one']);
+    assert.equal(schemaIsGated(schema), true, 'written-only gates make the schema gated');
   });
 
   test('duplicate artifact ids fail loudly', () => {
@@ -113,7 +197,7 @@ describe('schema reader: parsing', () => {
   });
 });
 
-describe('schema reader: resolution and ladder semantics', () => {
+describe('schema reader: resolution and grant semantics', () => {
   test('the repo mission schema resolves project-locally and is gated', () => {
     const openspecRoot = join(REPO_ROOT, 'openspec');
     const file = findSchemaFile(openspecRoot, 'mission');
@@ -136,12 +220,12 @@ describe('schema reader: resolution and ladder semantics', () => {
     assert.ok(!resolution.ok && resolution.reason.includes('no-such-schema'));
   });
 
-  test('ladder completes only when every rung bears a grant', () => {
+  test('schema completes only when every artifact bears a grant', () => {
     const schema = parseSchemaYaml(MISSION_YAML, 'fixture');
     const four = new Set(['idea', 'proposition', 'proposal', 'plan']);
-    assert.equal(ladderComplete(schema, four), false);
+    assert.equal(allArtifactsGranted(schema, four), false);
     four.add('execution');
-    assert.equal(ladderComplete(schema, four), true);
+    assert.equal(allArtifactsGranted(schema, four), true);
   });
 
   test('grant verbs resolve from declared x-grant-verb, not position', () => {
@@ -198,11 +282,15 @@ describe('bin parser reads the shipped schemas', () => {
 
 describe('parity: bin ≡ src on the shipped schemas', () => {
   test('projections equal over spec and mission — drift fails loudly', () => {
-    const project = (schema: any) =>
-      schema.artifacts.map((a: any) => ({
+    const project = (schema: any) => ({
+      name: schema.name,
+      declares: schema.declares,
+      artifacts: schema.artifacts.map((a: any) => ({
         id: a.id,
         generates: a.generates,
         requiresApproval: a.requiresApproval,
+        requiresWritten: a.requiresWritten ?? [],
+        unlocks: a.unlocks ?? [],
         grantVerb: a.grantVerb,
         sections: (a.sections ?? []).map((s: any) => s.id),
         lines: a.lines ?? [],
@@ -210,7 +298,8 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
         completes: a.completes,
         receivesReceipts: !!a.receivesReceipts,
         unlocksSource: !!a.unlocksSource,
-      }));
+      })),
+    });
     for (const name of ['spec', 'mission']) {
       const srcSchema = parseSchemaYaml(SHIPPED(name), name);
       const binSchema = parseSchemaYamlBin(SHIPPED(name), name);

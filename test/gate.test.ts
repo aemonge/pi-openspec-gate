@@ -8,12 +8,12 @@ import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH } from '../src/gate.ts'
 import type { GateConfig } from '../src/config.ts';
 import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 
-/** Exact copy from the Execution artifact — the gate must byte-match it. */
+/** Byte-stable block copy — the gate's remedy text, exactly. */
 const EXPECTED_BLOCK_COPY = [
   '⛔ unaccounted mutation — no active change',
   '   focus:   set the focus fact via your cockpit/status tool',
-  '   create:  openspec new change <slug> --schema mission',
-  '   or say "action the job" / "execute the job" — recorded as declared work, proceeds',
+  '   create:  openspec new change <slug> --schema <schema-name>',
+  '   or say the schema-declared phrase or "do it" — recorded as declared work, proceeds',
 ].join('\n');
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -61,7 +61,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     mkdirSync(join(repo, 'openspec', 'schemas', 'teeth'), { recursive: true });
     writeFileSync(
       join(repo, 'openspec', 'schemas', 'teeth', 'schema.yaml'),
-      'name: teeth\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
+      'name: teeth\nx-declares: [action the job, execute the job]\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
       'utf8',
     );
     writeFileSync(join(repo, 'openspec', 'changes', 'c1', '.openspec.yaml'), 'schema: teeth\n', 'utf8');
@@ -82,7 +82,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
         archiveGuard: false,
         stampCreations: false,
       },
-      exempt: config?.exempt ?? [{ prefix: '**/openspec/**', category: 'ladder-artifacts' }],
+      exempt: config?.exempt ?? [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
     });
     const ctx = {
       cwd: repo,
@@ -101,7 +101,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
   });
 
-  test('declare: human "action the job" → one debt line, mutation proceeds', async () => {
+  test('declare: schema-declared phrase "action the job" → one debt line, mutation proceeds', async () => {
     rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger per declare test
     const { fire, ctx, entries } = freshGate();
     await fire('message_end', { message: { role: 'user', content: 'action the job' } }, ctx);
@@ -118,7 +118,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.deepEqual(second, { block: true, reason: BLOCK_MESSAGE });
   });
 
-  test('declare: legacy "do it" still latches one declared mutation', async () => {
+  test('declare: built-in "do it" still latches one declared mutation', async () => {
     rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger per declare test
     const { fire, ctx, entries } = freshGate();
     await fire('message_end', { message: { role: 'user', content: 'do it' } }, ctx);
@@ -159,7 +159,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const exempt = entries.find((e) => e.customType === 'pi-openspec-gate.exempt.v1');
     assert.ok(exempt, 'exempt fact recorded');
     const data = exempt!.data as { category: string; paths: string[] };
-    assert.equal(data.category, 'ladder-artifacts');
+    assert.equal(data.category, 'openspec-artifacts');
     assert.equal(data.paths.length, 1);
   });
 
