@@ -5,7 +5,7 @@ description: One human-validatable value slice as a four-step flow —
   Brainstorm (why + questions) → Investigate (de-risk; research opens) →
   Plan (the contract; writes open) → Execute (the ledger; receipts land,
   the human verdict closes it). Strictness sits at the two boundaries
-  humans own: commit at Plan, judge at the verdict. Learnings live
+  humans own — commit at Plan, judge at the verdict. Learnings live
   outside the flow in openspec/learnings/, read by every step, written by
   any change that learned something. x- tags declare the human gates that
   pi-openspec-gate enforces; openspec itself strips them silently, so the
