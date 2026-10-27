@@ -14,7 +14,16 @@ export const FACT = {
   humangate: 'pi-openspec-gate.humangate.v1',
   creationStamped: 'pi-openspec-gate.creation-stamped.v1',
   phasegate: 'pi-openspec-gate.phasegate.v1',
+  selfDeclare: 'pi-openspec-gate.self-declare.v1',
 } as const;
+
+/** An assistant message carried a declare phrase — a self-declaration
+ *  attempt. The latch refused (user messages only); the fact records the
+ *  attempt and the next block carries the correction. */
+export type SelfDeclareFact = {
+  words: string;
+  at: string;
+};
 
 export type FactAppender = (customType: string, data?: unknown) => void;
 

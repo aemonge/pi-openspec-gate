@@ -5,6 +5,36 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+- **Every remedy names its speaker, its state, and its offender — the
+  research window closes in the void** — live-caught 2026-10-27 (walk #2,
+  a cold agent in a fresh repo): the declare remedy said `say …` and the
+  agent said it — twice (bold, then bare, "in case the markdown bolding
+  broke its literal match") — because "human words only" reads as a
+  style note, not a speaker constraint. The latch held both times
+  (fail-closed), but the copy invited the flail. Now the declare remedy
+  names the speaker (`relay to the human — their reply says one of … (an
+  assistant's own message never declares)`), a declare phrase in an
+  assistant message is noticed (`self-declare.v1` fact) and the next block
+  carries a one-shot correction, the create remedy names the resolvable
+  schemas instead of `--schema <schema-name>` (the agent had handed
+  creation to the human — "you'll know which schema your setup uses"),
+  and a refused bash compound names its offending segment in a why-line
+  (`segment 'python3 --version' is not classified read-only — read-only
+  commands still pass`) — one unclassifiable segment in a read-only chain
+  had read as "every shell call is refused". The research window becomes
+  state-aware: with no active change, research instruments block inside
+  any repo with a local `openspec/` — void research is unaccounted work
+  (the walk's agent ran a full research phase — the investigate
+  artifact's substance — before any change existed) — with the same
+  focus → create → declare remedies (one builder,
+  `blockUnaccounted`, carries every headline); the "research without a
+  focused change stays free — clear the focus" escape line is retired
+  (it advertised the hole), and research outside an openspec repo stays
+  free (the gate is inert there). Overturns the 2026-10-17 idle-research
+  ruling — first live evidence of its cost. Walk #2 record: memory
+  observation #970.
+  [state-aware-remedies](openspec/changes/state-aware-remedies)
+
 - **Blocks that end the flail** — the unaccounted-mutation block is
   agent-facing by construction: a stop directive opens it (the refusal is
   final — no retries, no investigating; act on a remedy or relay to the

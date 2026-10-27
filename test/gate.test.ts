@@ -228,8 +228,10 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.ok(!base.includes('declare:'), 'no declare line without declared phrases');
     const withPhrases = blockUnaccounted({ declares: ['execute the spec', 'action the spec'] });
     assert.ok(
-      withPhrases.includes('declare: say "action the spec" · "execute the spec" — human words only; recorded as declared work, proceeds'),
-      'exact phrases, sorted, human-words-only',
+      withPhrases.includes(
+        'declare: relay to the human — their reply says one of "action the spec" · "execute the spec" (an assistant\'s own message never declares); recorded as declared work, proceeds',
+      ),
+      'exact phrases, sorted, SPEAKER named — relay, never self-declare',
     );
     assert.ok(!withPhrases.includes('do it'), 'the retired alias appears nowhere');
     const bare = blockUnaccounted({ focusable: false });
@@ -239,6 +241,62 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const child = blockUnaccounted({ subagent: true });
     assert.ok(child.includes('subagent:'), 'subagent relay line present');
     assert.ok(child.includes('inherited'), 'relay line names the inheritance rule');
+  });
+
+  test('block copy: schemas named, offender named, variant headlines', () => {
+    const named = blockUnaccounted({ schemas: ['spec'] });
+    assert.ok(named.includes('create:  openspec new change <slug> --schema spec'), 'single schema spelled out');
+    assert.ok(!named.includes('<schema-name>'), 'no placeholder when schemas resolve');
+    const multi = blockUnaccounted({ schemas: ['mission', 'spec'] });
+    assert.ok(multi.includes('--schema mission|spec'), 'multiple schemas listed, sorted');
+    const offender = blockUnaccounted({ offender: 'python3 --version' });
+    assert.ok(
+      offender.includes("why:     segment 'python3 --version' is not classified read-only — read-only commands still pass"),
+      'why-line names the offending segment',
+    );
+    const variant = blockUnaccounted({
+      headline: '⛔ research window closed — no active change',
+      lead: 'research instruments are work',
+      focusable: false,
+    });
+    assert.ok(variant.startsWith('⛔ research window closed — no active change'), 'variant headline');
+    assert.ok(variant.includes('research instruments are work'), 'variant lead line');
+    assert.ok(!variant.includes('focus:'), 'state-aware remedies carry over');
+  });
+
+  test('compound bash block names the offending segment (walk #2, catch #6)', async () => {
+    sessionEntries.length = 0; // no focus — the block must fire
+    const { fire, ctx } = freshGate();
+    const result = (await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'pwd && ls -la && python3 --version && which python3' } },
+      ctx,
+    )) as { block?: boolean; reason?: string };
+    assert.equal(result?.block, true);
+    assert.match(
+      result!.reason!,
+      /why:     segment 'python3 --version' is not classified read-only — read-only commands still pass/u,
+    );
+  });
+
+  test('self-declare: assistant phrase → latch refuses, next block corrects (walk #2, catches #3/#4)', async () => {
+    sessionEntries.length = 0; // no focus — the latch must refuse, not attribute
+    const { fire, ctx, entries } = freshGate();
+    await fire('message_end', { message: { role: 'assistant', content: 'declaring it plainly: action the job' } }, ctx);
+    const blocked = (await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx)) as {
+      block?: boolean;
+      reason?: string;
+    };
+    assert.equal(blocked?.block, true, 'assistant text never declares — the latch stays closed');
+    assert.match(blocked!.reason!, /note:    a declare phrase appeared in an assistant message/u);
+    assert.match(blocked!.reason!, /relay the phrases upward, never say them yourself/u);
+    assert.match(blocked!.reason!, /declare: relay to the human/u, 'the declare remedy names the speaker');
+    const noticed = entries.find((e) => e.customType === 'pi-openspec-gate.self-declare.v1');
+    assert.ok(noticed, 'self-declare fact recorded');
+    const again = (await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx)) as {
+      reason?: string;
+    };
+    assert.ok(!again!.reason!.includes('note:'), 'the correction rides exactly one block');
   });
 
   test('unaccounted block is state-aware: zero changes → create/declare only', async () => {

@@ -27,6 +27,11 @@ export type MutationVerdict = {
   basis: string;
   /** true when the call is change entry (openspec new/init), skipped by the gate. */
   creation: boolean;
+  /** First bash segment that classified mutating, truncated — the block's
+   *  why-line (live-caught 2026-10-27: one unclassifiable segment in a
+   *  read-only chain made a cold agent conclude "every shell call is
+   *  refused"; naming the offender teaches the split). */
+  offender?: string;
 };
 
 const READ_ONLY_TOOLS = new Set([
@@ -253,6 +258,9 @@ function stripWrapper(segment: string): string {
   return WRAPPER_TOKEN.test(segment) ? segment.replace(WRAPPER_TOKEN, 'openspec ') : segment;
 }
 
+const offenderOf = (segment: string): string =>
+  segment.length > 60 ? `${segment.slice(0, 57)}…` : segment;
+
 function bashVerdict(command: string): MutationVerdict {
   const { segments, grammarUnsafe } = splitSegments(command);
   if (grammarUnsafe) {
@@ -262,7 +270,7 @@ function bashVerdict(command: string): MutationVerdict {
   for (const segment of segments) {
     for (const { pattern, basis } of BASH_OPERATOR_PATTERNS) {
       if (pattern.test(segment)) {
-        return { mutating: true, basis, creation: false };
+        return { mutating: true, basis, creation: false, offender: offenderOf(segment) };
       }
     }
     const body = stripAssignments(stripWrapper(segment));
@@ -279,10 +287,10 @@ function bashVerdict(command: string): MutationVerdict {
     if (readVerbed) continue; // read verb: arguments are data, not commands
     for (const { pattern, basis } of BASH_COMMAND_PATTERNS) {
       if (pattern.test(body)) {
-        return { mutating: true, basis, creation: false };
+        return { mutating: true, basis, creation: false, offender: offenderOf(segment) };
       }
     }
-    return { mutating: true, basis: 'bash.unknown=fail-safe', creation: false };
+    return { mutating: true, basis: 'bash.unknown=fail-safe', creation: false, offender: offenderOf(segment) };
   }
   if (creation) {
     return { mutating: false, basis: 'bash.openspec-creation', creation: true };

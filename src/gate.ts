@@ -5,7 +5,7 @@
  * Decision order for every mutating call:
  *   1. exempt?    (path-scoped, every target path covered) → record fact, pass
  *   2. focused?   (this session or inherited from parent)  → attribute, pass
- *   3. declared?  (a schema-declared phrase — human words only, latch consumed) → debt line, pass
+ *   3. declared?  (a schema-declared phrase in the human's own message — assistant text never declares; latch consumed) → debt line, pass
  *   4. otherwise  → block, exact copy, all three remedies
  * Creation commands (openspec new/init) pass ungated.
  * Handler failure blocks the call as a fail-safe.
@@ -46,37 +46,57 @@ import {
   schemaIsGated,
   schemaVerdictLine,
   scanGrantVerbs,
+  scanSchemaNames,
   sectionTitles,
   writesUnlocked,
 } from './schema.ts';
 
-/** The unaccounted-mutation block — agent-facing by construction:
- *  a stop directive opens it (the refusal is final; a flailing agent
- *  burns turns debugging a terminal block), every remedy names its exact
- *  instrument (the gate reads one focus entry type — a guessed
- *  cockpit/status tool satisfies nothing; the declare remedy lists the
- *  exact x-declares phrases and marks them human-words-only, so an
- *  assistant cannot invite itself to declare), remedies are state-aware
- *  (nothing focusable → no focus line; no declared phrases → no declare
- *  line), and subagent sessions get a relay-upward line (focus is
- *  inherited, never self-served). */
+/** The unaccounted block — agent-facing by construction: a stop directive
+ *  opens it (the refusal is final; a flailing agent burns turns debugging a
+ *  terminal block), every remedy names its exact instrument (the gate reads
+ *  one focus entry type — a guessed cockpit/status tool satisfies nothing;
+ *  the create remedy names the resolvable schemas, not a placeholder;
+ *  the declare remedy names the SPEAKER — relay to the human, whose reply
+ *  says one of the exact x-declares phrases, because an assistant's own
+ *  message never declares — live-caught 2026-10-27 ×2: a cold agent read
+ *  the old agent-addressed "say …" as its own instruction and parsed
+ *  "human words only" as a style note, retrying the phrase unbolded), a
+ *  why-line names the offending bash segment (one unclassifiable segment
+ *  in a read-only chain must not read as "every shell call is refused"),
+ *  remedies are state-aware (nothing focusable → no focus line; no
+ *  declared phrases → no declare line; no resolvable schemas →
+ *  placeholder), and subagent sessions get a relay-upward line (focus is
+ *  inherited, never self-served). The same builder carries the
+ *  research-window variants — one remedy language everywhere. */
 export function blockUnaccounted(options?: {
+  headline?: string;
+  lead?: string;
   subagent?: boolean;
   focusable?: boolean;
+  schemas?: string[];
   declares?: string[];
+  offender?: string;
 }): string {
   const lines = [
-    '⛔ unaccounted mutation — no active change',
+    options?.headline ?? '⛔ unaccounted mutation — no active change',
     '   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human',
   ];
+  if (options?.lead) {
+    lines.push(`   ${options.lead}`);
+  }
+  if (options?.offender) {
+    lines.push(`   why:     segment '${options.offender}' is not classified read-only — read-only commands still pass`);
+  }
   if (options?.focusable !== false) {
     lines.push('   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)');
   }
-  lines.push('   create:  openspec new change <slug> --schema <schema-name>');
+  const schemaName =
+    options?.schemas && options.schemas.length > 0 ? options.schemas.join('|') : '<schema-name>';
+  lines.push(`   create:  openspec new change <slug> --schema ${schemaName}`);
   const phrases = [...(options?.declares ?? [])].sort();
   if (phrases.length > 0) {
     lines.push(
-      `   declare: say ${phrases.map((p) => `"${p}"`).join(' · ')} — human words only; recorded as declared work, proceeds`,
+      `   declare: relay to the human — their reply says one of ${phrases.map((p) => `"${p}"`).join(' · ')} (an assistant's own message never declares); recorded as declared work, proceeds`,
     );
   }
   if (options?.subagent) {
@@ -139,7 +159,6 @@ export function blockResearchWindow(slug: string, grantCommand: string): string 
   return [
     `⛔ research window closed — '${slug}' has not reached its research step`,
     `   grant:   ${grantCommand}   ← your terminal`,
-    '   or:      research without a focused change stays free — clear the focus',
     '   the schema declares when research opens (x-unlocks: [research])',
   ].join('\n');
 }
@@ -147,8 +166,11 @@ export function blockResearchWindow(slug: string, grantCommand: string): string 
 /** A human declaration latches exactly one declared mutation. The
  *  vocabulary is data: only x-declares phrases of resolvable schemas
  *  latch — the built-in alias is retired — and only from user messages;
- *  assistant text never declares. */
+ *  assistant text never declares, but a phrase in an assistant message is
+ *  NOTICED (below) so the next block can correct the attempt instead of
+ *  leaving the agent to guess at formatting. */
 const DECLARE_MAX_LENGTH = 200;
+const SELF_DECLARE_MAX_LENGTH = 2000;
 
 const declareCache = new Map<string, RegExp | null>();
 function declarePhrases(openspecRoot: string): RegExp | null {
@@ -247,6 +269,9 @@ export type GateState = {
   validationPermit: boolean;
   /** witnessed-but-unresolved creation; stamped on message_end (below) */
   pendingCreation?: { slug: string; root: string; tool: string; at: string };
+  /** an assistant message carried a declare phrase (self-declaration
+   *  attempt, latch refused); the correction rides the next block once */
+  selfDeclareNoticed?: string;
 };
 
 export function createGate(pi: ExtensionAPI, config: GateConfig): void {
@@ -262,6 +287,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     validationPermit: false,
   };
   const configReadOnlyTools = new Set(config.readOnlyTools ?? []);
+
+  /** The self-declare correction rides exactly one block: a declare phrase
+   *  in an assistant message means the agent tried to declare itself — the
+   *  latch refused (user messages only) and stayed SILENT, so the agent
+   *  guessed at formatting and retried (live-caught 2026-10-27 ×2: bold,
+   *  then bare). The next block says what actually happened. */
+  const withDeclareNote = (reason: string): string => {
+    if (!state.selfDeclareNoticed) return reason;
+    state.selfDeclareNoticed = undefined; // one-shot: the correction rides one block
+    return `${reason}\n   note:    a declare phrase appeared in an assistant message — declarations latch only from the human; relay the phrases upward, never say them yourself`;
+  };
 
   const annotationsOf = (toolName: string) =>
     (pi.getAllTools?.() ?? []).find((tool) => tool.name === toolName)?.annotations;
@@ -322,7 +358,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       }
     }
     const message = (event as { message?: { role?: unknown; content?: unknown } }).message;
-    if (!message || message.role !== 'user') return;
+    if (!message) return;
     const content = message.content;
     const text =
       typeof content === 'string'
@@ -336,9 +372,21 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
               )
               .join(' ')
           : '';
-    if (text.length === 0 || text.length > DECLARE_MAX_LENGTH) return;
     const declareRoot = openspecRootOf((ctx as { cwd?: string } | undefined)?.cwd ?? process.cwd());
     const phrases = declareRoot ? declarePhrases(declareRoot) : null;
+    if (message.role === 'assistant') {
+      // self-declaration attempt: the latch refuses by construction (user
+      // messages only) — record it and let the next block carry the
+      // correction, so the agent stops guessing at formatting
+      // (live-caught 2026-10-27 ×2: said bold, then bare)
+      if (phrases && text.length > 0 && text.length <= SELF_DECLARE_MAX_LENGTH && phrases.test(text)) {
+        state.selfDeclareNoticed = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
+        appendFact(FACT.selfDeclare, { words: state.selfDeclareNoticed, at: utcNow() });
+      }
+      return;
+    }
+    if (message.role !== 'user') return;
+    if (text.length === 0 || text.length > DECLARE_MAX_LENGTH) return;
     if (phrases && phrases.test(text)) {
       state.declarationWords = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
     }
@@ -389,11 +437,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       }
     }
     if (!verdict.mutating) {
-      // 0.85 research window — schema-declared instruments (x-unlocks:
-      //  [research]) open at their artifact's grant. Reads stay free unless
-      //  a FOCUSED change's schema declares the window — idle research is
-      //  never gated
-      if (approval.phaseGates && openspecRoot) {
+      // 0.85 research window — research instruments are WORK: with a
+      // focused change they open at the schema-declared step
+      // (x-unlocks: [research]); with NO active change they block with the
+      // same state-aware remedies as the mutation block — void research is
+      // unaccounted work (live-caught 2026-10-27 walk #2: a cold agent ran
+      // a whole research phase — the investigate artifact's substance — in
+      // the void, because the window keyed on focus alone, and the old copy
+      // even advertised the escape: "research without a focused change
+      // stays free — clear the focus"). Reads that are not research
+      // instruments stay free.
+      if (approval.phaseGates && openspecRoot && researchCallMatches(toolName, bashCommand, config)) {
         const focusNow = activeFocus(ctx.sessionManager, cwd);
         if (focusNow && focusIsActive(focusNow, openspecRoot)) {
           const meta = readChangeMeta(openspecRoot, focusNow.change);
@@ -401,8 +455,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
           if (
             res.ok &&
             res.schema.artifacts.some((a) => a.unlocks.includes('research')) &&
-            !capabilityUnlocked(res.schema, grantedSet(meta), 'research') &&
-            researchCallMatches(toolName, bashCommand, config)
+            !capabilityUnlocked(res.schema, grantedSet(meta), 'research')
           ) {
             const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
             const grant = bearer.grantVerb
@@ -414,8 +467,23 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
               change: focusNow.change,
               at: utcNow(),
             });
-            return { block: true, reason: blockResearchWindow(focusNow.change, grant) };
+            return { block: true, reason: withDeclareNote(blockResearchWindow(focusNow.change, grant)) };
           }
+        } else {
+          appendFact(FACT.phasegate, { kind: 'research-void', tool: toolName, at: utcNow() });
+          return {
+            block: true,
+            reason: withDeclareNote(
+              blockUnaccounted({
+                headline: '⛔ research window closed — no active change',
+                lead: 'research instruments are work — they open at a schema-declared step, or the human declares',
+                subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
+                focusable: hasActiveChanges(openspecRoot),
+                schemas: scanSchemaNames(openspecRoot),
+                declares: [...scanDeclares(openspecRoot)],
+              }),
+            ),
+          };
         }
       }
       return undefined; // read-only or creation: pass
@@ -580,7 +648,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             paths,
             at: utcNow(),
           });
-          return { block: true, reason: BLOCK_UNAPPROVED };
+          return { block: true, reason: withDeclareNote(BLOCK_UNAPPROVED) };
         }
       }
       const at = utcNow();
@@ -611,15 +679,21 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
 
     // 4. blocked — visible, exact copy, every remedy that is real in this
-    // state: nothing focusable → no focus line; subagent → relay-upward
+    // state: nothing focusable → no focus line; subagent → relay-upward;
+    // resolvable schemas named, not a placeholder; the offending bash
+    // segment named; a noticed self-declare attempt corrected
     appendFact(FACT.blocked, { tool: toolName, paths, basis: verdict.basis, at: utcNow() });
     return {
       block: true,
-      reason: blockUnaccounted({
-        subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
-        focusable: openspecRoot ? hasActiveChanges(openspecRoot) : false,
-        declares: openspecRoot ? [...scanDeclares(openspecRoot)] : [],
-      }),
+      reason: withDeclareNote(
+        blockUnaccounted({
+          subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
+          focusable: openspecRoot ? hasActiveChanges(openspecRoot) : false,
+          schemas: openspecRoot ? scanSchemaNames(openspecRoot) : undefined,
+          declares: openspecRoot ? [...scanDeclares(openspecRoot)] : [],
+          offender: verdict.offender,
+        }),
+      ),
     };
   });
 }

@@ -562,3 +562,28 @@ export function scanGrantVerbs(openspecRoot: string): Set<string> {
   grantVerbCache.set(openspecRoot, verbs);
   return verbs;
 }
+
+const schemaNameCache = new Map<string, string[]>();
+
+/** Names of every resolvable schema (project + user-global), sorted — the
+ *  create remedy names what `--schema` accepts instead of a placeholder
+ *  (live-caught 2026-10-27 walk #2: an agent read `--schema <schema-name>`,
+ *  could not resolve it, and handed change creation to the human — "you'll
+ *  know which schema your setup uses"). Presence only; validity fails
+ *  loudly at resolution. Cached per openspec root. */
+export function scanSchemaNames(openspecRoot: string): string[] {
+  const cached = schemaNameCache.get(openspecRoot);
+  if (cached) return cached;
+  const names = new Set<string>();
+  for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
+    if (!existsSync(dir)) continue;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && existsSync(join(dir, entry.name, 'schema.yaml'))) {
+        names.add(entry.name);
+      }
+    }
+  }
+  const sorted = [...names].sort();
+  schemaNameCache.set(openspecRoot, sorted);
+  return sorted;
+}

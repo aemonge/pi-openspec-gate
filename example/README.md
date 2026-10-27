@@ -15,8 +15,10 @@ Plus schema-level `x-declares: [action the spec, execute the spec]`.
 
 **The research window**: with a change focused on this schema, research
 instruments (web/docs tools, and bash verbs named in config — `graphify`
-by default here) block until `dig` is granted; research without a focused
-change stays free. **The ledger anatomy** (in the templates, ungated):
+by default here) block until `dig` is granted; research with no focused
+change blocks too inside any repo with a local `openspec/` — the same
+state-aware remedies (focus → create → declare) — because void research
+is unaccounted work. **The ledger anatomy** (in the templates, ungated):
 per-Slice checkpoint checkboxes with timing slots → a Commit checkbox
 whose `hash:` slot is the receipt (a tick without a hash is not done) →
 one final, flip-guarded Human validation carrying `surfaced:` routing

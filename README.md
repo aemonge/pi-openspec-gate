@@ -16,9 +16,10 @@ tool call is exactly one of:
 ```text
 ⛔ unaccounted mutation — no active change
    stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human
+   why:     segment 'python3 --version' is not classified read-only — read-only commands still pass
    focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)
-   create:  openspec new change <slug> --schema <schema-name>
-   declare: say "action the spec" · "execute the spec" — human words only; recorded as declared work, proceeds
+   create:  openspec new change <slug> --schema spec
+   declare: relay to the human — their reply says one of "action the spec" · "execute the spec" (an assistant's own message never declares); recorded as declared work, proceeds
 ```
 
 Never permission, never a renderer, never a prompt: another layer owns
@@ -27,11 +28,14 @@ not a judgment. Change entry (`openspec new` / `init`) is never gated.
 Subagents inherit the parent's focus — federated accounting. Memory tools
 are instruments: ungated, recorded, never blocked. Blocks are state-aware:
 the stop directive opens every one, each remedy names its exact instrument,
-the focus line disappears when no change exists to focus, the declare line
-names the exact `x-declares` phrases and appears only when a schema
-declares any — a human's words only (assistant text never latches; the
-built-in "do it" alias is retired) — and subagent sessions get a
-relay-upward line.
+the focus line disappears when no change exists to focus, the create line
+names the resolvable schemas instead of a placeholder, a refused bash
+compound names its offending segment (read-only commands still pass), the
+declare line names the SPEAKER — relay to the human, whose reply says one
+of the exact `x-declares` phrases (an assistant's own message never
+declares; a phrase in assistant text is noticed and the next block carries
+the correction — the built-in "do it" alias is retired) — and subagent
+sessions get a relay-upward line.
 
 ## The shipped `mission` schema
 
@@ -110,12 +114,14 @@ Grants are strictly next-artifact-only, you approve what you read
 artifacts missing declared structure or carrying ungranted gated
 sections. Any tool-call attempt on the grant surface — approve, confirm,
 grant, or any verb the schemas declare — is itself blocked: approval is a
-human act. **The research window**: when a focused change's schema
-declares `x-unlocks: [research]` on an artifact, research instruments
-block until that artifact is granted — the schema declares *when*, the
-config declares *what* (tools + bash command verbs; web/docs tools by
-default, `graphify` here). Research without a focused change is never
-gated.
+human act. **The research window**: when a focused change's schema declares
+`x-unlocks: [research]` on an artifact, research instruments block until
+that artifact is granted — the schema declares *when*, the config declares
+*what* (tools + bash command verbs; web/docs tools by default, `graphify`
+here). Research without a focused change is also gated inside any repo
+with a local `openspec/` — void research is unaccounted work, and it
+blocks with the same state-aware remedies (focus → create → declare);
+outside an openspec repo research stays free (the gate is inert there).
 
 ```json
 "approval": { "enforce": true, "humanGateSteps": true,

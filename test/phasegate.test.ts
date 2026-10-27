@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
@@ -103,7 +103,7 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
     assert.equal(pass, undefined);
   });
 
-  test('after the dig grant the window opens; unfocused research stays free', async () => {
+  test('after the dig grant the window opens; void research blocks with the remedy ladder (walk #2, catch #7)', async () => {
     const { root } = fixture('window', { granted: 'brief,dig' });
     const fake = makeFakePi();
     createGate(fake.pi as never, CONFIG as never);
@@ -118,7 +118,48 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
       { toolName: 'web_explore', input: { query: 'casual question' } },
       ctxOf(root),
     );
-    assert.equal(idle, undefined, 'no focused change — idle research is never gated');
+    const reason = (idle as { reason: string }).reason;
+    assert.match(reason, /research window closed — no active change/u, 'void research blocks');
+    assert.match(reason, /stop:/u, 'same stop directive as the mutation block');
+    assert.match(reason, /openspec_focus/u, 'changes exist on disk → focus remedy');
+    assert.match(reason, /create:/u, 'create remedy present');
+    assert.ok(!reason.includes('clear the focus'), 'the escape-hatch line is retired');
+    const fact = fake.entries.find((e) => (e.data as { kind?: string } | undefined)?.kind === 'research-void');
+    assert.ok(fact, 'research-void fact recorded');
+  });
+
+  test('void research with zero changes: no focus line, create/declare lead, schema named', async () => {
+    const { root } = fixture('window');
+    rmSync(join(root, 'openspec', 'changes', 'c1'), { recursive: true, force: true });
+    const fake = makeFakePi();
+    createGate(fake.pi as never, CONFIG as never);
+    const blocked = await fake.fire(
+      'tool_call',
+      { toolName: 'resolve-library-id', input: { query: 'dice notation' } },
+      ctxOf(root),
+    );
+    const reason = (blocked as { reason: string }).reason;
+    assert.match(reason, /research window closed — no active change/u);
+    assert.ok(!reason.includes('focus:'), 'nothing focusable → focus line dropped');
+    assert.match(reason, /create:/u);
+    assert.ok(reason.includes('window'), 'the local schema is named, not a placeholder');
+    assert.ok(!reason.includes('<schema-name>'), 'no placeholder when a schema resolves');
+  });
+
+  test('void research with no local openspec stays free — the gate is inert there', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'phasegate-bare-'));
+    try {
+      const fake = makeFakePi();
+      createGate(fake.pi as never, CONFIG as never);
+      const pass = await fake.fire(
+        'tool_call',
+        { toolName: 'web_explore', input: { query: 'x' } },
+        ctxOf(root),
+      );
+      assert.equal(pass, undefined, 'no local openspec → research free');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

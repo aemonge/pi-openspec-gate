@@ -5,8 +5,9 @@
  * owns declaredness. Every mutating tool call must be one of:
  *   exempt     — path-scoped, always recorded as a fact
  *   attributed — the openspec focus names an active change; receipt appended
- *   declared   — the human said a schema-declared phrase (x-declares) —
- *                human words only; one visible debt line, then it proceeds
+ *   declared   — the human's own message said a schema-declared phrase
+ *                (x-declares) — assistant text never declares; one visible
+ *                debt line, then it proceeds
  *   blocked    — visible block, exact copy, every remedy real in this state
  *
  * Gate events are facts (pi.appendEntry). This extension never renders and
