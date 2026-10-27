@@ -5,6 +5,37 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+(none — 0.7.0 carries the walk #2/#3 batch)
+
+## 0.7.0 — 2026-10-27
+
+- **Walk #3 validation pass + strict-YAML example schema** — the
+  agent-facing blocks overhaul is live-validated end-to-end on a cold
+  agent (GLM-5.3, fresh machine, fresh repo): cold-start block read
+  correctly at the first mutation (stop directive — zero flail, vs
+  walk #2's ~10 guard-debug calls), create self-served once the schema
+  was named, focus self-served (`openspec_focus` set — the TUI shows a
+  change owning the moment), the declare relay was read letter-perfect
+  ("an assistant message never declares"), the research window held
+  pre-`dig` (one blocked probe, journal drafted with an honest
+  instruments-closed marker), approval teeth fired at every
+  focused-but-ungranted mutation (attribution is not approval), and
+  writes unlocked exactly at `commit` — the Plan boundary — where the
+  thrice-blocked `rm` and the original blocked write both passed
+  attributed, receipts landing in the `x-receives-receipts` artifact.
+  The shipped example schema needed one strict-YAML fix (a literal
+  `Hello: ${name}`-style colon value — `openspec status` now parses
+  again; `try.sh` 11/11, suite 155/155). Seven live catches ride the
+  follow-up change with full evidence in the tasks record: approve
+  remedy misdirection (and its amplification — agents re-broadcast the
+  bogus remedy as their own advice), relay false-positive on the
+  self-declare detector, declare remedy offered in states approval
+  teeth intercept, `--help`/`--version` probes classified mutating,
+  placeholder create remedy when the schema scan resolves none, focus
+  task staleness in the TUI line. Walk #3 record:
+  `openspec/changes/state-aware-remedies/6-tasks.md`.
+  [state-aware-remedies](openspec/changes/state-aware-remedies)
+
 - **Every remedy names its speaker, its state, and its offender — the
   research window closes in the void** — live-caught 2026-10-27 (walk #2,
   a cold agent in a fresh repo): the declare remedy said `say …` and the
