@@ -226,7 +226,9 @@ describe('artifact gates: creating gated change artifacts', () => {
     // bash targets are not enumerable (house law): the call falls to
     // focus/declare/block — gated artifacts can't be drafted around the
     // gate via bash any more than any other mutation can
-    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
+    const blocked = result as { block?: boolean; reason?: string };
+    assert.equal(blocked?.block, true, 'blocked');
+    assert.ok(blocked.reason!.includes('unaccounted mutation'), 'the unaccounted block — state-aware copy');
   });
 
   test('artifact requiring two precedents blocks until BOTH are granted, naming all missing', async () => {

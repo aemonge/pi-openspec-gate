@@ -4,16 +4,19 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 
-import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH } from '../src/gate.ts';
+import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH, blockUnaccounted } from '../src/gate.ts';
 import type { GateConfig } from '../src/config.ts';
 import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 
-/** Byte-stable block copy — the gate's remedy text, exactly. */
-const EXPECTED_BLOCK_COPY = [
+/** Byte-stable base copy — the builder's default state (a focusable
+ *  change, no declared phrases anywhere). Fixture-state asserts use
+ *  membership instead: global schema homes contribute x-declares phrases
+ *  machine-dependently, and the pinned copy must not. */
+const EXPECTED_BASE_COPY = [
   '⛔ unaccounted mutation — no active change',
-  '   focus:   set the focus fact via your cockpit/status tool',
+  '   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human',
+  '   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)',
   '   create:  openspec new change <slug> --schema <schema-name>',
-  '   or say the schema-declared phrase or "do it" — recorded as declared work, proceeds',
 ].join('\n');
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -91,11 +94,20 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     return { ...fake, ctx };
   }
 
-  test('block: no focus, no declaration → exact copy + all three remedies + fact', async () => {
+  test('block: no focus, no declaration → stop directive + every real remedy + fact', async () => {
     const { fire, ctx, entries } = freshGate();
-    const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
-    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
-    assert.equal(BLOCK_MESSAGE, EXPECTED_BLOCK_COPY);
+    const result = (await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx)) as {
+      block?: boolean;
+      reason?: string;
+    };
+    assert.equal(result?.block, true);
+    assert.equal(BLOCK_MESSAGE, EXPECTED_BASE_COPY);
+    assert.ok(result.reason!.includes('stop:'), 'stop directive');
+    assert.ok(result.reason!.includes('openspec_focus'), 'exact focus instrument');
+    assert.ok(result.reason!.includes('create:'), 'create remedy');
+    assert.ok(result.reason!.includes('declare:'), 'declare remedy — the fixture schema declares');
+    assert.ok(result.reason!.includes('"action the job"'), 'declare names the exact phrases');
+    assert.ok(!result.reason!.includes('"do it"'), 'the retired alias appears nowhere');
     const blocked = entries.find((e) => e.customType === 'pi-openspec-gate.blocked.v1');
     assert.ok(blocked, 'blocked fact recorded');
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
@@ -114,25 +126,22 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.match(lines[0], /^bare — action the job · at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u);
     assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'));
     // latch consumed: a second mutation blocks again
-    const second = await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx);
-    assert.deepEqual(second, { block: true, reason: BLOCK_MESSAGE });
+    const second = (await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx)) as {
+      reason?: string;
+    };
+    assert.ok(second?.reason?.includes('unaccounted mutation'), 'blocked again — one latch, one mutation');
   });
 
-  test('declare: built-in "do it" still latches one declared mutation', async () => {
-    rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger per declare test
+  test('declare: no built-in alias — "do it" latches nothing (vocabulary is schema data)', async () => {
+    rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true }); // fresh ledger
     const { fire, ctx, entries } = freshGate();
     await fire('message_end', { message: { role: 'user', content: 'do it' } }, ctx);
-    const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
-    assert.equal(pass, undefined);
-    const bare = join(repo, 'openspec', 'bare-work.md');
-    assert.ok(existsSync(bare), 'debt ledger exists');
-    const lines = readFileSync(bare, 'utf8').trim().split('\n');
-    assert.equal(lines.length, 1, 'exactly one debt line');
-    assert.match(lines[0], /^bare — do it · at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u);
-    assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'));
-    // latch consumed: a second mutation blocks again
-    const second = await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx);
-    assert.deepEqual(second, { block: true, reason: BLOCK_MESSAGE });
+    const blocked = (await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx)) as {
+      block?: boolean;
+    };
+    assert.equal(blocked?.block, true, 'still blocked — the alias is retired');
+    assert.ok(!entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'), 'no declared fact');
+    assert.ok(!existsSync(join(repo, 'openspec', 'bare-work.md')), 'no debt line');
   });
 
   test('attribute: focus names an active change → receipt in 4-tasks.md', async () => {
@@ -211,6 +220,65 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const { fire, ctx } = freshGate();
     const pass = await fire('tool_call', { toolName: 'bash', input: { command: 'openspec new change fresh --schema mission' } }, ctx);
     assert.equal(pass, undefined);
+  });
+
+  test('block copy: stop directive, exact instruments, state-aware variants', () => {
+    const base = blockUnaccounted();
+    assert.equal(base, EXPECTED_BASE_COPY, 'base copy pinned');
+    assert.ok(!base.includes('declare:'), 'no declare line without declared phrases');
+    const withPhrases = blockUnaccounted({ declares: ['execute the spec', 'action the spec'] });
+    assert.ok(
+      withPhrases.includes('declare: say "action the spec" · "execute the spec" — human words only; recorded as declared work, proceeds'),
+      'exact phrases, sorted, human-words-only',
+    );
+    assert.ok(!withPhrases.includes('do it'), 'the retired alias appears nowhere');
+    const bare = blockUnaccounted({ focusable: false });
+    assert.ok(!bare.includes('focus:'), 'no focus remedy when nothing can be focused');
+    assert.ok(bare.includes('create:'), 'create remedy remains');
+    assert.ok(bare.includes('stop:'), 'stop directive remains');
+    const child = blockUnaccounted({ subagent: true });
+    assert.ok(child.includes('subagent:'), 'subagent relay line present');
+    assert.ok(child.includes('inherited'), 'relay line names the inheritance rule');
+  });
+
+  test('unaccounted block is state-aware: zero changes → create/declare only', async () => {
+    const empty = mkdtempSync(join(tmpdir(), 'gate-empty-'));
+    try {
+      mkdirSync(join(empty, 'openspec', 'changes'), { recursive: true }); // the root walker keys on it
+      const fake = makeFakePi();
+      createGate(fake.pi as never, {
+        enabled: true,
+        exempt: [],
+        approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false },
+      });
+      const result = (await fake.fire(
+        'tool_call',
+        { toolName: 'write', input: { path: 'src/a.ts' } },
+        { cwd: empty, sessionManager: { getEntries: () => [] } },
+      )) as { reason?: string };
+      assert.ok(result?.reason, 'blocked');
+      assert.ok(result.reason!.includes('stop:'), 'stop directive present');
+      assert.ok(!result.reason!.includes('focus:'), 'focus remedy dropped — nothing to focus');
+      assert.ok(result.reason!.includes('create:'), 'create remedy leads');
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  test('unaccounted block tells subagents to relay upward', async () => {
+    sessionEntries.length = 0; // no inherited/own focus — the block must fire
+    const { fire, ctx } = freshGate();
+    process.env.PI_SUBAGENT_DELEGATION = JSON.stringify({ parentSessionId: 'parent-x', childSessionId: 'child-x' });
+    try {
+      const result = (await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx)) as {
+        reason?: string;
+      };
+      assert.ok(result?.reason, 'blocked');
+      assert.ok(result.reason!.includes('subagent:'), 'relay line present');
+      assert.ok(result.reason!.includes('do not self-serve'), 'self-serve refused');
+    } finally {
+      delete process.env.PI_SUBAGENT_DELEGATION;
+    }
   });
 });
 

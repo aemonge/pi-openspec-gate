@@ -63,7 +63,8 @@ pi                                        # start a session
 In-session checklist:
 
 1. `write src/anything.ts` with no focus → blocked with all three remedies
-2. Say **"do it"** (or a phrase a schema `x-declares`) → exactly one
+2. Say a phrase the schema `x-declares` (the example schema: **"action the
+   spec"** / **"execute the spec"** — human words only) → exactly one
    mutation proceeds, one debt line in `openspec/bare-work.md`
 3. Set the focus (`openspec_focus`) on your change → mutations attributed;
    receipts land in the `x-receives-receipts` artifact when declared

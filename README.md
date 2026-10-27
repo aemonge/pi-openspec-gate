@@ -8,22 +8,30 @@ tool call is exactly one of:
   receipt (tool · paths · UTC) lands in that change's `5-execution.md`
 - **declared** — the human says a phrase a schema declares (`x-declares`,
   e.g. the shipped `mission` schema declares "action the mission" /
-  "execute the mission") or the built-in "do it"; one visible debt line in
+  "execute the mission"); one visible debt line in
   `openspec/bare-work.md`, then it proceeds (one-shot latch)
-- **blocked** — visible, byte-stable, with paste-ready remedies
+- **blocked** — visible, byte-stable, state-aware: a stop directive, then
+  only remedies that are real in this state
 
 ```text
 ⛔ unaccounted mutation — no active change
-   focus:   set the focus fact via your cockpit/status tool
+   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human
+   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)
    create:  openspec new change <slug> --schema <schema-name>
-   or say the schema-declared phrase or "do it" — recorded as declared work, proceeds
+   declare: say "action the spec" · "execute the spec" — human words only; recorded as declared work, proceeds
 ```
 
 Never permission, never a renderer, never a prompt: another layer owns
 trust; this gate owns declaredness. `unknown = mutating` is a fail-safe,
 not a judgment. Change entry (`openspec new` / `init`) is never gated.
 Subagents inherit the parent's focus — federated accounting. Memory tools
-are instruments: ungated, recorded, never blocked.
+are instruments: ungated, recorded, never blocked. Blocks are state-aware:
+the stop directive opens every one, each remedy names its exact instrument,
+the focus line disappears when no change exists to focus, the declare line
+names the exact `x-declares` phrases and appears only when a schema
+declares any — a human's words only (assistant text never latches; the
+built-in "do it" alias is retired) — and subagent sessions get a
+relay-upward line.
 
 ## The shipped `mission` schema
 

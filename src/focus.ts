@@ -140,6 +140,19 @@ export function focusIsActive(focus: ActiveFocus | undefined, openspecRoot: stri
   return existsSync(join(openspecRoot, 'changes', focus.change));
 }
 
+/** True when at least one change directory exists under <root>/changes
+ *  (archive excluded) — the focus remedy is only real when something can
+ *  actually be focused; otherwise the block leads with create/declare. */
+export function hasActiveChanges(root: string): boolean {
+  try {
+    return readdirSync(join(root, 'changes'), { withFileTypes: true }).some(
+      (entry) => entry.isDirectory() && entry.name !== 'archive',
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Walk up from cwd to the nearest openspec root (dir holding changes/). */
 export function findOpenspecRoot(cwd: string): string | undefined {
   let dir = cwd;

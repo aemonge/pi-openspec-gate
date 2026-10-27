@@ -5,13 +5,34 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+- **Blocks that end the flail** — the unaccounted-mutation block is
+  agent-facing by construction: a stop directive opens it (the refusal is
+  final — no retries, no investigating; act on a remedy or relay to the
+  human), the focus remedy names its exact instrument (`openspec_focus` —
+  the gate reads one entry type, and "your cockpit/status tool" let
+  agents guess wrong, live-caught 2026-10-27 in a fresh-repo walkthrough),
+  remedies are state-aware (no focusable change on disk → the focus line
+  is dropped, create/declare lead), and subagent sessions get a
+  relay-upward line (focus is inherited, never self-served). New
+  `hasActiveChanges` joins the focus read-path; `blockUnaccounted()`
+  replaces the static `BLOCK_MESSAGE` constant at the block site (the
+  export remains the canonical base copy). The declare remedy is
+  precision-fixed the same way: it lists the exact `x-declares` phrases
+  (sorted, quoted) and marks them human-words-only — live-caught
+  2026-10-27: an assistant read the old "or say … 'do it'" invitation and
+  tried to declare in its own assistant message — the latch correctly
+  refused (user messages only), but the block had invited it. The
+  built-in `"do it"` alias is fully retired: no phrase latches that a
+  resolvable schema does not declare.
+
 - **Promptless and vocabulary-free** — the `context` handler and its
   injected protocol block are gone, and the shipped skill
   (`skills/mission-protocol.md`) no longer ships: the package injects
   nothing into LLM context, and block reasons carry their own remedies.
   The declaration latch's vocabulary moves to data — top-level
-  `x-declares` per schema (union across resolvable schemas joins the
-  built-in alias "do it"), and the block remedy names no schema.
+  `x-declares` per schema (union across resolvable schemas; the built-in
+  "do it" alias is retired — vocabulary is data, no engine-baked
+  phrases), and the block remedy names no schema.
   Vocabulary sweep across the engine: `MissionSchema`→`Schema`,
   `PhaseArtifact`→`Artifact`, `ladderComplete`→`allArtifactsGranted`,
   `grantRung`→`grantArtifact`, the `rung:` fact key→`artifact:`, and

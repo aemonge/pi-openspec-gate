@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
-import { describe, test } from 'node:test';
+import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, before, describe, test } from 'node:test';
 
-import { createGate, BLOCK_MESSAGE } from '../src/gate.ts';
+import { createGate } from '../src/gate.ts';
 import { loadGateConfig } from '../src/config.ts';
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -32,7 +35,33 @@ function makeFakePi() {
   return { pi, entries, fire };
 }
 
-const ctx = { cwd: '/tmp', sessionManager: { getEntries: () => [] } };
+// Deterministic empty repo: an openspec/changes dir with zero changes stops
+// the root walk here, so the block is byte-stable for this state (no
+// focusable change → no focus line). A bare /tmp cwd would make the
+// state-aware block machine-dependent.
+let emptyRepo: string;
+const ctx = { cwd: '', sessionManager: { getEntries: () => [] as { type: string; customType?: string; data?: unknown }[] } };
+// Membership asserts, not pinned copies: global schema homes contribute
+// x-declares phrases machine-dependently, so a byte-exact expectation for
+// this state is not stable across machines. The byte pin lives in the
+// builder unit test (gate.test.ts).
+function assertBlockedNoFocus(result: unknown): void {
+  const r = result as { block?: boolean; reason?: string };
+  assert.equal(r?.block, true, 'blocked');
+  assert.ok(r.reason!.includes('stop:'), 'stop directive');
+  assert.ok(!r.reason!.includes('focus:'), 'no focus remedy — nothing focusable');
+  assert.ok(r.reason!.includes('create:'), 'create remedy');
+}
+
+before(() => {
+  emptyRepo = mkdtempSync(join(tmpdir(), 'gate-instruments-'));
+  mkdirSync(join(emptyRepo, 'openspec', 'changes'), { recursive: true });
+  ctx.cwd = emptyRepo;
+});
+
+after(() => {
+  rmSync(emptyRepo, { recursive: true, force: true });
+});
 
 describe('instrument carve-out: the gate never gates its instruments', () => {
   test('allowlisted instrument passes and records an instrument fact', async () => {
@@ -49,14 +78,14 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
     const fake = makeFakePi();
     createGate(fake.pi as never, { enabled: true, exempt: [], accountingTools: ['work_focus'] });
     const result = await fake.fire('tool_call', { toolName: 'stage2', input: {} }, ctx);
-    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
+    assertBlockedNoFocus(result);
   });
 
   test('config without accountingTools keeps legacy behavior', async () => {
     const fake = makeFakePi();
     createGate(fake.pi as never, { enabled: true, exempt: [] });
     const result = await fake.fire('tool_call', { toolName: 'work_focus', input: {} }, ctx);
-    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
+    assertBlockedNoFocus(result);
   });
 
   test('repo config.json declares the observed instrument set', () => {
@@ -111,6 +140,6 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
     const fake = makeFakePi();
     createGate(fake.pi as never, loadGateConfig());
     const result = await fake.fire('tool_call', { toolName: 'mem_hypothetical', input: {} }, ctx);
-    assert.deepEqual(result, { block: true, reason: BLOCK_MESSAGE });
+    assertBlockedNoFocus(result);
   });
 });

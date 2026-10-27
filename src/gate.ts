@@ -5,7 +5,7 @@
  * Decision order for every mutating call:
  *   1. exempt?    (path-scoped, every target path covered) → record fact, pass
  *   2. focused?   (this session or inherited from parent)  → attribute, pass
- *   3. declared?  (schema-declared phrase or "do it", latch consumed) → debt line, pass
+ *   3. declared?  (a schema-declared phrase — human words only, latch consumed) → debt line, pass
  *   4. otherwise  → block, exact copy, all three remedies
  * Creation commands (openspec new/init) pass ungated.
  * Handler failure blocks the call as a fail-safe.
@@ -32,6 +32,7 @@ import {
   parseDelegationEnv,
   readFocusFromSessionFile,
   readSessionFocus,
+  hasActiveChanges,
   type ActiveFocus,
 } from './focus.ts';
 import { extractPaths } from './paths.ts';
@@ -49,12 +50,42 @@ import {
   writesUnlocked,
 } from './schema.ts';
 
-export const BLOCK_MESSAGE = [
-  '⛔ unaccounted mutation — no active change',
-  '   focus:   set the focus fact via your cockpit/status tool',
-  '   create:  openspec new change <slug> --schema <schema-name>',
-  '   or say the schema-declared phrase or "do it" — recorded as declared work, proceeds',
-].join('\n');
+/** The unaccounted-mutation block — agent-facing by construction:
+ *  a stop directive opens it (the refusal is final; a flailing agent
+ *  burns turns debugging a terminal block), every remedy names its exact
+ *  instrument (the gate reads one focus entry type — a guessed
+ *  cockpit/status tool satisfies nothing; the declare remedy lists the
+ *  exact x-declares phrases and marks them human-words-only, so an
+ *  assistant cannot invite itself to declare), remedies are state-aware
+ *  (nothing focusable → no focus line; no declared phrases → no declare
+ *  line), and subagent sessions get a relay-upward line (focus is
+ *  inherited, never self-served). */
+export function blockUnaccounted(options?: {
+  subagent?: boolean;
+  focusable?: boolean;
+  declares?: string[];
+}): string {
+  const lines = [
+    '⛔ unaccounted mutation — no active change',
+    '   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human',
+  ];
+  if (options?.focusable !== false) {
+    lines.push('   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)');
+  }
+  lines.push('   create:  openspec new change <slug> --schema <schema-name>');
+  const phrases = [...(options?.declares ?? [])].sort();
+  if (phrases.length > 0) {
+    lines.push(
+      `   declare: say ${phrases.map((p) => `"${p}"`).join(' · ')} — human words only; recorded as declared work, proceeds`,
+    );
+  }
+  if (options?.subagent) {
+    lines.push('   subagent: focus is inherited from your parent session — relay this block upward, do not self-serve');
+  }
+  return lines.join('\n');
+}
+
+export const BLOCK_MESSAGE = blockUnaccounted();
 
 export const BLOCK_APPROVAL_TOUCH = [
   '⛔ approval is human-terminal only',
@@ -114,9 +145,9 @@ export function blockResearchWindow(slug: string, grantCommand: string): string 
 }
 
 /** A human declaration latches exactly one declared mutation. The
- *  vocabulary is data: every x-declares phrase of any resolvable schema
- *  joins the built-in alias "do it". */
-const DECLARE_ALIAS_PATTERN = /\bdo\s+it\b/iu;
+ *  vocabulary is data: only x-declares phrases of resolvable schemas
+ *  latch — the built-in alias is retired — and only from user messages;
+ *  assistant text never declares. */
 const DECLARE_MAX_LENGTH = 200;
 
 const declareCache = new Map<string, RegExp | null>();
@@ -308,7 +339,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     if (text.length === 0 || text.length > DECLARE_MAX_LENGTH) return;
     const declareRoot = openspecRootOf((ctx as { cwd?: string } | undefined)?.cwd ?? process.cwd());
     const phrases = declareRoot ? declarePhrases(declareRoot) : null;
-    if ((phrases && phrases.test(text)) || DECLARE_ALIAS_PATTERN.test(text)) {
+    if (phrases && phrases.test(text)) {
       state.declarationWords = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
     }
     if (VALID_PATTERN.test(text)) {
@@ -579,9 +610,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       return undefined;
     }
 
-    // 4. blocked — visible, exact copy, all three remedies
+    // 4. blocked — visible, exact copy, every remedy that is real in this
+    // state: nothing focusable → no focus line; subagent → relay-upward
     appendFact(FACT.blocked, { tool: toolName, paths, basis: verdict.basis, at: utcNow() });
-    return { block: true, reason: BLOCK_MESSAGE };
+    return {
+      block: true,
+      reason: blockUnaccounted({
+        subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
+        focusable: openspecRoot ? hasActiveChanges(openspecRoot) : false,
+        declares: openspecRoot ? [...scanDeclares(openspecRoot)] : [],
+      }),
+    };
   });
 }
 
