@@ -1,192 +1,106 @@
 name: spec
-version: 2
+version: 4
 x-declares: [action the spec, execute the spec]
-description: One human-validatable value slice as a six-step flow — Idea (why) → Requirements drafted
-  (the first pass) → Research (what we know — several alternatives) → Requirements refined (the research-driven
-  steering) → Plan (how — estimate and the committed route) → Tasks (the ledger). Approvals flow down
-  step by step, evidence flows up; the claim born at the refined requirements' final Done-when criterion
-  is judged by Tasks' final Human-validation checkbox. Files are number-prefixed in grant order so the
-  directory sorts in grant order. x- tags declare the human gates that pi-openspec-gate enforces; openspec
-  itself strips them silently, so the gate validates its own tags.
+description: "Coding runs in one of two modes — human-coder assisted
+  by pi conversation, or pi-coder gated by openspec — and the choice
+  comes before any spec is started. Hand-off is always the human's
+  call, at any size; the agent first reports size and complexity
+  (chunk edit · multi-file · feature-scale) so the choice is informed,
+  never surprised. In hand-off no change is opened, nothing is
+  recorded, the agent mutates nothing — it replies in directives
+  only: EDIT: path:line with the paste-ready replacement · NEW: path
+  with the content · DELETE: path — and the human codes it by hand.
+  The gate is untouched: a mutating call still needs focus, a change,
+  or a declaration. The openspec mode is one human-validatable value
+  slice as a four-step flow — Brainstorm (why + questions) →
+  Investigate (de-risk; research opens) → Plan (the contract; writes
+  open) → Execute (the ledger; receipts land, the human verdict
+  closes it). Strictness sits at the two boundaries humans own —
+  commit at Plan, judge at the verdict. Learnings live outside the
+  flow in openspec/learnings/, read by every step, written by any
+  change that learned something. x- tags declare the human gates that
+  pi-openspec-gate enforces; openspec itself strips them silently, so
+  the gate validates its own tags."
 artifacts:
-- id: idea
-  generates: 1-idea.md
-  description: Why and for whom — the pain, and the questions it raises
-  template: 1-idea.md
-  instruction: 'Answer WHY this spec exists — the problem only. Sections: an
-
-    optional Parent blockquote (a parented spec may reduce this
-
-    artifact to that single line); Pain — two to four sentences of
-
-    observed pain, no solutions; Questions — the open questions this
-
-    idea raises: the drafted requirements answer the what-questions,
-
-    Research answers the how-might-we questions. The one-line Goal
-
-    lives in .openspec.yaml (meta goal:), not here. Free step —
-
-    schema entry, never gated.
-
-    '
-  requires: []
-  x-sections:
-  - Pain
-  - Questions
-  x-grant-verb: propose
-- id: requirements
-  generates: 2-drafted-requirements.md
-  description: What done means — the drafted first pass
-  template: 2-drafted-requirements.md
-  instruction: 'Observable criteria, scope, non-goals, and guardrails — the full
-
-    sheet: Done when · Scope · Out of Scope · Guardrails (the only
-
-    home of hard limits). No meta blockquotes: Estimate and
-
-    confidence live on the Plan; the human-only act is named in
-
-    Plan''s Verification; Parent lives in .openspec.yaml. This pass
-
-    must retire or sharpen at least one of the Idea''s Questions.
-
-    Research follows it and drives the refined pass.
-
-    '
-  requires:
-  - idea
-  x-requires-approval:
-  - idea
-  x-sections:
-  - Done when
-  - Scope
-  - Out of Scope
-  - Guardrails
-  x-grant-verb: draft
-- id: research
-  generates: 3-research.md
-  description: What we know — findings, options, dated evidence, several alternatives
-  template: 3-research.md
-  instruction: 'The investigation that de-risks the Plan, running between the
-
-    drafted and refined requirements — its findings ARE the steering.
-
-    Sections: Findings (facts with sources) · Options (compared
-
-    candidates, inside Scope) · Evidence & prices — as of a dated
-
-    line · Alternatives — two or more, each exactly three lines:
-
-    what it is · the trade-off · pick-when. No recommendation, no
-
-    ranking: the committed choice happens at Plan''s Workflow.
-
-    '
-  requires:
-  - requirements
-  x-requires-approval:
-  - requirements
-  x-sections:
-  - Findings
-  - Options
-  - Evidence & prices
-  - Alternatives
-  x-grant-verb: research
-- id: refined-requirements
-  generates: 4-refined-requirements.md
-  description: 'What done means — refined: research-driven steering of the drafted sheet'
-  template: 4-refined-requirements.md
-  instruction: 'Research is what moves requirements from drafted to refined.
-
-    Revise the drafted sheet via recorded deltas — never silent
-
-    overwrites — retiring or sharpening at least one more of the
-
-    Idea''s Questions. The final Done-when criterion of this step is
-
-    the claim Tasks judges.
-
-    '
-  requires:
-  - research
-  x-requires-approval:
-  - research
-  x-sections:
-  - Done when
-  - Scope
-  - Out of Scope
-  - Guardrails
-  x-grant-verb: refine
-- id: plan
-  generates: 5-plan.md
-  description: How — estimate, skills, the committed route, steps, verification, provenance
-  template: 5-plan.md
-  instruction: 'The method; the only home for implementation thinking —
-
-    references the requirements, never repeats them. Sections in
-
-    order: Estimate (range · confidence, pinned at plan time) ·
-
-    Skills (first, never omitted; nothing qualifies → `bare —
-
-    <reason>`) · Workflow (selects EXACTLY ONE of Research''s
-
-    Alternatives, and why the others lost) · Steps (numbered,
-
-    runnable) · Verification (deterministic checks, then the
-
-    concrete Human validation naming the one human-only act) ·
-
-    History (commit subject, or prices-as-of-date). Depth scales
-
-    with risk.
-
-    '
-  requires:
-  - refined-requirements
-  x-requires-approval:
-  - refined-requirements
-  x-sections:
-  - Estimate
-  - Skills
-  - Workflow
-  - Steps
-  - Verification
-  - History
-  x-grant-verb: plan
-- id: tasks
-  generates: 6-tasks.md
-  description: The ledger — what actually happened, receipts, and the verdict
-  template: 6-tasks.md
-  instruction: 'Record WHAT ACTUALLY HAPPENED. Literal H1 Tasks, the step-states
-
-    legend line, one H2 per Task with a `> Spec: <slug>` blockquote,
-
-    checkbox steps carrying start, elapsed, check, and
-
-    paths-or-receipt slots on indented non-checkbox lines.
-
-    Gate-appended receipts (tool · paths · UTC) land while work
-
-    runs. The final countable checkbox is always Human validation —
-
-    response, outcome, at; only a Human reply ticks it. Status truth
-
-    lives in counters, never prose. Approving this step completes
-
-    the schema.
-
-
-    Every checkbox state change lands as exactly one git commit — message
-
-    `<slug>: Task N Step M — <title> [state]` — the commit is the receipt; a
-
-    tick without a hash in its commit: slot is not done. No repo → `commit:
-
-    n/a — no repo` — visible debt, never silent.'
-  requires:
-  - plan
-  x-requires-approval:
-  - plan
-  x-grant-verb: execute
+  - id: brainstorm
+    generates: 1-brainstorm.md
+    description: Why and for whom — the pain, and the questions it raises
+    template: 1-brainstorm.md
+    instruction: 'Answer WHY this exists — the problem only. Sections:
+      Pain (two to four sentences of observed pain, no solutions) ·
+      Questions (the open questions — this artifact''s product; Investigate
+      aims at them, Plan retires them). Direction (one mutable paragraph
+      of hunch) is optional free prose. The one-line Goal lives in
+      .openspec.yaml (meta goal:), not here. Free step — schema entry,
+      never gated.'
+    requires: []
+    x-sections: [Pain, Questions]
+    x-grant: open
+  - id: investigate
+    generates: 2-investigate.md
+    description: De-risk the plan — findings, options, evidence; research instruments open here
+    template: 2-investigate.md
+    instruction: 'The investigation that de-risks the Plan. No declared
+      structure — the journal follows what was actually found. Suggested
+      shapes: Findings (facts with sources) · Options (compared, inside
+      scope) · Alternatives (two or more, each three lines — what it is ·
+      the trade-off · pick-when — ONLY when genuine; manufacturing one is
+      lying, not research). No recommendation, no ranking: the committed
+      choice happens at Plan''s Workflow. Research instruments (web, docs,
+      graphify) are gated to this step — the grant that opens them is the
+      human''s.'
+    requires:
+      - brainstorm
+    x-requires-approval: [brainstorm]
+    x-unlocks: [research]
+    x-grant: dig
+  - id: plan
+    generates: 3-plan.md
+    description: The contract — estimate, skills, route, slices, verification; writes open here
+    template: 3-plan.md
+    instruction: 'The method; the only home for implementation thinking —
+      references the requirements, never repeats them. Sections in order:
+      Estimate (range · confidence, pinned at commit time; consult
+      openspec/learnings/estimation.md) · Skills (first, never omitted;
+      nothing qualifies → exactly `bare — <reason>`; consult
+      openspec/learnings/skills.md) · Workflow (the committed route —
+      EXACTLY ONE of Investigate''s Alternatives when there were any, and
+      why the others lost; `direct, because trivial` is a valid
+      one-liner) · Slices (two-level: each H3 is a Slice — the
+      committable unit, ending in one conventional commit
+      type(scope): subject and one post-commit human validation; under
+      each Slice, checkbox Tasks as quick checkpoints, no per-Task
+      commit) · Verification (deterministic checks, then the one
+      human-only act, named) · History (commit subject, or
+      evidence-as-of-date). Depth scales with risk. This grant is the
+      docs→code boundary: writes unlock here.'
+    requires:
+      - investigate
+    x-requires-approval: [investigate]
+    x-unlocks: [writes]
+    x-sections: [Estimate, Skills, Workflow, Slices, Verification, History]
+    x-grant: commit
+  - id: execute
+    generates: 4-execute.md
+    description: The ledger — per-Slice checkpoints, hash-evidenced commits, receipts, and the final human verdict
+    template: 4-execute.md
+    instruction: 'Record WHAT ACTUALLY HAPPENED. Literal H1 Execute, the
+      state-legend line, one H2 per Slice (mirroring the Plan''s H3s).
+      Each Slice carries: checkbox Tasks (quick checkpoints; started_at ·
+      ended_at · total · check · paths on indented non-checkbox lines; no
+      per-Task commit) · a Commit checkbox (the pre-declared conventional
+      message; a hash: slot beneath — a tick without a hash is not done;
+      no repo → `hash: n/a — no repo`, visible debt) — the commit IS the
+      receipt. Gate-appended receipts (tool · paths · UTC) land while
+      work runs. The final countable checkbox is always the declared
+      verdict — Human validation, response · outcome · surfaced: (bugs/
+      errors/debt routed to openspec/learnings/debt.md) — only a Human
+      reply ticks it. Status truth lives in counters, never prose.
+      Approving this artifact completes the schema.'
+    requires:
+      - plan
+    x-requires-approval: [plan]
+    x-receives-receipts: true
+    x-completes: approved
+    x-verdict-line: Human validation
+    x-grant: build

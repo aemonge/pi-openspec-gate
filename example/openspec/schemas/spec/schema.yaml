@@ -1,15 +1,26 @@
 name: spec
 version: 4
 x-declares: [action the spec, execute the spec]
-description: One human-validatable value slice as a four-step flow —
-  Brainstorm (why + questions) → Investigate (de-risk; research opens) →
-  Plan (the contract; writes open) → Execute (the ledger; receipts land,
-  the human verdict closes it). Strictness sits at the two boundaries
-  humans own — commit at Plan, judge at the verdict. Learnings live
-  outside the flow in openspec/learnings/, read by every step, written by
-  any change that learned something. x- tags declare the human gates that
-  pi-openspec-gate enforces; openspec itself strips them silently, so the
-  gate validates its own tags.
+description: "Coding runs in one of two modes — human-coder assisted
+  by pi conversation, or pi-coder gated by openspec — and the choice
+  comes before any spec is started. Hand-off is always the human's
+  call, at any size; the agent first reports size and complexity
+  (chunk edit · multi-file · feature-scale) so the choice is informed,
+  never surprised. In hand-off no change is opened, nothing is
+  recorded, the agent mutates nothing — it replies in directives
+  only: EDIT: path:line with the paste-ready replacement · NEW: path
+  with the content · DELETE: path — and the human codes it by hand.
+  The gate is untouched: a mutating call still needs focus, a change,
+  or a declaration. The openspec mode is one human-validatable value
+  slice as a four-step flow — Brainstorm (why + questions) →
+  Investigate (de-risk; research opens) → Plan (the contract; writes
+  open) → Execute (the ledger; receipts land, the human verdict
+  closes it). Strictness sits at the two boundaries humans own —
+  commit at Plan, judge at the verdict. Learnings live outside the
+  flow in openspec/learnings/, read by every step, written by any
+  change that learned something. x- tags declare the human gates that
+  pi-openspec-gate enforces; openspec itself strips them silently, so
+  the gate validates its own tags."
 artifacts:
   - id: brainstorm
     generates: 1-brainstorm.md
