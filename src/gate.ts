@@ -77,6 +77,8 @@ export function blockUnaccounted(options?: {
   schemas?: string[];
   declares?: string[];
   offender?: string;
+  /** the focus names a change that left changes/ (archived, removed) */
+  dangling?: string;
 }): string {
   const lines = [
     options?.headline ?? '⛔ unaccounted mutation — no active change',
@@ -90,6 +92,9 @@ export function blockUnaccounted(options?: {
   }
   if (options?.focusable !== false) {
     lines.push('   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)');
+  }
+  if (options?.dangling) {
+    lines.push(`   dangling: focused change '${options.dangling}' was archived or removed — re-aim focus at a live change`);
   }
   const schemaName =
     options?.schemas && options.schemas.length > 0 ? options.schemas.join('|') : '<schema-name>';
@@ -762,10 +767,12 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // resolvable schemas named, not a placeholder; the offending bash
     // segment named; a noticed self-declare attempt corrected
     appendFact(FACT.blocked, { tool: toolName, paths, basis: verdict.basis, at: utcNow() });
+    const dangling = focus && !focusIsActive(focus, openspecRoot) ? focus.change : undefined;
     return {
       block: true,
       reason: withDeclareNote(
         blockUnaccounted({
+          dangling,
           subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
           focusable: openspecRoot ? hasActiveChanges(openspecRoot) : false,
           schemas: openspecRoot ? scanSchemaNames(openspecRoot) : undefined,

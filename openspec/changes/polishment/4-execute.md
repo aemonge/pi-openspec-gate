@@ -25,13 +25,13 @@
 
 ## Slice 2 — focus-lifecycle: the fence knows the archive
 
-- [ ] Dangling focus names itself in the unaccounted block
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] Bash paths join cwd before exemption matching
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] Tests: archived-focus remedy, bash exemption, non-openspec bash still mutates
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] fix(gate): the fence knows the archive — dangling focus and bash exemption
+- [x] Dangling focus names itself in the unaccounted block
+      started_at: 15:44 · ended_at: 15:46 · total: 2m · check: focus on a moved change renders the dangling line + re-aim · paths: src/gate.ts
+- [x] Bash-exemption task REFRAMED: exemptions.ts excludes bash from path exemptions by construction (documented law), so the live block was correct behavior, not a gap; test pins the law, no code change
+      started_at: 15:47 · ended_at: 15:52 · total: 5m · check: bash-staged openspec paths block under unapproved focus, by law · paths: test/approval.test.ts (catch #8: the premise was wrong — matcher law, not bug; premise-built path-join reverted)
+- [x] Tests: dangling-focus remedy, bash-never-exempt law, non-openspec bash same block
+      started_at: 15:52 · ended_at: 15:55 · total: 3m · check: 168/168, lint holds, try 11/11 · paths: test/approval.test.ts
+- [ ] fix(gate): the fence knows the archive — dangling focus named, bash law pinned
       hash:
 - [ ] Human validation
 
@@ -130,3 +130,55 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:29:04Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:29:04Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T15:29:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T15:29:28Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:29:54Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:29:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:29:58Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:29:58Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:30:19Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:30:19Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T15:31:37Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T15:31:38Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:31:38Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:31:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:31:46Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:31:46Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:32:24Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:32:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:32:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:32:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:32:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:32:43Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:33:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T15:33:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:33:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:33:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:01Z

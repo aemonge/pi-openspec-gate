@@ -537,4 +537,32 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     );
     assert.deepEqual(legacy, { block: true, reason: BLOCK_ARCHIVE });
   });
+
+  test('a dangling focus names itself — archived or removed changes are not silence', async () => {
+    const { fire } = freshGate();
+    const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('gone'));
+    const reason = (result as { reason: string }).reason;
+    assert.match(reason, /dangling: focused change 'gone' was archived or removed/u);
+    assert.match(reason, /re-aim focus at a live change/u);
+  });
+
+  test('bash is never path-exempt — the matcher law holds for openspec paths too', async () => {
+    const { fire } = freshGate();
+    writeChangeMeta(root, 'g1', { schema: 'runway', status: 'proposed' });
+    // the docs exemption is edit/write drafting; a bash call's path
+    // enumeration is never exemption-eligible (exemptions.ts: bash excluded
+    // by construction) — so staging under openspec/ still hits the teeth
+    const blocked = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'git add openspec/learnings/debt.md' } },
+      focusOn('g1'),
+    );
+    assert.match((blocked as { reason: string }).reason, /advance: pios-gate next g1/u);
+    const blocked2 = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'git add src/a.ts' } },
+      focusOn('g1'),
+    );
+    assert.match((blocked2 as { reason: string }).reason, /advance: pios-gate next g1/u, 'non-openspec bash mutates and blocks the same way');
+  });
 });
