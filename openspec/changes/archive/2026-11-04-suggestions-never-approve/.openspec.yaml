@@ -1,12 +1,15 @@
 schema: spec
 created: 2026-11-04
 goal: "grant suggestions speak the schema's act — declared verb, else next; approve only where it is true"
-status: proposed
+status: approved
 created_by: assistant
 
-granted: brainstorm,investigate,plan
+granted: brainstorm,investigate,plan,execute
 granted_brainstorm: 2026-11-04T08:25:08Z
 
 granted_investigate: 2026-11-04T12:57:54Z
 
 granted_plan: 2026-11-04T13:38:24Z
+
+granted_execute: 2026-11-04T14:49:41Z
+approved_at: 2026-11-04T14:49:41Z
