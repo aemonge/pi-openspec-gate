@@ -31,8 +31,8 @@
       started_at: 15:47 · ended_at: 15:52 · total: 5m · check: bash-staged openspec paths block under unapproved focus, by law · paths: test/approval.test.ts (catch #8: the premise was wrong — matcher law, not bug; premise-built path-join reverted)
 - [x] Tests: dangling-focus remedy, bash-never-exempt law, non-openspec bash same block
       started_at: 15:52 · ended_at: 15:55 · total: 3m · check: 168/168, lint holds, try 11/11 · paths: test/approval.test.ts
-- [ ] fix(gate): the fence knows the archive — dangling focus named, bash law pinned
-      hash:
+- [x] fix(gate): the fence knows the archive — dangling focus named, bash law pinned
+      hash: 243ff57
 - [ ] Human validation
 
 ## Slice 3 — the wrapper keeps gate-side flags off openspec's argv
@@ -43,8 +43,8 @@
       started_at: 15:59 · ended_at: 16:01 · total: 2m · check: 169/169, lint holds · paths: test/pios-wrapper.test.ts
 - [x] Docs: README pause row + pause paragraph; CHANGELOG polishment entry
       started_at: 16:01 · ended_at: 16:03 · total: 2m · check: command table + approvals section + Unreleased · paths: README.md, CHANGELOG.md
-- [ ] fix(gate): the escape hatch survives its own exec
-      hash:
+- [x] fix(gate): the escape hatch survives its own exec
+      hash: 468c52d
 - [ ] Human validation
 
 - [ ] Human validation — response: · outcome: · surfaced:
@@ -208,3 +208,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:13Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:28Z
