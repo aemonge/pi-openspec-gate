@@ -100,6 +100,7 @@ is still not approval.
 
 ```sh
 pios-gate grant <slug> <artifact-id>   # canonical: id or artifact/section path
+pios-gate next <slug>                  # the uniform act: first ungranted artifact, declared sequence
 pios-gate <verb> <slug>                # an x-grant-verb the schema declares
 pios-gate approve <slug> [artifact-id] # canonical stamp (gated schemas: per-step only)
 pios-gate confirm <slug>               # permits the declared verdict-line flip
@@ -112,8 +113,11 @@ pios-gate <anything else>              # exec openspec verbatim, exit code intac
 Grants are strictly next-artifact-only, you approve what you read
 (undrafted artifacts refuse), and the grant itself refuses to stamp
 artifacts missing declared structure or carrying ungranted gated
-sections. Any tool-call attempt on the grant surface — approve, confirm,
-grant, or any verb the schemas declare — is itself blocked: approval is a
+sections. Every suggestion speaks the schema's act: the declared verb
+when one exists, `next` when it doesn't — `approve` is named only where
+it is true (the legacy whole-change stamp). Any tool-call attempt on the
+grant surface — approve, confirm, grant, next, or any verb the schemas
+declare — is itself blocked: approval is a
 human act. **The research window**: when a focused change's schema declares
 `x-unlocks: [research]` on an artifact, research instruments block until
 that artifact is granted — the schema declares *when*, the config declares

@@ -177,7 +177,7 @@ describe('artifact gates: creating gated change artifacts', () => {
       block: true,
       reason: [
         '⛔ phase gate — a not granted yet',
-        '   grant:   pios-gate approve c1 a   ← your terminal',
+        '   grant:   pios-gate next c1   ← your terminal',
         '   docs:    the schema gates this artifact (x-requires-approval)',
       ].join('\n'),
     });

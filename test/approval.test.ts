@@ -369,3 +369,84 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal(pass, undefined);
   });
 });
+
+describe('state-aware blocks: gated changes never hear approve', () => {
+  let repo: string;
+  let root: string;
+
+  before(() => {
+    repo = mkdtempSync(join(tmpdir(), 'gate-stateaware-'));
+    root = join(repo, 'openspec');
+    mkdirSync(join(root, 'changes', 'g1'), { recursive: true });
+    mkdirSync(join(root, 'changes', 'l1'), { recursive: true }); // legacy: no schema
+    mkdirSync(join(root, 'schemas', 'runway'), { recursive: true });
+    writeFileSync(
+      join(root, 'schemas', 'runway', 'schema.yaml'),
+      'name: runway\nartifacts:\n  - id: brief\n    generates: 1-brief.md\n  - id: dig\n    generates: 2-dig.md\n    x-grant-verb: dig\n    x-requires-approval: [brief]\n',
+      'utf8',
+    );
+  });
+
+  after(() => {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  function freshGate(approval = TEETH_ON) {
+    const fake = makeFakePi();
+    const config: GateConfig = {
+      enabled: true,
+      approval,
+      exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
+    };
+    createGate(fake.pi as never, config);
+    const ctx = { cwd: repo, sessionManager: { getEntries: () => [] } };
+    return { ...fake, ctx };
+  }
+
+  function focusOn(change: string) {
+    const entries = [{ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change, taskId: '1' } }];
+    return { cwd: repo, sessionManager: { getEntries: () => entries } };
+  }
+
+  test('teeth: verb-less first rung advances by next, never approve', async () => {
+    const { fire } = freshGate();
+    writeChangeMeta(root, 'g1', { schema: 'runway', status: 'proposed' });
+    const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g1'));
+    const reason = (result as { reason: string }).reason;
+    assert.match(reason, /⛔ focused change is not approved/u);
+    assert.match(reason, /advance: pios-gate next g1/u);
+    assert.doesNotMatch(reason, /approve:/u);
+  });
+
+  test('teeth: a declared artifact advances by its verb', async () => {
+    const { fire } = freshGate();
+    mkdirSync(join(root, 'changes', 'g2'), { recursive: true });
+    writeChangeMeta(root, 'g2', { schema: 'runway', status: 'proposed', granted: 'brief' });
+    const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g2'));
+    const reason = (result as { reason: string }).reason;
+    assert.match(reason, /advance: pios-gate dig g2/u);
+    assert.doesNotMatch(reason, /approve:/u);
+  });
+
+  test('archive guard: gated change advances, legacy stays byte-identical', async () => {
+    const { fire } = freshGate();
+    mkdirSync(join(root, 'changes', 'g3'), { recursive: true });
+    writeChangeMeta(root, 'g3', { schema: 'runway', status: 'proposed' });
+    const gated = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'openspec archive g3 -y' } },
+      { cwd: repo, sessionManager: { getEntries: () => [] } },
+    );
+    const gatedReason = (gated as { reason: string }).reason;
+    assert.match(gatedReason, /advance: pios-gate next g3/u);
+    assert.doesNotMatch(gatedReason, /approve:/u);
+    // the legacy change (no schema) keeps the byte-matched copy
+    writeChangeMeta(root, 'l1', { status: 'proposed' });
+    const legacy = await fire(
+      'tool_call',
+      { toolName: 'bash', input: { command: 'openspec archive l1 -y' } },
+      { cwd: repo, sessionManager: { getEntries: () => [] } },
+    );
+    assert.deepEqual(legacy, { block: true, reason: BLOCK_ARCHIVE });
+  });
+});

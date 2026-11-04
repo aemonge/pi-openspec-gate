@@ -5,7 +5,19 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
-(none — 0.7.0 carries the walk #2/#3 batch)
+- **suggestions-never-approve** — step suggestions speak the schema's
+  act: `grantHint`'s verb-less fallback is `pios-gate next <slug>` (was
+  `approve <slug> <artifact-id>`), the cockpit and inspect inherit it,
+  and the unapproved-source and archive blocks are state-aware — a
+  gated change is told `advance: <declared verb | pios-gate next>`
+  (approve never named for a step, and the old hard-coded approve line
+  no longer exits non-zero on gated schemas); legacy changes keep the
+  byte-identical approve remedy. `pios-gate next <slug>` grants the
+  first ungranted artifact in declared sequence — every verb-less
+  schema's uniform step verb; `next` joins RESERVED_WORDS (no schema
+  may shadow it) and the approval-touch guard (no assistant may invoke
+  it). Carries catch #1: eight tests stale since the schema-v4 rewrite
+  (mission retired, six-verb spec gone) repaired to the shipped spec.
 
 ## 0.7.0 — 2026-10-27
 

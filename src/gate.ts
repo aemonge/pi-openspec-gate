@@ -49,6 +49,7 @@ import {
   scanSchemaNames,
   sectionTitles,
   writesUnlocked,
+  type Schema,
 } from './schema.ts';
 
 /** The unaccounted block — agent-facing by construction: a stop directive
@@ -131,11 +132,44 @@ export const BLOCK_UNAPPROVED = [
 ].join('\n');
 
 export function blockArtifactApproval(slug: string, missing: string[], verb?: string): string {
-  const grant = verb ? `pios-gate ${verb} ${slug}` : `pios-gate approve ${slug} ${missing[0] ?? '<artifact>'}`;
+  const grant = verb ? `pios-gate ${verb} ${slug}` : `pios-gate next ${slug}`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
     `   grant:   ${grant}   ← your terminal`,
     '   docs:    the schema gates this artifact (x-requires-approval)',
+  ].join('\n');
+}
+
+/** The advance command for a gated change: the first ungranted
+ *  artifact's declared verb, else the uniform next — approve is never
+ *  named for a step (it is the legacy whole-change stamp). */
+export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
+  const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
+  if (!nextRung) return undefined;
+  return nextRung.grantVerb ? `pios-gate ${nextRung.grantVerb} ${slug}` : `pios-gate next ${slug}`;
+}
+
+/** State-aware archive block: a gated change is advanced by its own act,
+ *  never approved. Falls back to the legacy copy when everything is
+ *  granted (completion lag). */
+export function blockArchiveState(slug: string, schema: Schema, approved: Set<string>): string {
+  const advance = advanceCommand(schema, approved, slug);
+  if (!advance) return BLOCK_ARCHIVE;
+  return [
+    '⛔ archive requires an approved change',
+    `   advance: ${advance}   ← your terminal`,
+    '   or pass --i-am-the-human',
+  ].join('\n');
+}
+
+/** State-aware unapproved block, same law as blockArchiveState. */
+export function blockUnapprovedState(slug: string, schema: Schema, approved: Set<string>): string {
+  const advance = advanceCommand(schema, approved, slug);
+  if (!advance) return BLOCK_UNAPPROVED;
+  return [
+    '⛔ focused change is not approved — attribution is not approval',
+    `   advance: ${advance}   ← your terminal`,
+    '   docs:    openspec/** stays exempt — drafting is never blocked',
   ].join('\n');
 }
 
@@ -529,7 +563,12 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const changeExists = slug && root ? exists(changeMetaPath(root, slug).replace(/\.openspec\.yaml$/u, '')) : false;
       if (slug && meta && !changeIsApproved(meta) && !ARCHIVE_FLAG.test(bashCommand)) {
         appendFact(FACT.unapproved, { kind: 'archive', tool: toolName, change: slug, at: utcNow() });
-        return { block: true, reason: BLOCK_ARCHIVE };
+        const resolution = root ? resolveChangeSchema(root, meta.raw.schema) : undefined;
+        const reason =
+          resolution?.ok && schemaIsGated(resolution.schema)
+            ? blockArchiveState(slug, resolution.schema, grantedSet(meta))
+            : BLOCK_ARCHIVE;
+        return { block: true, reason };
       }
     }
 
@@ -648,7 +687,11 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             paths,
             at: utcNow(),
           });
-          return { block: true, reason: withDeclareNote(BLOCK_UNAPPROVED) };
+          const reason =
+            unlockResolution.ok && schemaIsGated(unlockResolution.schema)
+              ? withDeclareNote(blockUnapprovedState(focus.change, unlockResolution.schema, grantedSet(meta)))
+              : withDeclareNote(BLOCK_UNAPPROVED);
+          return { block: true, reason };
         }
       }
       const at = utcNow();

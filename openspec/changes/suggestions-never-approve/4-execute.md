@@ -13,19 +13,20 @@
 - [x] Tests: grantHint fallback, next stamps/refuses (all-granted, legacy ×2), reserved-word validation, touch guard
       started_at: 13:49 · ended_at: 14:12 · total: 23m · check: 159/159, lint holds, try.sh 11/11 · paths: test/pios-wrapper.test.ts, test/schema.test.ts, test/gate.test.ts
       catch #1: suite was already red on main — 8 stale tests from 3a08b97's schema v4 rewrite (mission retired, six-verb spec gone) repaired to v4 in-scope; caught at first npm test
-- [ ] feat(gate): next — the uniform step act for verb-less schemas
-      hash:
+- [x] feat(gate): next — the uniform step act for verb-less schemas
+      hash: 93bc012
 
 ## Slice 2 — no surface names approve for a step
 
-- [ ] State-aware BLOCK_UNAPPROVED / BLOCK_ARCHIVE — gated: declared verb, else next; legacy: approve verbatim
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] `blockArtifactApproval` verb-less branch → `pios-gate next ${slug}`
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] Tests: gated blocks never name approve and the remedy runs; legacy blocks byte-identical
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] Docs: README command table + gate-verb row; CHANGELOG Unreleased
-      started_at: · ended_at: · total: · check: · paths:
+- [x] State-aware BLOCK_UNAPPROVED / BLOCK_ARCHIVE — gated: declared verb, else next; legacy: approve verbatim
+      started_at: 14:18 · ended_at: 14:24 · total: 6m · check: gated blocks advance by next/verb and never name approve; no-schema change keeps the byte-matched approve copy · paths: src/gate.ts
+- [x] `blockArtifactApproval` verb-less branch → `pios-gate next ${slug}`
+      started_at: 14:24 · ended_at: 14:26 · total: 2m · check: phase-gate copy test asserts the next remedy · paths: src/gate.ts, test/phasegate.test.ts
+- [x] Tests: gated blocks never name approve and the remedy runs; legacy blocks byte-identical
+      started_at: 14:26 · ended_at: 14:33 · total: 7m · check: 162/162, lint holds, try.sh 11/11 · paths: test/approval.test.ts
+      catch #2: vocabulary law caught 'rung' in a new comment (self-enforcing law, red-green); catch #3: writeChangeMeta is a set-only merge — a reused slug leaked granted: brief across tests; per-test slugs
+- [x] Docs: README command table + suggestion-law paragraph; CHANGELOG Unreleased
+      started_at: 14:33 · ended_at: 14:36 · total: 3m · check: table gains next row; touch-guard list gains next · paths: README.md, CHANGELOG.md
 - [ ] fix(gate): step suggestions speak the schema's act — verb, else next
       hash:
 
@@ -138,3 +139,83 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T13:51:31Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T13:51:31Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T13:54:30Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T13:54:30Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-04T13:54:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-04T13:54:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T13:55:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T13:55:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T13:55:36Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T13:55:36Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:55:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:55:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:56:05Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:56:05Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T13:57:23Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-04T13:57:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:57:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:57:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:57:56Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:57:56Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:37Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:58:37Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:59:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:59:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:59:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T13:59:34Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T14:00:18Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-04T14:00:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:00:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:00:28Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:01:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:01:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T14:01:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T14:01:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:01:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:01:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:01:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:01:28Z
