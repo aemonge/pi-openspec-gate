@@ -5,6 +5,19 @@ entry below cites the changes that produced it. Dates are release dates.
 
 ## Unreleased
 
+- **polishment batch** — one ceremony, three fixes: **pause** (say
+  `pause 30m` in the session; the work fences rest for the duration,
+  the approval-touch guard and receipts stay absolute, unaccounted
+  still refuses, `resume` ends it early, ceiling `pauseCeiling` 4h);
+  **focus-lifecycle** (a dangling focus — change archived or removed —
+  names itself in the unaccounted block with the re-aim, instead of a
+  generic "no active change"; bash-never-path-exempt pinned as the
+  matcher's documented law, not a bug); **archive flag strip** (the
+  wrapper keeps gate-side `--i-am-the-human` off openspec's argv — the
+  escape hatch survives its own exec, catch #5). Carries catches #6–#8
+  (cockpit countdown cut to session facts; external arming parked on a
+  pi session-id API; the bash "gap" was the matcher's law).
+
 - **suggestions-never-approve** — step suggestions speak the schema's
   act: `grantHint`'s verb-less fallback is `pios-gate next <slug>` (was
   `approve <slug> <artifact-id>`), the cockpit and inspect inherit it,

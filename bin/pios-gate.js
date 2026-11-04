@@ -257,8 +257,13 @@ if (command === 'confirm') {
   process.exit(0);
 }
 
-// everything else: exec openspec verbatim — no arg rewriting, ever
-const result = spawnSync('openspec', process.argv.slice(2), { stdio: 'inherit' });
+// everything else: exec openspec verbatim — no arg rewriting, ever —
+// EXCEPT gate-side flags: --i-am-the-human is the archive guard's escape
+// hatch (the hook honors it and steps aside); openspec would reject it as
+// unknown, so the wrapper keeps it off the argv it forwards
+// (live-caught 2026-11-04: the hatch broke at its own exec)
+const passthroughArgs = process.argv.slice(2).filter((a) => a !== '--i-am-the-human');
+const result = spawnSync('openspec', passthroughArgs, { stdio: 'inherit' });
 if (result.error) {
   console.error(`pios-gate: cannot exec openspec (${result.error.message}) — is it on PATH?`);
   process.exit(127);

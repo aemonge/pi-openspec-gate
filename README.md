@@ -104,6 +104,7 @@ pios-gate next <slug>                  # the uniform act: first ungranted artifa
 pios-gate <verb> <slug>                # an x-grant-verb the schema declares
 pios-gate approve <slug> [artifact-id] # canonical stamp (gated schemas: per-step only)
 pios-gate confirm <slug>               # permits the declared verdict-line flip
+pios-gate pause|resume                 # teaching: pause is a session act — say it in the session
 pios-gate pending                      # the cockpit — every change, next acts
 pios-gate inspect <slug>               # one change, verbose (artifacts, stamps, structure)
 pios-gate help                         # the gate's own usage (bare invocation too)
@@ -119,7 +120,13 @@ when one exists, `next` when it doesn't — `approve` is named only where
 it is true (the legacy whole-change stamp). Any tool-call attempt on the
 grant surface — approve, confirm, grant, next, or any verb the schemas
 declare — is itself blocked: approval is a
-human act. **The research window**: when a focused change's schema declares
+human act. **The pause**: say `pause 30m` (grammar `X{h,m,s}`, ceiling
+`approval.pauseCeiling`, default 4h) in the session and the work fences
+rest — approval teeth, phase gates, research window, archive guard —
+while the touch guard, attribution, and receipts stay absolute, and the
+unaccounted block still refuses (no landing place, no pause). `resume`
+ends it early; the permit dies with the session; only a human reply can
+arm it. **The research window**: when a focused change's schema declares
 `x-unlocks: [research]` on an artifact, research instruments block until
 that artifact is granted — the schema declares *when*, the config declares
 *what* (tools + bash command verbs; web/docs tools by default, `graphify`

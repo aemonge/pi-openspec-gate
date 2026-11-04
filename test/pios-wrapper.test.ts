@@ -266,6 +266,20 @@ test('help: bare invocation and help print gate usage — never openspec banner'
   }
 });
 
+test('archive: the gate-side flag never reaches openspec argv (catch #5)', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'u1', 'status: proposed\n');
+    const r = run(repo, ['archive', 'u1', '-y', '--skip-specs', '--i-am-the-human']);
+    assert.equal(r.status, 0, r.stdout);
+    const calls = existsSync(repo.log) ? readFileSync(repo.log, 'utf8') : '';
+    assert.doesNotMatch(calls, /--i-am-the-human/u, 'the gate-side flag is stripped before exec');
+    assert.match(calls, /archive u1/u, 'the rest of the argv forwards verbatim');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('pause: a session act — the terminal verb teaches, never forwards', () => {
   const repo = makeRepo();
   try {

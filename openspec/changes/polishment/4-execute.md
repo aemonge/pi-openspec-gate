@@ -37,10 +37,12 @@
 
 ## Slice 3 — the wrapper keeps gate-side flags off openspec's argv
 
-- [ ] Passthrough strips `--i-am-the-human` before `spawnSync`
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] Tests: flag stripped, guard still fires without it
-      started_at: · ended_at: · total: · check: · paths:
+- [x] Passthrough strips `--i-am-the-human` before `spawnSync`
+      started_at: 15:57 · ended_at: 15:59 · total: 2m · check: the argv forwards verbatim minus the gate-side flag · paths: bin/pios-gate.js
+- [x] Tests: flag stripped, guard still fires without it
+      started_at: 15:59 · ended_at: 16:01 · total: 2m · check: 169/169, lint holds · paths: test/pios-wrapper.test.ts
+- [x] Docs: README pause row + pause paragraph; CHANGELOG polishment entry
+      started_at: 16:01 · ended_at: 16:03 · total: 2m · check: command table + approvals section + Unreleased · paths: README.md, CHANGELOG.md
 - [ ] fix(gate): the escape hatch survives its own exec
       hash:
 - [ ] Human validation
@@ -182,3 +184,27 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:01Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:01Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-04T15:34:14Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-04T15:34:14Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-04T15:34:14Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-04T15:34:15Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:19Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:34:19Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T15:34:59Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T15:34:59Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:34:59Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:34:59Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:35:13Z
