@@ -37,8 +37,8 @@
 - [x] README help row; debt entry retired as fixed (same-day, human ruling cited)
       started_at: 14:58 · ended_at: 15:01 · total: 3m · check: catch #4 closed in openspec/learnings/debt.md · paths: README.md, openspec/learnings/debt.md
       catch #4: bare ./bin/pios-gate answered as openspec — tripped live by the human during validation; first routed to debt, overruled, fixed in-scope
-- [ ] feat(gate): help — the gate introduces itself
-      hash:
+- [x] feat(gate): help — the gate introduces itself
+      hash: 39da123
 - [ ] Human validation
 
 - [ ] Human validation — response: · outcome: · surfaced:
@@ -298,3 +298,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:30Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:43Z
