@@ -1,0 +1,8 @@
+name: plain
+version: 1
+artifacts:
+  - id: idea
+    generates: 1-idea.md
+  - id: memo
+    generates: 2-memo.md
+    x-requires-approval: [idea]
