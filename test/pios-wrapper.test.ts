@@ -248,6 +248,24 @@ test('grants: structure refusal — a Claim-less proposition will not stamp', ()
   }
 });
 
+test('help: bare invocation and help print gate usage — never openspec banner', () => {
+  const repo = makeRepo();
+  try {
+    for (const args of [[], ['help'], ['--help'], ['-h']]) {
+      const r = run(repo, args);
+      assert.equal(r.status, 0, `pios-gate ${args.join(' ')}`);
+      assert.match(r.stdout, /pios-gate pending/u, args.join(' '));
+      assert.doesNotMatch(r.stdout, /AI-native/u, 'openspec banner must not answer for the gate');
+      assert.equal(r.called, false, 'help never forwards');
+    }
+    // unknown verbs keep the documented passthrough
+    const unknown = run(repo, ['some-openspec-verb', 'x']);
+    assert.equal(unknown.called, true, 'unknown argv still execs openspec verbatim');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('next: the uniform act — first ungranted stamps, refusals never forward', () => {
   const repo = makeRepo();
   try {

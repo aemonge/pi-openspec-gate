@@ -106,6 +106,7 @@ pios-gate approve <slug> [artifact-id] # canonical stamp (gated schemas: per-ste
 pios-gate confirm <slug>               # permits the declared verdict-line flip
 pios-gate pending                      # the cockpit — every change, next acts
 pios-gate inspect <slug>               # one change, verbose (artifacts, stamps, structure)
+pios-gate help                         # the gate's own usage (bare invocation too)
 pios-gate focus                        # teaching: focus is a session instrument
 pios-gate <anything else>              # exec openspec verbatim, exit code intact
 ```

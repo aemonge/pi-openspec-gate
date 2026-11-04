@@ -21,6 +21,7 @@
  *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
  *   pios-gate focus             teaching: focus is a session instrument
+ *   pios-gate help              the gate's own usage (bare invocation too)
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
  *                               intact — exec, never interpretation —
  *                               EXCEPT grant-shaped verbs (any schema's
@@ -101,6 +102,27 @@ if (command === 'inspect') {
 
 if (command === 'focus') {
   console.log('focus is a session instrument — set it with your cockpit/status tools (openspec_focus), not the terminal');
+  process.exit(0);
+}
+
+// the gate introduces itself: bare invocation and help print gate usage —
+// never openspec's banner under the gate's name (live-caught 2026-11-04,
+// human ruling: no debt, fix now)
+if (!command || command === 'help' || command === '--help' || command === '-h') {
+  console.log(`pios-gate — the gate as a feature extension of openspec
+
+  pios-gate pending                     the cockpit — every change, next acts
+  pios-gate inspect <slug>              one change, verbose
+  pios-gate grant <slug> <artifact-id>  canonical grant (id or artifact/section)
+  pios-gate next <slug>                 the uniform act: first ungranted artifact
+  pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
+  pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
+  pios-gate confirm <slug>              permits the declared verdict-line flip
+  pios-gate validate <args>             openspec's structure lint (passthrough)
+  pios-gate <anything else>             exec openspec verbatim, exit code intact
+
+Grants are human-terminal: approve, confirm, grant, next, and every
+declared verb refuse tool-call invocations.`);
   process.exit(0);
 }
 

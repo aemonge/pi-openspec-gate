@@ -30,6 +30,17 @@
 - [ ] fix(gate): step suggestions speak the schema's act — verb, else next
       hash: 483cddb
 
+## Slice 3 — gate-owned help *(human ruling 2026-11-04: "No debt, fix now")*
+
+- [x] Bare `pios-gate`, `help`, `--help`, `-h` print the gate's own usage — never openspec's banner; unknown verbs keep the passthrough
+      started_at: 14:52 · ended_at: 14:58 · total: 6m · check: all four forms exit 0 with gate usage, no forward; unknown verb still execs openspec · paths: bin/pios-gate.js, test/pios-wrapper.test.ts
+- [x] README help row; debt entry retired as fixed (same-day, human ruling cited)
+      started_at: 14:58 · ended_at: 15:01 · total: 3m · check: catch #4 closed in openspec/learnings/debt.md · paths: README.md, openspec/learnings/debt.md
+      catch #4: bare ./bin/pios-gate answered as openspec — tripped live by the human during validation; first routed to debt, overruled, fixed in-scope
+- [ ] feat(gate): help — the gate introduces itself
+      hash:
+- [ ] Human validation
+
 - [ ] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-04T13:40:37Z
@@ -231,3 +242,59 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:03:04Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:03:04Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:16:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:16:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:16:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:16:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:26:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:26:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:26:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:26:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:29:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:29:34Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:29:37Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:29:37Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/.gitignore · at 2026-11-04T14:29:54Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/.gitignore · at 2026-11-04T14:29:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:32:48Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:32:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-04T14:38:05Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-04T14:38:05Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-04T14:38:22Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-04T14:38:22Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:38:22Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-04T14:38:22Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:38:29Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:38:29Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:03Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:04Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:30Z

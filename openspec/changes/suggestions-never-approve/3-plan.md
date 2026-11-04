@@ -43,6 +43,14 @@ Two rulings this plan pins: the unapproved-source and archive blocks become stat
       hash:
 - [ ] Human validation
 
+### Slice 3 — gate-owned help *(added 2026-11-04, human ruling: "no debt, fix now")*
+
+- [ ] Bare `pios-gate`, `help`, `--help`, `-h` print the gate's own usage — never openspec's banner under the gate's name; unknown verbs keep the documented passthrough
+- [ ] Tests: all four forms exit 0 with gate usage, no passthrough; README table row; debt entry retired as fixed
+- [ ] Commit: `feat(gate): help — the gate introduces itself`
+      hash:
+- [ ] Human validation
+
 ## Verification
 
 - `npm test` → all pass (155 baseline + new); `just lint` → "vocabulary law holds"; `./example/try.sh` → 11/11.
