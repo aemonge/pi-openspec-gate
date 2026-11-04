@@ -2,8 +2,7 @@
 
 The archive (`openspec/changes/archive/`) is the source of truth — every
 entry below cites the changes that produced it. Dates are release dates.
-
-## Unreleased
+## 0.8.0 — 2026-11-04
 
 - **polishment batch** — one ceremony, three fixes: **pause** (say
   `pause 30m` in the session; the work fences rest for the duration,

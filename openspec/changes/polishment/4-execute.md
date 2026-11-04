@@ -232,3 +232,15 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:46:31Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:46:31Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:48:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:48:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:48:16Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-04T15:48:16Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:48:22Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:48:22Z
