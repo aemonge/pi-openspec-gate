@@ -7,6 +7,9 @@
  *                               the canonical grant — an artifact id or
  *                               an artifact/section id-path; structure
  *                               and gated sections checked before stamping
+ *   pios-gate next <slug>       the uniform act — grants the first
+ *                               ungranted artifact in declared sequence;
+ *                               every verb-less schema's step verb
  *   pios-gate <verb> <slug>    an x-grant-verb the change's schema
  *                               declares (vocabulary from data, not code)
  *   pios-gate approve <slug> [artifact-id]
@@ -36,6 +39,7 @@ import { join } from 'node:path';
 import {
   artifactForGrantVerb,
   findOpenspecRoot,
+  grantedSet,
   grantArtifact,
   grantVerbVocabulary,
   pendingReport,
@@ -109,6 +113,35 @@ if (command === 'grant') {
     process.exit(2);
   }
   doGrant(root, slug, artifactArg);
+}
+
+// the uniform act: grant the first ungranted artifact in declared
+// sequence — the step verb every verb-less gated schema already has
+if (command === 'next') {
+  const root = rootOf();
+  changeOrDie(root, slug, 'usage: pios-gate next <change-slug>');
+  const meta = readChangeMeta(root, slug);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  if (!resolution.ok) {
+    // no schema is the legacy shape — approve is the true act there
+    if (resolution.reason === 'no-schema') {
+      console.error(`pios-gate: change '${slug}' declares no schema — use: pios-gate approve ${slug}`);
+      process.exit(1);
+    }
+    console.error(`pios-gate: schema problem for '${slug}' — ${resolution.reason}`);
+    process.exit(1);
+  }
+  if (!schemaIsGated(resolution.schema)) {
+    console.error(`pios-gate: schema '${meta.schema}' declares no gates — use: pios-gate approve ${slug}`);
+    process.exit(1);
+  }
+  const approved = grantedSet(meta);
+  const nextArtifact = resolution.schema.artifacts.find((a) => !approved.has(a.id));
+  if (!nextArtifact) {
+    console.error(`pios-gate: '${slug}' has nothing to grant — all artifacts granted`);
+    process.exit(1);
+  }
+  doGrant(root, slug, nextArtifact.id);
 }
 
 if (command === 'approve') {

@@ -211,13 +211,13 @@ const VALID_MAX_LENGTH = 200;
 
 /** Any tool-call attempt to reach the approval surface — blocked before
  *  all else. Reserved surface: pi-openspec-gate approve|validate (old),
- *  pios-gate approve|confirm|grant (new). Beyond the reserved words the
- *  vocabulary is data: every x-grant-verb declared by any resolvable
+ *  pios-gate approve|confirm|grant|next (new). Beyond the reserved words
+ *  the vocabulary is data: every x-grant-verb declared by any resolvable
  *  schema joins the guard (scanGrantVerbs, cached per root).
  *  `pios-gate validate` forwards to openspec's structure lint and is NOT
  *  touch-guarded. */
 const APPROVAL_TOUCH_RESERVED =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant))\b/u;
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next))\b/u;
 
 const verbTouchCache = new Map<string, RegExp | null>();
 function approvalTouchVerbs(openspecRoot: string): RegExp | null {

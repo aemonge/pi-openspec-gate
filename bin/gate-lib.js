@@ -84,7 +84,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 
@@ -490,11 +490,12 @@ export function parseSectionPath(path) {
 }
 
 /** The terminal command granting an artifact: declared verb, else the
- *  id-addressed canonical form. */
+ *  uniform `next` — the schema's act, never approve (that word is the
+ *  legacy whole-change stamp; on a gated schema it means nothing). */
 export function grantHint(schema, artifactId, slug) {
   const artifact = schema.artifacts.find((a) => a.id === artifactId);
   if (artifact?.grantVerb) return `pios-gate ${artifact.grantVerb} ${slug}`;
-  return `pios-gate approve ${slug} ${artifactId}`;
+  return `pios-gate next ${slug}`;
 }
 
 // ── structure checkers ─────────────────────────────────────────────────

@@ -348,6 +348,7 @@ test('touch-guard: the grant surface is human-terminal only — reserved words +
     'pios-gate approve demo',
     'pios-gate confirm demo',
     'pios-gate grant demo some/one',
+    'pios-gate next demo',
     'node bin/pios-gate.js approve demo',
     'pi-openspec-gate validate demo',
   ]) {

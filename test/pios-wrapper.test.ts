@@ -248,6 +248,85 @@ test('grants: structure refusal — a Claim-less proposition will not stamp', ()
   }
 });
 
+test('next: the uniform act — first ungranted stamps, refusals never forward', () => {
+  const repo = makeRepo();
+  try {
+    mkdirSync(join(repo.dir, 'openspec', 'schemas', 'verbless'), { recursive: true });
+    writeFileSync(
+      join(repo.dir, 'openspec', 'schemas', 'verbless', 'schema.yaml'),
+      'name: verbless\nartifacts:\n  - id: idea\n    generates: 1-idea.md\n  - id: memo\n    generates: 2-memo.md\n    x-requires-approval: [idea]\n',
+    );
+    change(repo, 'v1', 'schema: verbless\nstatus: proposed\n');
+    draft(repo, 'v1', '1-idea.md', 'pain');
+    draft(repo, 'v1', '2-memo.md', 'memo');
+
+    // before any grant: next finds the first rung in declaration order
+    const first = run(repo, ['next', 'v1']);
+    assert.equal(first.status, 0);
+    assert.match(first.stdout, /granted v1 · idea/);
+
+    // declaration order continues: memo follows idea without naming it
+    const second = run(repo, ['next', 'v1']);
+    assert.equal(second.status, 0);
+    assert.match(second.stdout, /granted v1 · memo/);
+
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'v1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /granted: idea,memo/);
+
+    // nothing left: loud refusal, never a passthrough
+    const done = run(repo, ['next', 'v1']);
+    assert.equal(done.status, 1);
+    assert.match(done.stdout, /nothing to grant — all artifacts granted/);
+    assert.equal(existsSync(repo.log), false, 'grants never forward to openspec');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('next: an undrafted rung refuses — you approve what you read', () => {
+  const repo = makeRepo();
+  try {
+    mkdirSync(join(repo.dir, 'openspec', 'schemas', 'verbless'), { recursive: true });
+    writeFileSync(
+      join(repo.dir, 'openspec', 'schemas', 'verbless', 'schema.yaml'),
+      'name: verbless\nartifacts:\n  - id: idea\n    generates: 1-idea.md\n  - id: memo\n    generates: 2-memo.md\n    x-requires-approval: [idea]\n',
+    );
+    change(repo, 'v1', 'schema: verbless\nstatus: proposed\n');
+    const refused = run(repo, ['next', 'v1']);
+    assert.equal(refused.status, 1);
+    assert.match(refused.stdout, /1-idea\.md not drafted yet — you approve what you read/);
+    assert.equal(existsSync(repo.log), false);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('next: a legacy change refuses with the approve truth — schema-less and ungated alike', () => {
+  const repo = makeRepo();
+  try {
+    // legacy shape one: no schema at all
+    change(repo, 'legacy', 'status: proposed\n');
+    const bare = run(repo, ['next', 'legacy']);
+    assert.equal(bare.status, 1);
+    assert.match(bare.stdout, /declares no schema — use: pios-gate approve legacy/);
+    assert.equal(existsSync(repo.log), false);
+
+    // legacy shape two: a declared schema with no gates
+    mkdirSync(join(repo.dir, 'openspec', 'schemas', 'plain'), { recursive: true });
+    writeFileSync(
+      join(repo.dir, 'openspec', 'schemas', 'plain', 'schema.yaml'),
+      'name: plain\nartifacts:\n  - id: a\n    generates: 1-a.md\n',
+    );
+    change(repo, 'plain', 'schema: plain\nstatus: proposed\n');
+    const ungated = run(repo, ['next', 'plain']);
+    assert.equal(ungated.status, 1);
+    assert.match(ungated.stdout, /declares no gates — use: pios-gate approve plain/);
+    assert.equal(existsSync(repo.log), false);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('grants: x-requires-written — a deleted dependency file refuses the stamp', () => {
   const repo = makeRepo();
   try {
@@ -372,7 +451,7 @@ test('grants: focus teaches, ungated schema refuses verbs politely', () => {
 
 function shippedRepo(): Repo {
   const repo = makeRepo();
-  for (const name of ['spec', 'mission']) {
+  for (const name of ['spec']) {
     const dir = join(repo.dir, 'openspec', 'schemas', name);
     mkdirSync(dir, { recursive: true });
     copyFileSync(
@@ -385,19 +464,19 @@ function shippedRepo(): Repo {
 
 function specChange(repo: Repo, slug: string): void {
   change(repo, slug, 'schema: spec\nstatus: proposed\ncreated_by: assistant\n');
-  draft(repo, slug, '1-idea.md', '# Idea: fixture\n\n## Pain\n\nfixture\n\n## Questions\n\n- fixture\n');
+  draft(repo, slug, '1-brainstorm.md', '# Brainstorm\n\n## Pain\n\nfixture\n\n## Questions\n\n- fixture\n');
 }
 
 test('parity live: verb grant works on the shipped spec schema', () => {
   const repo = shippedRepo();
   try {
     specChange(repo, 'fx');
-    const p = run(repo, ['propose', 'fx']);
+    const p = run(repo, ['open', 'fx']);
     assert.equal(p.status, 0, p.stdout);
-    assert.match(p.stdout, /granted fx · idea · at/);
+    assert.match(p.stdout, /granted fx · brainstorm · at/);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /granted: idea/);
-    assert.match(meta, /granted_idea:/);
+    assert.match(meta, /granted: brainstorm/);
+    assert.match(meta, /granted_brainstorm:/);
     assert.equal(existsSync(repo.log), false, 'a grant verb never forwards to openspec');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
@@ -408,10 +487,10 @@ test('parity live: grant <slug> <step> on the shipped spec schema', () => {
   const repo = shippedRepo();
   try {
     specChange(repo, 'fx');
-    const g = run(repo, ['grant', 'fx', 'idea']);
+    const g = run(repo, ['grant', 'fx', 'brainstorm']);
     assert.equal(g.status, 0, g.stdout);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
-    assert.match(meta, /granted_idea:/);
+    assert.match(meta, /granted_brainstorm:/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -420,10 +499,15 @@ test('parity live: grant <slug> <step> on the shipped spec schema', () => {
 test('parity live: wrong-schema verb fails loudly, never passthrough', () => {
   const repo = shippedRepo();
   try {
+    mkdirSync(join(repo.dir, 'openspec', 'schemas', 'other'), { recursive: true });
+    writeFileSync(
+      join(repo.dir, 'openspec', 'schemas', 'other', 'schema.yaml'),
+      'name: other\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: seal\n    x-requires-approval: []\n',
+    );
     specChange(repo, 'fx');
-    const deal = run(repo, ['deal', 'fx']);
-    assert.equal(deal.status, 1);
-    assert.match(deal.stdout, /'deal' is declared by schema 'mission', not by 'spec'/);
+    const seal = run(repo, ['seal', 'fx']);
+    assert.equal(seal.status, 1);
+    assert.match(seal.stdout, /'seal' is declared by schema 'other', not by 'spec'/);
     assert.equal(existsSync(repo.log), false, 'grant-shaped input never reaches openspec');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });

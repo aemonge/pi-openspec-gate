@@ -15,6 +15,7 @@ import {
 } from '../src/schema.ts';
 import {
   artifactForGrantVerb as artifactForGrantVerbBin,
+  grantHint,
   parseSchemaYaml as parseSchemaYamlBin,
   schemaIsGated as schemaIsGatedBin,
 } from '../bin/gate-lib.js';
@@ -108,6 +109,20 @@ describe('schema reader: parsing', () => {
     assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one/u);
   });
 
+  test('reserved words never become schema verbs — next joined the CLI surface', () => {
+    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: next\n';
+    assert.throws(() => parseSchemaYaml(yaml, 'fixture'), /x-grant-verb 'next' is reserved by the gate CLI/u);
+    assert.throws(() => parseSchemaYamlBin(yaml, 'fixture'), /is reserved by the gate CLI/u);
+  });
+
+  test('grantHint: declared verb, else next — never approve for a step (bin contract)', () => {
+    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: kickoff\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n';
+    const schema = parseSchemaYamlBin(yaml, 'fixture');
+    assert.equal(grantHint(schema, 'a', 'c1'), 'pios-gate kickoff c1');
+    assert.equal(grantHint(schema, 'b', 'c1'), 'pios-gate next c1');
+    assert.ok(!grantHint(schema, 'b', 'c1').includes('approve'), 'a step suggestion never says approve');
+  });
+
   test('unknown x-requires-approval reference fails loudly', () => {
     const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-approval: [ghost]\n';
     assert.throws(() => parseSchemaYaml(yaml, 'fixture'), /unknown artifact 'ghost'/u);
@@ -198,14 +213,14 @@ describe('schema reader: parsing', () => {
 });
 
 describe('schema reader: resolution and grant semantics', () => {
-  test('the repo mission schema resolves project-locally and is gated', () => {
+  test('the repo spec schema resolves project-locally and is gated', () => {
     const openspecRoot = join(REPO_ROOT, 'openspec');
-    const file = findSchemaFile(openspecRoot, 'mission');
-    assert.ok(file, 'repo-local mission schema found');
-    const resolution = resolveChangeSchema(openspecRoot, 'mission');
+    const file = findSchemaFile(openspecRoot, 'spec');
+    assert.ok(file, 'repo-local spec schema found');
+    const resolution = resolveChangeSchema(openspecRoot, 'spec');
     assert.ok(resolution.ok);
     if (resolution.ok) {
-      assert.equal(resolution.schema.artifacts.length, 5);
+      assert.equal(resolution.schema.artifacts.length, 4);
       assert.ok(schemaIsGated(resolution.schema));
     }
   });
@@ -247,36 +262,30 @@ const SHIPPED = (name: string): string =>
   readFileSync(findSchemaFile(join(REPO_ROOT, 'openspec'), name)!, 'utf8');
 
 describe('bin parser reads the shipped schemas', () => {
-  test('spec: gated, every verb resolves, un-indented block lists populate', () => {
+  test('spec: gated, every verb resolves, block lists populate', () => {
     const schema = parseSchemaYamlBin(SHIPPED('spec'), 'spec');
     assert.equal(schemaIsGatedBin(schema), true, 'spec schema must be gated on the CLI side');
-    assert.equal(artifactForGrantVerbBin(schema, 'propose')?.id, 'idea');
-    assert.equal(artifactForGrantVerbBin(schema, 'draft')?.id, 'requirements');
-    assert.equal(artifactForGrantVerbBin(schema, 'research')?.id, 'research');
-    assert.equal(artifactForGrantVerbBin(schema, 'refine')?.id, 'refined-requirements');
-    assert.equal(artifactForGrantVerbBin(schema, 'plan')?.id, 'plan');
-    assert.equal(artifactForGrantVerbBin(schema, 'execute')?.id, 'tasks');
-    const requirements = schema.artifacts.find((a: any) => a.id === 'requirements');
-    assert.deepEqual(requirements?.requiresApproval, ['idea']);
+    assert.equal(artifactForGrantVerbBin(schema, 'open')?.id, 'brainstorm');
+    assert.equal(artifactForGrantVerbBin(schema, 'dig')?.id, 'investigate');
+    assert.equal(artifactForGrantVerbBin(schema, 'commit')?.id, 'plan');
+    assert.equal(artifactForGrantVerbBin(schema, 'build')?.id, 'execute');
+    const investigate = schema.artifacts.find((a: any) => a.id === 'investigate');
+    assert.deepEqual(investigate?.requiresApproval, ['brainstorm']);
+    assert.deepEqual(investigate?.unlocks, ['research']);
+    const brainstorm = schema.artifacts.find((a: any) => a.id === 'brainstorm');
     assert.deepEqual(
-      requirements?.sections.map((s: any) => s.id),
-      ['Done when', 'Scope', 'Out of Scope', 'Guardrails'],
-    );
-    const idea = schema.artifacts.find((a: any) => a.id === 'idea');
-    assert.deepEqual(
-      idea?.sections.map((s: any) => s.id),
+      brainstorm?.sections.map((s: any) => s.id),
       ['Pain', 'Questions'],
     );
-  });
-
-  test('mission: flow lists still parse — verbs, verdict line, receipts', () => {
-    const schema = parseSchemaYamlBin(SHIPPED('mission'), 'mission');
-    assert.equal(schemaIsGatedBin(schema), true);
-    assert.equal(artifactForGrantVerbBin(schema, 'deal')?.id, 'proposition');
-    assert.equal(artifactForGrantVerbBin(schema, 'order')?.id, 'plan');
-    const execution = schema.artifacts.find((a: any) => a.id === 'execution');
-    assert.equal(execution?.verdictLine, 'Human validation');
-    assert.equal(execution?.receivesReceipts, true);
+    const plan = schema.artifacts.find((a: any) => a.id === 'plan');
+    assert.deepEqual(
+      plan?.sections.map((s: any) => s.id),
+      ['Estimate', 'Skills', 'Workflow', 'Slices', 'Verification', 'History'],
+    );
+    const execute = schema.artifacts.find((a: any) => a.id === 'execute');
+    assert.equal(execute?.verdictLine, 'Human validation');
+    assert.equal(execute?.receivesReceipts, true);
+    assert.equal(execute?.completes, 'approved');
   });
 });
 
@@ -300,7 +309,7 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
         unlocksSource: !!a.unlocksSource,
       })),
     });
-    for (const name of ['spec', 'mission']) {
+    for (const name of ['spec']) {
       const srcSchema = parseSchemaYaml(SHIPPED(name), name);
       const binSchema = parseSchemaYamlBin(SHIPPED(name), name);
       assert.deepEqual(project(binSchema), project(srcSchema), `parity broken on ${name}`);
