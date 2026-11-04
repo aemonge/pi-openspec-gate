@@ -1,12 +1,15 @@
 schema: spec
 created: 2026-11-04
 goal: "one ceremony, many small fixes — pause, focus-lifecycle gaps; slices are the items"
-status: proposed
+status: approved
 created_by: assistant
 
-granted: brainstorm,investigate,plan
+granted: brainstorm,investigate,plan,execute
 granted_brainstorm: 2026-11-04T15:06:52Z
 
 granted_investigate: 2026-11-04T15:13:32Z
 
 granted_plan: 2026-11-04T15:18:45Z
+
+granted_execute: 2026-11-04T15:40:43Z
+approved_at: 2026-11-04T15:40:43Z
