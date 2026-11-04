@@ -28,7 +28,7 @@
 - [x] Docs: README command table + suggestion-law paragraph; CHANGELOG Unreleased
       started_at: 14:33 · ended_at: 14:36 · total: 3m · check: table gains next row; touch-guard list gains next · paths: README.md, CHANGELOG.md
 - [ ] fix(gate): step suggestions speak the schema's act — verb, else next
-      hash:
+      hash: 483cddb
 
 - [ ] Human validation — response: · outcome: · surfaced:
 
@@ -219,3 +219,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:01:28Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:01:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:02:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:02:13Z
