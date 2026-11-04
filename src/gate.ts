@@ -243,6 +243,14 @@ function researchCallMatches(toolName: string, bashCommand: string, config: Gate
 const VALID_PATTERN = /\bVALID\b/u;
 const VALID_MAX_LENGTH = 200;
 
+/** A literal human pause/resume latches the session permit. Duration
+ *  grammar X{h,m,s} is MANDATORY — the word is the law: pause, never
+ *  stop ("pause 999h" clamps to the configured ceiling). The latch is
+ *  human-reply only, exactly like the VALID latch above it. */
+const PAUSE_PATTERN = /\b(?:pios-gate\s+)?pause\s+(\d+)\s*(h|m|s)\b/i;
+const RESUME_PATTERN = /\b(?:pios-gate\s+)?resume\b/i;
+const PAUSE_CEILING_DEFAULT = 4 * 3_600_000;
+
 /** Any tool-call attempt to reach the approval surface — blocked before
  *  all else. Reserved surface: pi-openspec-gate approve|validate (old),
  *  pios-gate approve|confirm|grant|next (new). Beyond the reserved words
@@ -251,7 +259,7 @@ const VALID_MAX_LENGTH = 200;
  *  `pios-gate validate` forwards to openspec's structure lint and is NOT
  *  touch-guarded. */
 const APPROVAL_TOUCH_RESERVED =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next))\b/u;
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|pause|resume))\b/u;
 
 const verbTouchCache = new Map<string, RegExp | null>();
 function approvalTouchVerbs(openspecRoot: string): RegExp | null {
@@ -301,6 +309,8 @@ export type GateState = {
   declarationWords: string | undefined;
   inheritedFocus: ActiveFocus | undefined;
   validationPermit: boolean;
+  /** session pause permit — epoch-ms expiry, armed by a human reply only */
+  pauseUntil?: number;
   /** witnessed-but-unresolved creation; stamped on message_end (below) */
   pendingCreation?: { slug: string; root: string; tool: string; at: string };
   /** an assistant message carried a declare phrase (self-declaration
@@ -427,6 +437,20 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     if (VALID_PATTERN.test(text)) {
       state.validationPermit = true; // one human-gate flip, latched
     }
+    const resumeMatch = RESUME_PATTERN.test(text);
+    const pauseMatch = PAUSE_PATTERN.exec(text);
+    if (resumeMatch) {
+      if (state.pauseUntil !== undefined) appendFact(FACT.pause, { kind: 'resumed', at: utcNow() });
+      state.pauseUntil = undefined;
+    }
+    if (pauseMatch) {
+      const amount = Number(pauseMatch[1]);
+      const unit = pauseMatch[2]!.toLowerCase();
+      const unitMs = unit === 'h' ? 3_600_000 : unit === 'm' ? 60_000 : 1_000;
+      const ceiling = config.approval.pauseCeiling ?? PAUSE_CEILING_DEFAULT;
+      state.pauseUntil = Date.now() + Math.min(amount * unitMs, ceiling);
+      appendFact(FACT.pause, { kind: 'armed', until: state.pauseUntil, at: utcNow() });
+    }
   });
 
   pi.on('tool_call', async (event, ctx) => {
@@ -457,6 +481,18 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
 
     const verdict = classifyMutation(toolName, input, annotationsOf(toolName), configReadOnlyTools);
+
+    // the pause permit — armed by a human reply only (the latch sits on
+    // user messages; assistant text and tool calls can never arm it, and
+    // the touch guard above already ran and stays absolute: pause yields
+    // the work fences, never the approval surface). Shape A: unaccounted
+    // still refuses — no landing place, no pause. Expired lazily.
+    const nowMs = Date.now();
+    if (state.pauseUntil !== undefined && nowMs >= state.pauseUntil) {
+      state.pauseUntil = undefined;
+      appendFact(FACT.pause, { kind: 'expired', at: utcNow() });
+    }
+    const paused = state.pauseUntil !== undefined && nowMs < state.pauseUntil;
     const openspecRoot = openspecRootOf(cwd);
 
     // creation stamping — assistant-witnessed `openspec new change <slug>`
@@ -481,7 +517,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       // even advertised the escape: "research without a focused change
       // stays free — clear the focus"). Reads that are not research
       // instruments stay free.
-      if (approval.phaseGates && openspecRoot && researchCallMatches(toolName, bashCommand, config)) {
+      if (!paused && approval.phaseGates && openspecRoot && researchCallMatches(toolName, bashCommand, config)) {
         const focusNow = activeFocus(ctx.sessionManager, cwd);
         if (focusNow && focusIsActive(focusNow, openspecRoot)) {
           const meta = readChangeMeta(openspecRoot, focusNow.change);
@@ -556,7 +592,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
 
     // 0.8 archive guard — archiving an unapproved change needs a human flag
-    if (approval.archiveGuard && bashCommand && ARCHIVE_PATTERN.test(bashCommand)) {
+    if (!paused && approval.archiveGuard && bashCommand && ARCHIVE_PATTERN.test(bashCommand)) {
       const slug = /\bopenspec\s+archive\s+(?:-[\w-]+\s+)*([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
       const root = openspecRootOf(cwd);
       const meta = slug && root ? readChangeMeta(root, slug) : undefined;
@@ -581,7 +617,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // schema's declarations. Existing files stay editable (grandfathered,
     // receipts flow); bash creations get the approval check (heredoc
     // content is not inspectable — documented, fail-safe on the grant).
-    if (approval.phaseGates && openspecRoot) {
+    if (!paused && approval.phaseGates && openspecRoot) {
       for (const path of paths) {
         const slug = CHANGE_FROM_PATH_PATTERN.exec(path)?.[1];
         if (!slug) continue;
@@ -670,7 +706,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       // 2a. approval teeth — attribution is not approval; source mutations
       // on a focused-but-unapproved change block with the terminal remedy
       const meta = readChangeMeta(openspecRoot!, focus.change);
-      if (approval.enforce) {
+      if (approval.enforce && !paused) {
         // unlock is data: any granted writes-unlock artifact (x-unlocks:
         //  [writes], legacy x-unlocks-source), else (no declaration) full
         // completion — attribution is not approval

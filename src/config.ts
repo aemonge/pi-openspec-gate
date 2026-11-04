@@ -33,6 +33,10 @@ export type ApprovalConfig = {
   stampCreations: boolean;
   /** Phase gates: creating a gated artifact needs its declared precedents granted; declared sections/lines checked at birth. */
   phaseGates: boolean;
+  /** Hard cap for a session pause, in ms — a pause longer than this clamps
+   *  to the ceiling (the duration IS the feature; "pause 999h" must not be
+   *  a stop in disguise). Default 4h. */
+  pauseCeiling?: number;
 };
 
 export type GateConfig = {
@@ -79,6 +83,7 @@ export function parseApproval(raw: unknown): ApprovalConfig {
     archiveGuard: flag('archiveGuard'),
     stampCreations: flag('stampCreations'),
     phaseGates: flag('phaseGates'),
+    pauseCeiling: typeof record.pauseCeiling === 'number' ? record.pauseCeiling : undefined,
   };
 }
 

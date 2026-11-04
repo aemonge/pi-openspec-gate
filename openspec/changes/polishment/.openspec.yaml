@@ -4,5 +4,9 @@ goal: "one ceremony, many small fixes — pause, focus-lifecycle gaps; slices ar
 status: proposed
 created_by: assistant
 
-granted: brainstorm
+granted: brainstorm,investigate,plan
 granted_brainstorm: 2026-11-04T15:06:52Z
+
+granted_investigate: 2026-11-04T15:13:32Z
+
+granted_plan: 2026-11-04T15:18:45Z

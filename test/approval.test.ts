@@ -370,6 +370,94 @@ describe('approval teeth: attribution is not approval', () => {
   });
 });
 
+describe('pause: a human reply arms the yield — teeth rest, the fence stays', () => {
+  test('teeth yield while armed; the fence and unaccounted do not', async () => {
+    const fake = makeFakePi();
+    const config: GateConfig = {
+      enabled: true,
+      exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
+      approval: { ...TEETH_ON },
+    };
+    createGate(fake.pi as never, config);
+    const repo2 = mkdtempSync(join(tmpdir(), 'gate-pause-'));
+    const root2 = join(repo2, 'openspec');
+    try {
+      mkdirSync(join(root2, 'changes', 'c9'), { recursive: true });
+      writeChangeMeta(root2, 'c9', { status: 'proposed' });
+      const focusCtx = {
+        cwd: repo2,
+        sessionManager: { getEntries: () => [{ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c9', taskId: '1' } }] },
+      };
+      const plainCtx = { cwd: repo2, sessionManager: { getEntries: () => [] } };
+      // before: blocked
+      const before = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.deepEqual(before, { block: true, reason: BLOCK_UNAPPROVED });
+      // assistant text never arms
+      await fake.fire('message_end', { message: { role: 'assistant', content: 'pause 30m and relax' } }, focusCtx);
+      const stillBlocked = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.deepEqual(stillBlocked, { block: true, reason: BLOCK_UNAPPROVED }, 'assistant text cannot arm');
+      // malformed duration never arms
+      await fake.fire('message_end', { message: { role: 'user', content: 'pause soon, maybe' } }, focusCtx);
+      const malformed = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.deepEqual(malformed, { block: true, reason: BLOCK_UNAPPROVED }, 'malformed duration cannot arm');
+      // the human's reply arms
+      await fake.fire('message_end', { message: { role: 'user', content: 'pause 30m' } }, focusCtx);
+      const yielded = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.equal(yielded, undefined, 'teeth rest while armed');
+      const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.pause.v1');
+      assert.equal((fact!.data as { kind: string }).kind, 'armed');
+      // the fence stays: grant surfaces block even while paused
+      const fenced = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate next c9' } }, focusCtx);
+      assert.deepEqual(fenced, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'pause never reaches the approval surface');
+      // arming via tool call is itself fenced
+      const selfServe = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate pause 5m' } }, focusCtx);
+      assert.deepEqual(selfServe, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'an assistant cannot pause the gate');
+      // shape A: unaccounted stays refused while paused — no landing place, no pause
+      const unaccounted = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, plainCtx);
+      const unaccountedReason = (unaccounted as { reason: string }).reason;
+      assert.match(unaccountedReason, /unaccounted mutation/u);
+    } finally {
+      rmSync(repo2, { recursive: true, force: true });
+    }
+  });
+
+  test('expiry restores the teeth; resume clears early', async () => {
+    const fake = makeFakePi();
+    const config: GateConfig = {
+      enabled: true,
+      exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
+      approval: { ...TEETH_ON, pauseCeiling: 60 },
+    };
+    createGate(fake.pi as never, config);
+    const repo2 = mkdtempSync(join(tmpdir(), 'gate-pause-expiry-'));
+    const root2 = join(repo2, 'openspec');
+    try {
+      mkdirSync(join(root2, 'changes', 'c9'), { recursive: true });
+      writeChangeMeta(root2, 'c9', { status: 'proposed' });
+      const focusCtx = {
+        cwd: repo2,
+        sessionManager: { getEntries: () => [{ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c9', taskId: '1' } }] },
+      };
+      // 99h clamps to the 60ms ceiling
+      await fake.fire('message_end', { message: { role: 'user', content: 'pause 99h' } }, focusCtx);
+      const yielded = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.equal(yielded, undefined, 'armed (clamped to ceiling)');
+      await new Promise((resolve) => setTimeout(resolve, 90));
+      const after = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.deepEqual(after, { block: true, reason: BLOCK_UNAPPROVED }, 'expiry restores the teeth');
+      const expired = fake.entries.find((e) => e.customType === 'pi-openspec-gate.pause.v1' && (e.data as { kind: string }).kind === 'expired');
+      assert.ok(expired, 'the expiry is a recorded fact');
+      // resume clears early
+      await fake.fire('message_end', { message: { role: 'user', content: 'pause 1h' } }, focusCtx);
+      await fake.fire('message_end', { message: { role: 'user', content: 'resume' } }, focusCtx);
+      const resumed = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
+      assert.deepEqual(resumed, { block: true, reason: BLOCK_UNAPPROVED }, 'resume clears the permit');
+    } finally {
+      rmSync(repo2, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('state-aware blocks: gated changes never hear approve', () => {
   let repo: string;
   let root: string;

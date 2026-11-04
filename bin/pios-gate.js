@@ -21,6 +21,8 @@
  *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
  *   pios-gate focus             teaching: focus is a session instrument
+ *   pios-gate pause|resume      teaching: pause is a session act — say
+ *                               "pause 30m" in the session
  *   pios-gate help              the gate's own usage (bare invocation too)
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
  *                               intact — exec, never interpretation —
@@ -105,6 +107,18 @@ if (command === 'focus') {
   process.exit(0);
 }
 
+// pause/resume are session acts (the permit lives in the session and
+// dies with it — arming from a terminal would need a session-id channel
+// pi does not expose): the verb teaches, the reply arms
+if (command === 'pause' || command === 'resume') {
+  console.log(
+    command === 'pause'
+      ? 'pause is a session act — say "pause 30m" (grammar X{h,m,s}, ceiling 4h) in your session; the permit dies with the session'
+      : 'resume is a session act — say "resume" in your session',
+  );
+  process.exit(0);
+}
+
 // the gate introduces itself: bare invocation and help print gate usage —
 // never openspec's banner under the gate's name (live-caught 2026-11-04,
 // human ruling: no debt, fix now)
@@ -118,6 +132,7 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
   pios-gate confirm <slug>              permits the declared verdict-line flip
+  pios-gate pause|resume                teaching: pause is a session act — say it in the session
   pios-gate validate <args>             openspec's structure lint (passthrough)
   pios-gate <anything else>             exec openspec verbatim, exit code intact
 

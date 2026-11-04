@@ -34,3 +34,10 @@ focus-lifecycle gaps below.
   publish). Also worth a look: whether bash-extracted relative paths
   (e.g. `git add openspec/changes/`) match the `**/openspec/**`
   exemption at all — the docs exemption never got a chance to speak.
+- **Backlog · external pause arming needs a pi session-id API** — the
+  pause permit lives in session state (dies with the session, by law);
+  arming it from a terminal (`pios-gate pause 30m` reaching the live
+  session) needs pi to expose the session id/file to extensions. Until
+  then `pios-gate pause` teaches and the in-session reply arms
+  (2026-11-04, polishment Slice 1). Same channel would let a cockpit
+  show the countdown.

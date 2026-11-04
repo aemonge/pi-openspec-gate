@@ -84,7 +84,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 

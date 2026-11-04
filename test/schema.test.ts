@@ -109,10 +109,12 @@ describe('schema reader: parsing', () => {
     assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one/u);
   });
 
-  test('reserved words never become schema verbs — next joined the CLI surface', () => {
-    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: next\n';
-    assert.throws(() => parseSchemaYaml(yaml, 'fixture'), /x-grant-verb 'next' is reserved by the gate CLI/u);
-    assert.throws(() => parseSchemaYamlBin(yaml, 'fixture'), /is reserved by the gate CLI/u);
+  test('reserved words never become schema verbs — next, pause, resume joined the CLI surface', () => {
+    for (const verb of ['next', 'pause', 'resume']) {
+      const yaml = `name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: ${verb}\n`;
+      assert.throws(() => parseSchemaYaml(yaml, 'fixture'), new RegExp(`x-grant-verb '${verb}' is reserved by the gate CLI`, 'u'));
+      assert.throws(() => parseSchemaYamlBin(yaml, 'fixture'), /is reserved by the gate CLI/u);
+    }
   });
 
   test('grantHint: declared verb, else next — never approve for a step (bin contract)', () => {

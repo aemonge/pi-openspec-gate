@@ -266,6 +266,20 @@ test('help: bare invocation and help print gate usage — never openspec banner'
   }
 });
 
+test('pause: a session act — the terminal verb teaches, never forwards', () => {
+  const repo = makeRepo();
+  try {
+    for (const args of [['pause', '30m'], ['resume']]) {
+      const r = run(repo, args);
+      assert.equal(r.status, 0, args.join(' '));
+      assert.match(r.stdout, /session act/u, args.join(' '));
+      assert.equal(existsSync(repo.log), false, 'pause/resume never forward');
+    }
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('next: the uniform act — first ungranted stamps, refusals never forward', () => {
   const repo = makeRepo();
   try {

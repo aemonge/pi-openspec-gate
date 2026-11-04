@@ -15,6 +15,7 @@ export const FACT = {
   creationStamped: 'pi-openspec-gate.creation-stamped.v1',
   phasegate: 'pi-openspec-gate.phasegate.v1',
   selfDeclare: 'pi-openspec-gate.self-declare.v1',
+  pause: 'pi-openspec-gate.pause.v1',
 } as const;
 
 /** An assistant message carried a declare phrase — a self-declaration
