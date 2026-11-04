@@ -41,7 +41,7 @@
       hash: 39da123
 - [ ] Human validation
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: "then VALID the other one, and archive it" · outcome: validated — live checks passed in the human's terminal (next t1 three-stamp walk "The next is OK"; help surface eyeballed, catch #4 tripped and fixed in-slice) · surfaced: catch #4 — bare pios-gate answered as openspec; fixed 39da123, completions/single-name thread parked in openspec/learnings/debt.md
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-04T13:40:37Z
 
@@ -302,3 +302,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:43Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T14:39:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:49:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T14:49:08Z
