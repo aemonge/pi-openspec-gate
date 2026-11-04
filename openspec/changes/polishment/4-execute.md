@@ -47,7 +47,7 @@
       hash: 468c52d
 - [ ] Human validation
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: "VALID" · outcome: validated — Slice 3 live-validated in the scratch (t3 archived through the stripped flag, exit 0); Slices 1–2 suite-pinned (169/169), live validation deferred to post-install · surfaced: stamps outran the build (granted_execute 15:40:43Z mid-build — the ledger was approved as structure before the slices landed); catches #5–#8 carried; external arming + cockpit countdown parked in debt.md pending a pi session-id API
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/config.ts · at 2026-11-04T15:25:01Z
 
@@ -228,3 +228,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:41:43Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-04T15:41:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:46:31Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-04T15:46:31Z
