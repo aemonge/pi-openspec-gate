@@ -645,3 +645,59 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-10T16:10:01Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-10T16:10:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:44Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:15:44Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-10T16:16:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-10T16:16:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T16:16:19Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T16:16:19Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-10T16:16:19Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-10T16:16:20Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T16:16:37Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T16:16:38Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:16:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:16:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:17:15Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:17:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:17:51Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:17:51Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:18:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:18:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:18:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:18:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:19:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:19:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:44:59Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:44:59Z

@@ -1,0 +1,13 @@
+schema: spec
+created: 2026-11-10
+skip_specs: true
+
+status: proposed
+created_by: assistant
+
+granted: brainstorm,investigate,plan
+granted_brainstorm: 2026-11-10T13:37:44Z
+
+granted_investigate: 2026-11-10T13:50:59Z
+
+granted_plan: 2026-11-10T13:52:27Z
