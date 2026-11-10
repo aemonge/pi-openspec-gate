@@ -3,20 +3,15 @@
  * node refuses type-stripping under node_modules, so installed bins must
  * not be TypeScript).
  *
- *   the walk — the human's whole vocabulary:
- *   pios-gate <slug>            aim — focus a change (one active per
- *                               room; human authority — never the
- *                               agent's)
+ *   the walk — the vocabulary, one for human and AI alike:
+ *   pios-gate <slug>            aim — focus a change (and see its act)
  *   pios-gate go                advance — stamp the next step of the
  *                               focused change
  *   pios-gate list              the cockpit — every change, next acts
- *   pios-gate act               the aim's act in one line — derived at
- *                               read time, never stored; what renderers
- *                               relay
  *   pios-gate done              the close — after the human ticks the
  *                               verdict: validated, archived, focus dies
  *
- *   for agents, scripts, renderers:
+ *   more:
  *   pios-gate act <slug>        a change's act in one line
  *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
@@ -27,10 +22,9 @@
  *   pios-gate focus [slug]      show or set the aim
  *   pios-gate approve <slug>    legacy whole-change stamp (ungated only)
  *
- *   the room:
- *   pios-gate pause|resume      session acts — say them in the session
- *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
- *                               intact — exec, never interpretation
+ *   more — pause|resume are session acts (say them in the session);
+ *   anything else execs openspec verbatim, exit code intact — never
+ *   interpretation
  *
  * Reserved words never forward. Human terminal only: aim, go, done,
  * confirm, grant, next, and approve refuse tool-call invocations.
@@ -159,7 +153,7 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   pios-gate done              the close — after you tick the verdict:
                               validated, archived, focus released
 
-  for agents, scripts, renderers:
+  more:
   pios-gate act <slug>        a change's act in one line
   pios-gate inspect <slug>    one change, verbose
   pios-gate grant <slug> <ref>  stamp by name (id · row# · file · artifact/section)
@@ -167,14 +161,12 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   pios-gate confirm <slug>    the verdict, named
   pios-gate focus [slug]      show or set the aim
   pios-gate approve <slug>    legacy whole-change stamp (ungated schemas only)
-
-  the room:
   pios-gate pause|resume      session acts — say them in the session
   pios-gate validate <args>   openspec's structure lint (passthrough)
   pios-gate <anything else>   exec openspec verbatim, exit code intact
 
-Grants are human-terminal — go, confirm, grant, next, and approve refuse
-tool-call invocations.`);
+Grants are human-terminal — go, done, confirm, grant, next, and approve
+refuse tool-call invocations.`);
   process.exit(0);
 }
 

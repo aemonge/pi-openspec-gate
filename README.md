@@ -101,7 +101,7 @@ pios-gate list                        # the cockpit — every change, next acts
 pios-gate act                         # the aim's act in one line (what renderers relay)
 pios-gate confirm                     # the verdict — after you tick it
 
-# for agents, scripts, renderers:
+# more:
 pios-gate act <slug>                  # a change's act in one line
 pios-gate inspect <slug>              # one change, verbose (artifacts, stamps, structure)
 pios-gate grant <slug> <artifact-id>  # stamp by name: id, row#, file, or artifact/section path
