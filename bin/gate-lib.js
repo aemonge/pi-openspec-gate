@@ -111,7 +111,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'done', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 
@@ -687,12 +687,19 @@ export function pendingReport(root) {
     }
     const approvedSuffix = meta.approved_at ? ` · approved ${meta.approved_at}` : '';
 
-    if (gated && status !== 'approved') {
+    if (gated) {
       const schema = resolution.schema;
       const approved = grantedSet(meta);
       const marks = schema.artifacts.map((a) => (approved.has(a.id) ? '✓' : existsSync(join(changesDir, dir.name, a.generates)) ? '◻' : '·')).join('');
       const act = pendingAct(root, dir.name, schema, approved);
-      rows.push(`${dir.name.padEnd(36)}[${schema.name}] ${marks} ${status}${approvedSuffix}\n${act ? `  next: ${act}` : ''}`);
+      const tail = act
+        ? `  next: ${act}`
+        : unhashed > 0
+          ? `${unhashed} unhashed commits — pios-gate done closes after the hash`
+          : meta.validated
+            ? '  done — ready to archive?'
+            : `  next: ${completionLine(schema, meta)} → pios-gate done`;
+      rows.push(`${dir.name.padEnd(36)}[${schema.name}] ${marks} ${status}${approvedSuffix}\n${tail}`);
     } else {
       const legacyNeed =
         status !== 'approved'

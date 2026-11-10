@@ -194,7 +194,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /status: approved/);
 
       // the cockpit names the declared verdict, never a hardcoded one
-      assert.match(run(dir, ['pending']).stdout, /m2\s+approved\s+needs confirm \(verdict open\)/);
+      assert.match(run(dir, ['pending']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending → pios-gate done/u);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

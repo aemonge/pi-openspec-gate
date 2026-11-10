@@ -354,17 +354,17 @@ test('walk: <slug> aims, go advances, list watches — archive only after confir
     assert.match(meta, /granted: idea,proposition,proposal,plan,execution/);
     assert.match(meta, /status: approved/);
 
-    // the verdict wall: go refuses until confirm
+    // the verdict wall: go refuses — done closes, only after the tick
     const wall = run(repo, ['go']);
     assert.equal(wall.status, 1);
-    assert.match(wall.stdout, /tick 'the verdict' then: pios-gate confirm m1/);
+    assert.match(wall.stdout, /tick 'the verdict' then: pios-gate done/);
 
-    assert.equal(run(repo, ['confirm']).status, 0, 'the walk confirms without a slug');
-    const last = run(repo, ['go']);
-    assert.equal(last.status, 0);
-    assert.match(last.stdout, /validated m1 — archiving/);
-    assert.equal(last.called, true, 'the last go execs the archive');
+    const close = run(repo, ['done']);
+    assert.equal(close.status, 0);
+    assert.match(close.stdout, /done m1 · validated · archiving/);
+    assert.equal(close.called, true, 'done execs the archive');
     assert.match(readFileSync(repo.log, 'utf8'), /archive m1/);
+    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), false, 'done releases the aim');
 
     // list is the cockpit, pending its twin
     rmSync(repo.log, { force: true });

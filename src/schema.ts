@@ -74,7 +74,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** The gate CLI's own words — never schema-declared (the declared-verb
  *  scan died with the verbs; this set is static law). */
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'done', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 

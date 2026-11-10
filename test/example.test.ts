@@ -63,8 +63,10 @@ describe('the example schema (spec v4)', () => {
       'missing declared structure: Workflow',
       'pios-gate next hello-gate',
       'all artifacts granted — status: approved',
-      'needs confirm (verdict open)',
-      'ready to archive?',
+      '→ pios-gate done',
+      'all artifacts granted — status: approved',
+      'not done — tick',
+      'done hello-gate · validated · archiving',
       'passed: 12',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);

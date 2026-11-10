@@ -81,11 +81,11 @@ expect '→ pios-gate go' list hello-gate
 echo '6 ── completion: the last grant stamps the change approved'
 expect 'all artifacts granted — status: approved' go
 
-echo '7 ── the verdict lifecycle: confirm, tick, ready'
-expect 'needs confirm (verdict open)' pending hello-gate
-expect 'confirmed hello-gate' confirm hello-gate
+echo '7 ── the close: tick the verdict, then done'
+expect '→ pios-gate done' pending hello-gate
+expect_fail 'not done — tick' done hello-gate
 printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
-expect 'ready to archive?' pending hello-gate
+expect 'done hello-gate · validated · archiving' done hello-gate
 
 echo '8 ── the final state on disk'
 echo '── .openspec.yaml:'

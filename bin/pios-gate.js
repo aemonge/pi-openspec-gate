@@ -8,13 +8,13 @@
  *                               room; human authority — never the
  *                               agent's)
  *   pios-gate go                advance — stamp the next step of the
- *                               focused change (archive after confirm —
- *                               the verdict wall intact)
+ *                               focused change
  *   pios-gate list              the cockpit — every change, next acts
  *   pios-gate act               the aim's act in one line — derived at
  *                               read time, never stored; what renderers
  *                               relay
- *   pios-gate confirm <slug>    the verdict — permits verdict-line flips
+ *   pios-gate done              the close — after the human ticks the
+ *                               verdict: validated, archived, focus dies
  *
  *   for agents, scripts, renderers:
  *   pios-gate act <slug>        a change's act in one line
@@ -32,12 +32,12 @@
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
  *                               intact — exec, never interpretation
  *
- * Reserved words never forward. Human terminal only: aim, go, confirm,
- * grant, next, and approve refuse tool-call invocations.
+ * Reserved words never forward. Human terminal only: aim, go, done,
+ * confirm, grant, next, and approve refuse tool-call invocations.
  */
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -50,6 +50,8 @@ import {
   pendingReport,
   readChangeMeta,
   readFocus,
+  focusPath,
+  receiptArtifactFor,
   resolveChangeSchema,
   schemaIsGated,
   schemaVerdictLine,
@@ -101,7 +103,7 @@ const doGrant = (root, s, artifactId) => {
   }
   console.log(
     result.completed
-      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: pios-gate confirm ${s}` : ''}`
+      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: pios-gate done` : ''}`
       : `granted ${s} · ${result.granted} · at ${result.at}${result.next ? ` · next: ${result.next}` : ''}`,
   );
   process.exit(0);
@@ -150,12 +152,12 @@ if (command === 'pause' || command === 'resume') {
 if (!command || command === 'help' || command === '--help' || command === '-h') {
   console.log(`pios-gate — the gate as a feature extension of openspec
 
-  the walk:
-  pios-gate <slug>            aim
-  pios-gate go                advance — stamp the next step (archive is the last go)
-  pios-gate list              see every change
-  pios-gate act               the aim's act, one line
-  pios-gate confirm           the verdict — after you tick it
+  const walk:
+  pios-gate <slug>            aim — focus a change (and see its act)
+  pios-gate go                advance — stamp the next step
+  pios-gate list              the cockpit — every change
+  pios-gate done              the close — after you tick the verdict:
+                              validated, archived, focus released
 
   for agents, scripts, renderers:
   pios-gate act <slug>        a change's act in one line
@@ -246,15 +248,60 @@ if (command === 'go') {
   if (!pending) {
     if (!meta.validated) {
       const verdict = schemaVerdictLine(resolution.schema);
-      console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: pios-gate confirm ${focused}`);
+      console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: pios-gate done`);
       process.exit(1);
     }
-    console.log(`validated ${focused} — archiving`);
-    const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
-    process.exit(archive.status ?? 1);
+    console.error(`validated ${focused} — nothing to advance: pios-gate done`);
+    process.exit(1);
   }
   const nextArtifact = resolution.schema.artifacts.find((a) => !grantedSet(meta).has(a.id));
   doGrant(root, focused, nextArtifact.id);
+}
+
+// the close: after the human ticks the verdict — validated, archived.
+// One word for the whole ending; the tick before it stays human-only.
+if (command === 'done') {
+  const root = rootOf();
+  const focused = readFocus(root);
+  if (!focused) {
+    console.error('no focus — pios-gate <slug>');
+    process.exit(1);
+  }
+  if (!existsSync(join(root, 'changes', focused))) {
+    console.error('focus is stale — pios-gate <slug>');
+    process.exit(1);
+  }
+  const meta = readChangeMeta(root, focused);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
+    console.error(`pios-gate: '${focused}' declares no gates — the close is: pios-gate approve ${focused}, then archive`);
+    process.exit(1);
+  }
+  const ungranted = resolution.schema.artifacts.filter((a) => !grantedSet(meta).has(a.id));
+  if (ungranted.length > 0) {
+    console.error(`not done — ${ungranted.length} artifact(s) ungranted (${ungranted.map((a) => a.id).join(', ')}) — pios-gate go`);
+    process.exit(1);
+  }
+  const verdict = schemaVerdictLine(resolution.schema);
+  if (verdict && !meta.validated) {
+    const bearer = receiptArtifactFor(resolution.schema);
+    const ledger = bearer ? join(root, 'changes', focused, bearer.generates) : undefined;
+    const unticked = ledger && existsSync(ledger)
+      ? new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'))
+      : true;
+    if (unticked) {
+      console.error(`not done — tick '${verdict}' in ${bearer?.generates ?? 'the ledger'} first, then: pios-gate done`);
+      process.exit(1);
+    }
+  }
+  const at = utcNowStamp();
+  writeChangeMeta(root, focused, { validated: at, validated_at: at });
+  console.log(`done ${focused} · validated · archiving`);
+  const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
+  if (archive.status === 0) {
+    try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
+  }
+  process.exit(archive.status ?? 1);
 }
 
 // the uniform act: grant the first ungranted artifact in declared

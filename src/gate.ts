@@ -262,7 +262,7 @@ const PAUSE_CEILING_DEFAULT = 4 * 3_600_000;
  *  `pios-gate validate` forwards to openspec's structure lint and is NOT
  *  touch-guarded. */
 const APPROVAL_TOUCH_RESERVED =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|go|pause|resume))\b/u;
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|go|done|pause|resume))\b/u;
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
