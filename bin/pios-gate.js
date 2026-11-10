@@ -152,7 +152,7 @@ if (command === 'pause' || command === 'resume') {
 if (!command || command === 'help' || command === '--help' || command === '-h') {
   console.log(`pios-gate — the gate as a feature extension of openspec
 
-  const walk:
+  the walk:
   pios-gate <slug>            aim — focus a change (and see its act)
   pios-gate go                advance — stamp the next step
   pios-gate list              the cockpit — every change
