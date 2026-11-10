@@ -359,7 +359,7 @@ test('walk: <slug> aims, go advances, list watches — archive only after confir
     assert.equal(wall.status, 1);
     assert.match(wall.stdout, /tick 'the verdict' then: pios-gate confirm m1/);
 
-    assert.equal(run(repo, ['confirm', 'm1']).status, 0);
+    assert.equal(run(repo, ['confirm']).status, 0, 'the walk confirms without a slug');
     const last = run(repo, ['go']);
     assert.equal(last.status, 0);
     assert.match(last.stdout, /validated m1 — archiving/);
@@ -392,6 +392,9 @@ test('walk: stale focus and aimless go refuse loudly', () => {
     const staleAct = run(repo, ['act']);
     assert.equal(staleAct.status, 0);
     assert.match(staleAct.stdout, /focus is stale — pios-gate <slug>/);
+    const staleConfirm = run(repo, ['confirm']);
+    assert.equal(staleConfirm.status, 1);
+    assert.match(staleConfirm.stdout, /focus is stale — pios-gate <slug>/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }

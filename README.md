@@ -99,13 +99,14 @@ pios-gate <slug>                      # aim — focus a change
 pios-gate go                          # advance — stamp the next step (archive after confirm)
 pios-gate list                        # the cockpit — every change, next acts
 pios-gate act                         # the aim's act in one line (what renderers relay)
-pios-gate confirm <slug>              # the verdict — permits the declared flip
+pios-gate confirm                     # the verdict — after you tick it
 
 # for agents, scripts, renderers:
 pios-gate act <slug>                  # a change's act in one line
 pios-gate inspect <slug>              # one change, verbose (artifacts, stamps, structure)
 pios-gate grant <slug> <artifact-id>  # stamp by name: id, row#, file, or artifact/section path
 pios-gate next <slug>                 # the advance without aiming
+pios-gate confirm <slug>              # the verdict, named
 pios-gate focus [slug]                # show or set the aim
 pios-gate approve <slug> [artifact-id] # legacy whole-change stamp (ungated schemas only)
 ```

@@ -151,17 +151,18 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   console.log(`pios-gate — the gate as a feature extension of openspec
 
   the walk:
-  pios-gate <slug>            aim — focus a change (one active per room)
-  pios-gate go                advance — stamp the next step (archive after confirm)
-  pios-gate list              the cockpit — every change, next acts
-  pios-gate act               the aim's act in one line — what renderers relay
-  pios-gate confirm <slug>    the verdict — permits the declared flip
+  pios-gate <slug>            aim
+  pios-gate go                advance — stamp the next step (archive is the last go)
+  pios-gate list              see every change
+  pios-gate act               the aim's act, one line
+  pios-gate confirm           the verdict — after you tick it
 
   for agents, scripts, renderers:
   pios-gate act <slug>        a change's act in one line
   pios-gate inspect <slug>    one change, verbose
   pios-gate grant <slug> <ref>  stamp by name (id · row# · file · artifact/section)
   pios-gate next <slug>       the advance without aiming
+  pios-gate confirm <slug>    the verdict, named
   pios-gate focus [slug]      show or set the aim
   pios-gate approve <slug>    legacy whole-change stamp (ungated schemas only)
 
@@ -311,10 +312,18 @@ if (command === 'approve') {
 
 if (command === 'confirm') {
   const root = rootOf();
-  changeOrDie(root, slug, 'usage: pios-gate confirm <change-slug>');
+  const target = slug ?? readFocus(root);
+  if (!target) {
+    console.error('no focus — pios-gate <slug> (or: pios-gate confirm <slug>)');
+    process.exit(1);
+  }
+  if (!existsSync(join(root, 'changes', target))) {
+    console.error('focus is stale — pios-gate <slug>');
+    process.exit(1);
+  }
   const at = utcNowStamp();
-  writeChangeMeta(root, slug, { validated: at, validated_at: at });
-  console.log(`confirmed ${slug} · at ${at}`);
+  writeChangeMeta(root, target, { validated: at, validated_at: at });
+  console.log(`confirmed ${target} · at ${at}`);
   process.exit(0);
 }
 
