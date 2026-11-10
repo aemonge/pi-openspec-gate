@@ -11,6 +11,12 @@
  *                               sections checked before stamping
  *   pios-gate act <slug>       the next act in one line — derived at read
  *                              time, never stored; what renderers relay
+ *   pios-gate <slug>            the walk's aim — focus a change (one
+ *                               active change per room; human authority)
+ *   pios-gate go                the walk's advance — stamp the next step
+ *                               of the focused change (archive after
+ *                               confirm — the verdict wall intact)
+ *   pios-gate list              the cockpit — every change, next acts
  *   pios-gate next <slug>       the uniform act — grants the first
  *                               ungranted artifact in declared sequence;
  *                               every verb-less schema's step verb
@@ -24,7 +30,7 @@
  *   pios-gate pending           the cockpit — every change, next acts
  *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
- *   pios-gate focus             teaching: focus is a session instrument
+ *   pios-gate focus [slug]      show or set the terminal focus
  *   pios-gate pause|resume      teaching: pause is a session act — say
  *                               "pause 30m" in the session
  *   pios-gate help              the gate's own usage (bare invocation too)
@@ -44,6 +50,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  actHint,
   artifactForGrantVerb,
   completionLine,
   findOpenspecRoot,
@@ -53,11 +60,14 @@ import {
   pendingAct,
   pendingReport,
   readChangeMeta,
+  readFocus,
   resolveChangeSchema,
   schemaIsGated,
+  schemaVerdictLine,
   showReport,
   utcNowStamp,
   writeChangeMeta,
+  writeFocus,
 } from './gate-lib.js';
 
 const [command, slug, artifactArg] = process.argv.slice(2);
@@ -82,6 +92,18 @@ const changeOrDie = (root, s, usage) => {
   }
 };
 
+/** The walk's aim — write focus, then teach what the next go will do. */
+const aimFocus = (root, target) => {
+  writeFocus(root, target);
+  const meta = readChangeMeta(root, target);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  const act = resolution.ok && schemaIsGated(resolution.schema)
+    ? (pendingAct(root, target, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta))
+    : `needs approve — pios-gate approve ${target}`;
+  console.log(`focused ${target} · next: ${act}`);
+  process.exit(0);
+};
+
 const doGrant = (root, s, artifactId) => {
   const result = grantArtifact(root, s, artifactId);
   if (!result.ok) {
@@ -96,7 +118,7 @@ const doGrant = (root, s, artifactId) => {
   process.exit(0);
 };
 
-if (command === 'pending') {
+if (command === 'pending' || command === 'list') {
   console.log(pendingReport(rootOf()));
   process.exit(0);
 }
@@ -108,9 +130,17 @@ if (command === 'inspect') {
   process.exit(0);
 }
 
+// the walk's aim: terminal focus — the human's authority, one active
+// change per room; the agent's session focus is a separate store
 if (command === 'focus') {
-  console.log('focus is a session instrument — set it with your cockpit/status tools (openspec_focus), not the terminal');
-  process.exit(0);
+  const root = rootOf();
+  if (!slug) {
+    const current = readFocus(root);
+    console.log(current ? `focused ${current}` : 'no focus — pios-gate <slug>');
+    process.exit(0);
+  }
+  changeOrDie(root, slug, 'usage: pios-gate focus <change-slug>');
+  aimFocus(root, slug);
 }
 
 // pause/resume are session acts (the permit lives in the session and
@@ -133,8 +163,11 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
 
   pios-gate pending                     the cockpit — every change, next acts
   pios-gate inspect <slug>              one change, verbose
+  pios-gate <slug>                      the walk's aim — focus a change
+  pios-gate go                          the walk's advance — stamp the next step (archive after confirm)
+  pios-gate list                        the cockpit — every change, next acts (pending's twin)
   pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
-  pios-gate next <slug>                 the uniform act: first ungranted artifact
+  pios-gate next <slug>                 the explicit advance: first ungranted artifact
   pios-gate act <slug>                  the next act in one line — for humans and renderers
   pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
@@ -179,6 +212,41 @@ if (command === 'act') {
   }
   console.log(pendingAct(root, slug, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta));
   process.exit(0);
+}
+
+// the walk's advance: stamp the next step of the focused change — same
+// grantArtifact checks as every surface; the verdict wall and archive
+// discipline intact (archive fires only after confirm)
+if (command === 'go') {
+  const root = rootOf();
+  const focused = readFocus(root);
+  if (!focused) {
+    console.error('no focus — pios-gate <slug>');
+    process.exit(1);
+  }
+  if (!existsSync(join(root, 'changes', focused))) {
+    console.error('focus is stale — pios-gate <slug>');
+    process.exit(1);
+  }
+  const meta = readChangeMeta(root, focused);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
+    console.error(`pios-gate: '${focused}' declares no gates — use: pios-gate approve ${focused}`);
+    process.exit(1);
+  }
+  const pending = pendingAct(root, focused, resolution.schema, grantedSet(meta));
+  if (!pending) {
+    if (!meta.validated) {
+      const verdict = schemaVerdictLine(resolution.schema);
+      console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: pios-gate confirm ${focused}`);
+      process.exit(1);
+    }
+    console.log(`validated ${focused} — archiving`);
+    const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
+    process.exit(archive.status ?? 1);
+  }
+  const nextArtifact = resolution.schema.artifacts.find((a) => !grantedSet(meta).has(a.id));
+  doGrant(root, focused, nextArtifact.id);
 }
 
 // the uniform act: grant the first ungranted artifact in declared
@@ -287,6 +355,12 @@ if (command === 'confirm') {
 }
 
 // everything else: exec openspec verbatim — no arg rewriting, ever —
+// EXCEPT the walk's aim: a bare change name focuses (resolved, never
+// interpreted — unknown names keep the passthrough below)
+if (command && !slug) {
+  const root = findOpenspecRoot(process.cwd());
+  if (root && existsSync(join(root, 'changes', command))) aimFocus(root, command);
+}
 // EXCEPT gate-side flags: --i-am-the-human is the archive guard's escape
 // hatch (the hook honors it and steps aside); openspec would reject it as
 // unknown, so the wrapper keeps it off the argv it forwards

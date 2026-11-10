@@ -75,7 +75,7 @@ expect 'granted hello-gate · plan' commit hello-gate
 
 echo '5 ── the cockpit names the next human act'
 printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
-expect 'grant: pios-gate build' pending hello-gate
+expect 'pios-gate next hello-gate' pending hello-gate
 
 echo '6 ── completion: the last grant stamps the change approved'
 expect 'all artifacts granted — status: approved' build hello-gate

@@ -63,7 +63,7 @@ describe('the example schema (spec v4)', () => {
       'in sequence',
       'not drafted yet',
       'missing declared structure: Workflow',
-      'grant: pios-gate build',
+      'pios-gate next hello-gate',
       'all artifacts granted — status: approved',
       'needs confirm (verdict open)',
       'ready to archive?',

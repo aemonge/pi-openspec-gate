@@ -74,6 +74,33 @@ export function utcNowStamp() {
   return new Date().toISOString().replace(/\.\d{3}Z$/u, 'Z');
 }
 
+// ── terminal focus (the walk's aim) ───────────────────────────────────
+
+/** The human's terminal focus — one active change per room, one line in
+ *  the root. The agent's session focus (openspec_focus) is a separate
+ *  store and a separate authority; this file is never written by it. */
+export function focusPath(openspecRoot) {
+  return join(openspecRoot, '.focus');
+}
+
+export function readFocus(openspecRoot) {
+  const file = focusPath(openspecRoot);
+  if (!existsSync(file)) return undefined;
+  const name = readFileSync(file, 'utf8').trim();
+  return name.length > 0 ? name : undefined;
+}
+
+export function writeFocus(openspecRoot, slug) {
+  writeFileSync(focusPath(openspecRoot), `${slug}\n`, 'utf8');
+}
+
+/** The act hint for a change: focused rooms say `go`, everything else
+ *  names the explicit form. The echo teaches the two-word walk without
+ *  ever assuming the aim. */
+export function actHint(openspecRoot, slug) {
+  return readFocus(openspecRoot) === slug ? 'pios-gate go' : `pios-gate next ${slug}`;
+}
+
 // ── schema mirror (x- vocabulary) ──────────────────────────────────────
 
 const KEY_LINE = /^([A-Za-z_][\w-]*):\s*(.*)$/u;
@@ -84,7 +111,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'act', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 
@@ -520,7 +547,7 @@ export function pendingAct(root, slug, schema, approved) {
   const next = schema.artifacts.find((a) => !approved.has(a.id));
   if (!next) return undefined;
   return existsSync(join(root, 'changes', slug, next.generates))
-    ? `read ${next.generates} → grant: ${grantHint(schema, next.id, slug)}`
+    ? `read ${next.generates} → ${actHint(root, slug)}`
     : `awaiting draft of ${next.generates} (artifact ${next.id})`;
 }
 

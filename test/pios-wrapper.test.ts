@@ -42,9 +42,9 @@ function change(repo: Repo, slug: string, meta?: string): void {
 test('wrapper: passthrough execs openspec verbatim, exit code intact', () => {
   const repo = makeRepo();
   try {
-    const ok = run(repo, ['list', '--json']);
+    const ok = run(repo, ['status', '--json']);
     assert.equal(ok.status, 0);
-    assert.equal(readFileSync(repo.log, 'utf8').trim(), 'list --json');
+    assert.equal(readFileSync(repo.log, 'utf8').trim(), 'status --json');
 
     const fail = run(repo, ['show', 'nope'], 3);
     assert.equal(fail.status, 3);
@@ -287,13 +287,13 @@ test('teaching: the gate names the next act — echo suffix and the act verb', (
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
-    const proposed = run(repo, ['propose', 'm1']);
+    const proposed = run(repo, ['next', 'm1']);
     assert.equal(proposed.status, 0);
-    assert.match(proposed.stdout, /next: read 2-proposition\.md → grant: pios-gate deal m1/);
+    assert.match(proposed.stdout, /next: read 2-proposition\.md → pios-gate next m1/);
 
     const act = run(repo, ['act', 'm1']);
     assert.equal(act.status, 0);
-    assert.match(act.stdout, /read 2-proposition\.md → grant: pios-gate deal m1/);
+    assert.match(act.stdout, /read 2-proposition\.md → pios-gate next m1/);
     assert.equal(act.called, false, 'act never forwards');
 
     for (const verb of ['deal', 'plan', 'order']) assert.equal(run(repo, [verb, 'm1']).status, 0);
@@ -317,6 +317,74 @@ test('teaching: act on a legacy change points at the legacy acts', () => {
     change(repo, 'z', 'status: approved\nvalidated: 2026-10-19T11:00:00Z\n');
     assert.match(run(repo, ['act', 'z']).stdout, /ready to archive\?/);
     assert.equal(run(repo, ['act', 'missing']).status, 2);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('walk: <slug> aims, go advances, list watches — archive only after confirm', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\n\nClaim: x\n');
+    draft(repo, 'm1', '3-proposal.md', '# Proposal\n\n## Done when\n');
+    draft(repo, 'm1', '4-plan.md', '# Plan\n');
+    draft(repo, 'm1', '5-execution.md', '# Execution\n');
+
+    // bare slug aims; the echo teaches the next go
+    const aim = run(repo, ['m1']);
+    assert.equal(aim.status, 0);
+    assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → pios-gate go/);
+    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), true);
+    assert.match(run(repo, ['focus']).stdout, /focused m1/);
+
+    // unknown bare names still forward verbatim
+    assert.equal(run(repo, ['whatever']).called, true, 'unknown single arg forwards');
+
+    // go ladders the rungs — same grantArtifact checks, focused
+    for (let i = 0; i < 5; i += 1) {
+      const step = run(repo, ['go']);
+      assert.equal(step.status, 0, `go #${i + 1}`);
+    }
+    const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /granted: idea,proposition,proposal,plan,execution/);
+    assert.match(meta, /status: approved/);
+
+    // the verdict wall: go refuses until confirm
+    const wall = run(repo, ['go']);
+    assert.equal(wall.status, 1);
+    assert.match(wall.stdout, /tick 'the verdict' then: pios-gate confirm m1/);
+
+    assert.equal(run(repo, ['confirm', 'm1']).status, 0);
+    const last = run(repo, ['go']);
+    assert.equal(last.status, 0);
+    assert.match(last.stdout, /validated m1 — archiving/);
+    assert.equal(last.called, true, 'the last go execs the archive');
+    assert.match(readFileSync(repo.log, 'utf8'), /archive m1/);
+
+    // list is the cockpit, pending its twin
+    rmSync(repo.log, { force: true });
+    const list = run(repo, ['list']);
+    assert.equal(list.status, 0);
+    assert.equal(list.called, false);
+    assert.match(list.stdout, /m1/);
+    assert.equal(run(repo, ['pending']).status, 0);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('walk: stale focus and aimless go refuse loudly', () => {
+  const repo = gatedRepo();
+  try {
+    const aimless = run(repo, ['go']);
+    assert.equal(aimless.status, 1);
+    assert.match(aimless.stdout, /no focus — pios-gate <slug>/);
+    writeFileSync(join(repo.dir, 'openspec', '.focus'), 'gone\n');
+    const stale = run(repo, ['go']);
+    assert.equal(stale.status, 1);
+    assert.match(stale.stdout, /focus is stale — pios-gate <slug>/);
+    assert.match(run(repo, ['focus']).stdout, /focused gone/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -539,7 +607,7 @@ test('cockpit: pending shows grant marks and the next grant; show is verbose', (
     run(repo, ['propose', 'm1']);
     const pending = run(repo, ['pending']);
     assert.match(pending.stdout, /\[gated\] ✓◻···/);
-    assert.match(pending.stdout, /read 2-proposition\.md → grant: pios-gate deal m1/);
+    assert.match(pending.stdout, /read 2-proposition\.md → pios-gate next m1/);
 
     const show = run(repo, ['inspect', 'm1']);
     assert.match(show.stdout, /change: m1 · schema: gated/);
@@ -550,13 +618,13 @@ test('cockpit: pending shows grant marks and the next grant; show is verbose', (
   }
 });
 
-test('grants: focus teaches, ungated schema refuses verbs politely', () => {
+test('grants: focus aims, ungated schema refuses grants politely', () => {
   const repo = makeRepo();
   try {
     change(repo, 'legacy', 'status: proposed\n');
     const focus = run(repo, ['focus']);
     assert.equal(focus.status, 0);
-    assert.match(focus.stdout, /session instrument/);
+    assert.match(focus.stdout, /no focus — pios-gate <slug>/);
     const verb = run(repo, ['grant', 'legacy', 'a']);
     assert.equal(verb.status, 1); // grant refused, not a usage error
     assert.match(verb.stdout, /schema declares no gates/);

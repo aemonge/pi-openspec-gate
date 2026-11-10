@@ -100,11 +100,11 @@ describe('schema reader: parsing', () => {
   });
 
   test('x-grant is an alias for x-grant-verb; declaring both fails loudly', () => {
-    const short = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: go\n';
+    const short = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: ship-it\n';
     const schema = parseSchemaYaml(short, 'fixture');
-    assert.equal(artifactForGrantVerb(schema, 'go')?.id, 'a');
-    assert.equal(parseSchemaYamlBin(short, 'fixture').artifacts[0]!.grantVerb, 'go');
-    const both = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: go\n    x-grant-verb: go\n';
+    assert.equal(artifactForGrantVerb(schema, 'ship-it')?.id, 'a');
+    assert.equal(parseSchemaYamlBin(short, 'fixture').artifacts[0]!.grantVerb, 'ship-it');
+    const both = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: ship-it\n    x-grant-verb: ship-it\n';
     assert.throws(() => parseSchemaYaml(both, 'fixture'), /declares x-grant and x-grant-verb both/u);
     assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one/u);
   });
