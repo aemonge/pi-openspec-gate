@@ -327,12 +327,20 @@ test('walk: <slug> aims, go advances, list watches — archive only after confir
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
+    // bare act resolves the aim — the renderer's one-line contract
+    const aimless = run(repo, ['act']);
+    assert.equal(aimless.status, 0);
+    assert.match(aimless.stdout, /no focus — pios-gate <slug>/);
+
     // bare slug aims; the echo teaches the next go
     const aim = run(repo, ['m1']);
     assert.equal(aim.status, 0);
     assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → pios-gate go/);
     assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), true);
     assert.match(run(repo, ['focus']).stdout, /focused m1/);
+    const renderer = run(repo, ['act']);
+    assert.equal(renderer.status, 0);
+    assert.match(renderer.stdout, /read 1-idea\.md → pios-gate go/);
 
     // unknown bare names still forward verbatim
     assert.equal(run(repo, ['whatever']).called, true, 'unknown single arg forwards');
@@ -381,6 +389,9 @@ test('walk: stale focus and aimless go refuse loudly', () => {
     assert.equal(stale.status, 1);
     assert.match(stale.stdout, /focus is stale — pios-gate <slug>/);
     assert.match(run(repo, ['focus']).stdout, /focused gone/);
+    const staleAct = run(repo, ['act']);
+    assert.equal(staleAct.status, 0);
+    assert.match(staleAct.stdout, /focus is stale — pios-gate <slug>/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -392,7 +403,7 @@ test('help: bare invocation and help print gate usage — never openspec banner'
     for (const args of [[], ['help'], ['--help'], ['-h']]) {
       const r = run(repo, args);
       assert.equal(r.status, 0, `pios-gate ${args.join(' ')}`);
-      assert.match(r.stdout, /pios-gate pending/u, args.join(' '));
+      assert.match(r.stdout, /pios-gate <slug>/u, args.join(' '));
       assert.doesNotMatch(r.stdout, /AI-native/u, 'openspec banner must not answer for the gate');
       assert.equal(r.called, false, 'help never forwards');
     }

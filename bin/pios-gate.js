@@ -3,40 +3,37 @@
  * node refuses type-stripping under node_modules, so installed bins must
  * not be TypeScript).
  *
- *   pios-gate grant <slug> <artifact-id>
- *                               the canonical grant — the declared word
- *                               id, inspect's row number, or the
- *                               generated file (artifact/section id-path
- *                               for sub-grants); structure and gated
- *                               sections checked before stamping
- *   pios-gate act <slug>       the next act in one line — derived at read
- *                              time, never stored; what renderers relay
- *   pios-gate <slug>            the walk's aim — focus a change (one
- *                               active change per room; human authority)
- *   pios-gate go                the walk's advance — stamp the next step
- *                               of the focused change (archive after
- *                               confirm — the verdict wall intact)
+ *   the walk — the human's whole vocabulary:
+ *   pios-gate <slug>            aim — focus a change (one active per
+ *                               room; human authority — never the
+ *                               agent's)
+ *   pios-gate go                advance — stamp the next step of the
+ *                               focused change (archive after confirm —
+ *                               the verdict wall intact)
  *   pios-gate list              the cockpit — every change, next acts
- *   pios-gate next <slug>       the explicit advance — grants the first
- *                               ungranted artifact in declared sequence
- *   pios-gate approve <slug> [artifact-id]
- *                               canonical stamp; none given = all
- *                               remaining artifacts on a gated schema, legacy
- *                               status-only otherwise)
- *   pios-gate confirm <slug>    permits verdict-line [x] flips
- *   pios-gate pending           the cockpit — every change, next acts
+ *   pios-gate act               the aim's act in one line — derived at
+ *                               read time, never stored; what renderers
+ *                               relay
+ *   pios-gate confirm <slug>    the verdict — permits verdict-line flips
+ *
+ *   for agents, scripts, renderers:
+ *   pios-gate act <slug>        a change's act in one line
  *   pios-gate inspect <slug>    one change, verbose (own verb: `show`
  *                               stays openspec's passthrough)
- *   pios-gate focus [slug]      show or set the terminal focus
- *   pios-gate pause|resume      teaching: pause is a session act — say
- *                               "pause 30m" in the session
- *   pios-gate help              the gate's own usage (bare invocation too)
+ *   pios-gate grant <slug> <ref>  stamp by name — ref is the declared
+ *                               word id, inspect's row number, the
+ *                               generated file, or artifact/section
+ *   pios-gate next <slug>       the advance without aiming
+ *   pios-gate focus [slug]      show or set the aim
+ *   pios-gate approve <slug>    legacy whole-change stamp (ungated only)
+ *
+ *   the room:
+ *   pios-gate pause|resume      session acts — say them in the session
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
  *                               intact — exec, never interpretation
  *
- * Reserved words never forward. Human terminal only: the gate's
- * approval-touch guard blocks tool-call invocations of every grant
- * surface, reserved or declared.
+ * Reserved words never forward. Human terminal only: aim, go, confirm,
+ * grant, next, and approve refuse tool-call invocations.
  */
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
@@ -154,27 +151,27 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   console.log(`pios-gate — the gate as a feature extension of openspec
 
   the walk:
-  pios-gate <slug>                      aim — focus a change (one active per room)
-  pios-gate go                          advance — stamp the next step (archive after confirm)
-  pios-gate list                        the cockpit — every change, next acts (pending's twin)
-  pios-gate confirm <slug>              the verdict — permits the declared verdict-line flip
+  pios-gate <slug>            aim — focus a change (one active per room)
+  pios-gate go                advance — stamp the next step (archive after confirm)
+  pios-gate list              the cockpit — every change, next acts
+  pios-gate act               the aim's act in one line — what renderers relay
+  pios-gate confirm <slug>    the verdict — permits the declared flip
 
-  power verbs (when you want to name things):
-  pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
-  pios-gate next <slug>                 the explicit advance: first ungranted artifact
-  pios-gate act <slug>                  the next act in one line — for humans and renderers
-  pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
+  for agents, scripts, renderers:
+  pios-gate act <slug>        a change's act in one line
+  pios-gate inspect <slug>    one change, verbose
+  pios-gate grant <slug> <ref>  stamp by name (id · row# · file · artifact/section)
+  pios-gate next <slug>       the advance without aiming
+  pios-gate focus [slug]      show or set the aim
+  pios-gate approve <slug>    legacy whole-change stamp (ungated schemas only)
 
   the room:
-  pios-gate pending                     the cockpit (list's twin)
-  pios-gate inspect <slug>              one change, verbose
-  pios-gate focus [slug]                show or set the walk's aim
-  pios-gate pause|resume                teaching: pause is a session act — say it in the session
-  pios-gate validate <args>             openspec's structure lint (passthrough)
-  pios-gate <anything else>             exec openspec verbatim, exit code intact
+  pios-gate pause|resume      session acts — say them in the session
+  pios-gate validate <args>   openspec's structure lint (passthrough)
+  pios-gate <anything else>   exec openspec verbatim, exit code intact
 
-Grants are human-terminal: approve, confirm, grant, next, and go
-refuse tool-call invocations.`);
+Grants are human-terminal — go, confirm, grant, next, and approve refuse
+tool-call invocations.`);
   process.exit(0);
 }
 
@@ -190,11 +187,24 @@ if (command === 'grant') {
 }
 
 // the teacher: the change's next human act in one line — derived at read
-// time, never stored; what renderers relay (placement, never truth)
+// time, never stored; what renderers relay (placement, never truth).
+// Bare `act` resolves the aim — stardeck reads one line, owns no state.
 if (command === 'act') {
   const root = rootOf();
-  changeOrDie(root, slug, 'usage: pios-gate act <change-slug>');
-  const meta = readChangeMeta(root, slug);
+  const target = slug ?? readFocus(root);
+  if (!target) {
+    console.log('no focus — pios-gate <slug>');
+    process.exit(0);
+  }
+  if (!existsSync(join(root, 'changes', target))) {
+    if (slug) {
+      console.error(`no such change: ${target} (under ${root}/changes/)`);
+      process.exit(2);
+    }
+    console.log('focus is stale — pios-gate <slug>');
+    process.exit(0);
+  }
+  const meta = readChangeMeta(root, target);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     const status = meta.status ?? 'no-meta';
@@ -207,7 +217,7 @@ if (command === 'act') {
     );
     process.exit(0);
   }
-  console.log(pendingAct(root, slug, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta));
+  console.log(pendingAct(root, target, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta));
   process.exit(0);
 }
 

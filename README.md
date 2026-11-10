@@ -95,17 +95,19 @@ approved` is written only when every artifact is granted — attribution
 is still not approval.
 
 ```sh
-pios-gate <slug>                      # the walk's aim — focus a change
-pios-gate go                          # the walk's advance — stamp the next rung (archive after confirm)
-pios-gate list                        # the cockpit — every change, next acts (pending's twin)
-pios-gate grant <slug> <artifact-id>   # canonical: id, row#, file, or artifact/section path
-pios-gate next <slug>                  # the explicit advance: first ungranted artifact, declared sequence
-pios-gate approve <slug> [artifact-id] # canonical stamp (gated schemas: per-step only)
-pios-gate confirm <slug>               # permits the declared verdict-line flip
-pios-gate pause|resume                 # teaching: pause is a session act — say it in the session
-pios-gate inspect <slug>               # one change, verbose (artifacts, stamps, structure)
-pios-gate help                         # the gate's own usage (bare invocation too)
-pios-gate <anything else>              # exec openspec verbatim, exit code intact
+pios-gate <slug>                      # aim — focus a change
+pios-gate go                          # advance — stamp the next step (archive after confirm)
+pios-gate list                        # the cockpit — every change, next acts
+pios-gate act                         # the aim's act in one line (what renderers relay)
+pios-gate confirm <slug>              # the verdict — permits the declared flip
+
+# for agents, scripts, renderers:
+pios-gate act <slug>                  # a change's act in one line
+pios-gate inspect <slug>              # one change, verbose (artifacts, stamps, structure)
+pios-gate grant <slug> <artifact-id>  # stamp by name: id, row#, file, or artifact/section path
+pios-gate next <slug>                 # the advance without aiming
+pios-gate focus [slug]                # show or set the aim
+pios-gate approve <slug> [artifact-id] # legacy whole-change stamp (ungated schemas only)
 ```
 
 Grants are strictly next-artifact-only, you approve what you read
