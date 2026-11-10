@@ -1,8 +1,8 @@
 #!/bin/sh
-# try.sh — the example walkthrough on the v4 spec schema.
+# try.sh — the example walkthrough on the v5 spec schema.
 #
 # Builds a scratch repo from this example, runs the negatives first, then
-# walks the four-grant lifecycle — open → dig → commit → build — and the
+# walks the four-grant lifecycle — focus once, four go presses — and the
 # verdict lifecycle to ready-to-archive. This directory is never modified.
 # Every grant below is what a HUMAN types in their terminal — that is the
 # point of the gate.
@@ -56,29 +56,30 @@ md() {
 }
 
 echo '1 ── sequence: declaration sequence is grant sequence'
-expect_fail 'in sequence' dig hello-gate
+expect_fail 'in sequence' grant hello-gate investigate
 
 echo '2 ── you approve what you read'
-expect_fail 'not drafted yet' open hello-gate
+expect 'focused hello-gate · next: awaiting draft of 1-brainstorm.md' hello-gate
+expect_fail 'not drafted yet' go
 md 1-brainstorm.md Brainstorm Pain Questions
-expect 'granted hello-gate · brainstorm' open hello-gate
+expect 'granted hello-gate · brainstorm' go
 
 echo '3 ── the journal is free: investigate needs no shape, only substance'
 printf '# Investigate\n\nFindings: the gate reads only x- tags.\nNo alternatives needed — direct route.\n' > "$C/2-investigate.md"
-expect 'granted hello-gate · investigate' dig hello-gate
+expect 'granted hello-gate · investigate' go
 
 echo '4 ── the contract is hard: every declared section at stamp time'
 md 3-plan.md Plan Estimate Skills
-expect_fail 'missing declared structure: Workflow' commit hello-gate
+expect_fail 'missing declared structure: Workflow' go
 md 3-plan.md Plan Estimate Skills Workflow Slices Verification History
-expect 'granted hello-gate · plan' commit hello-gate
+expect 'granted hello-gate · plan' go
 
 echo '5 ── the cockpit names the next human act'
 printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
-expect 'pios-gate next hello-gate' pending hello-gate
+expect '→ pios-gate go' list hello-gate
 
 echo '6 ── completion: the last grant stamps the change approved'
-expect 'all artifacts granted — status: approved' build hello-gate
+expect 'all artifacts granted — status: approved' go
 
 echo '7 ── the verdict lifecycle: confirm, tick, ready'
 expect 'needs confirm (verdict open)' pending hello-gate

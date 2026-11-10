@@ -512,7 +512,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     writeChangeMeta(root, 'g2', { schema: 'runway', status: 'proposed', granted: 'brief' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g2'));
     const reason = (result as { reason: string }).reason;
-    assert.match(reason, /advance: pios-gate dig g2/u);
+    assert.match(reason, /advance: pios-gate next g2/u);
     assert.doesNotMatch(reason, /approve:/u);
   });
 

@@ -5,7 +5,6 @@ import { join } from 'node:path';
 
 import {
   artifactForFilename,
-  artifactForGrantVerb,
   allArtifactsGranted,
   findSchemaFile,
   parseSchemaYaml,
@@ -14,8 +13,7 @@ import {
   sectionTitles,
 } from '../src/schema.ts';
 import {
-  artifactForGrantVerb as artifactForGrantVerbBin,
-  grantHint,
+  actHint as actHintBin,
   parseSchemaYaml as parseSchemaYamlBin,
   schemaIsGated as schemaIsGatedBin,
 } from '../bin/gate-lib.js';
@@ -99,30 +97,30 @@ describe('schema reader: parsing', () => {
     assert.deepEqual(sectionTitles(b!), ['One', 'Two']);
   });
 
-  test('x-grant is an alias for x-grant-verb; declaring both fails loudly', () => {
+  test('x-grant is silently ignored — the verbs died, schemas in the wild never break', () => {
     const short = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: ship-it\n';
     const schema = parseSchemaYaml(short, 'fixture');
-    assert.equal(artifactForGrantVerb(schema, 'ship-it')?.id, 'a');
-    assert.equal(parseSchemaYamlBin(short, 'fixture').artifacts[0]!.grantVerb, 'ship-it');
-    const both = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant: ship-it\n    x-grant-verb: ship-it\n';
-    assert.throws(() => parseSchemaYaml(both, 'fixture'), /declares x-grant and x-grant-verb both/u);
-    assert.throws(() => parseSchemaYamlBin(both, 'fixture'), /choose one/u);
+    assert.equal(schema.artifacts.length, 1);
+    const bin = parseSchemaYamlBin(short, 'fixture');
+    assert.equal(bin.artifacts.length, 1);
+    assert.ok(!('grantVerb' in schema.artifacts[0]!) && !('grantVerb' in bin.artifacts[0]!));
   });
 
-  test('reserved words never become schema verbs — next, pause, resume joined the CLI surface', () => {
-    for (const verb of ['next', 'pause', 'resume']) {
+  test('reserved words are moot — x-grant-verb parses clean and resolves nothing', () => {
+    for (const verb of ['next', 'pause', 'resume', 'go']) {
       const yaml = `name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: ${verb}\n`;
-      assert.throws(() => parseSchemaYaml(yaml, 'fixture'), new RegExp(`x-grant-verb '${verb}' is reserved by the gate CLI`, 'u'));
-      assert.throws(() => parseSchemaYamlBin(yaml, 'fixture'), /is reserved by the gate CLI/u);
+      const schema = parseSchemaYaml(yaml, 'fixture');
+      const bin = parseSchemaYamlBin(yaml, 'fixture');
+      assert.ok(schema.artifacts.length === 1 && bin.artifacts.length === 1);
+      assert.ok(!('grantVerb' in schema.artifacts[0]!) && !('grantVerb' in bin.artifacts[0]!));
     }
   });
 
-  test('grantHint: declared verb, else next — never approve for a step (bin contract)', () => {
-    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: kickoff\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n';
-    const schema = parseSchemaYamlBin(yaml, 'fixture');
-    assert.equal(grantHint(schema, 'a', 'c1'), 'pios-gate kickoff c1');
-    assert.equal(grantHint(schema, 'b', 'c1'), 'pios-gate next c1');
-    assert.ok(!grantHint(schema, 'b', 'c1').includes('approve'), 'a step suggestion never says approve');
+  test('actHint: focused rooms say go, everything else names next (bin)', () => {
+    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n';
+    parseSchemaYamlBin(yaml, 'fixture');
+    assert.equal(actHintBin('/no/such/root', 'c1'), 'pios-gate next c1');
+    assert.ok(!actHintBin('/no/such/root', 'c1').includes('approve'), 'a step suggestion never says approve');
   });
 
   test('unknown x-requires-approval reference fails loudly', () => {
@@ -245,13 +243,9 @@ describe('schema reader: resolution and grant semantics', () => {
     assert.equal(allArtifactsGranted(schema, four), true);
   });
 
-  test('grant verbs resolve from declared x-grant-verb, not position', () => {
+  test('the walk killed the declared verbs — no artifact resolves one', () => {
     const schema = parseSchemaYaml(MISSION_YAML, 'fixture');
-    assert.equal(artifactForGrantVerb(schema, 'propose')?.id, 'idea');
-    assert.equal(artifactForGrantVerb(schema, 'deal')?.id, 'proposition');
-    assert.equal(artifactForGrantVerb(schema, 'plan')?.id, 'proposal');
-    assert.equal(artifactForGrantVerb(schema, 'order')?.id, 'plan');
-    assert.equal(artifactForGrantVerb(schema, 'execute')?.id, 'execution');
+    for (const artifact of schema.artifacts) assert.ok(!('grantVerb' in artifact));
   });
 });
 
@@ -264,13 +258,10 @@ const SHIPPED = (name: string): string =>
   readFileSync(findSchemaFile(join(REPO_ROOT, 'openspec'), name)!, 'utf8');
 
 describe('bin parser reads the shipped schemas', () => {
-  test('spec: gated, every verb resolves, block lists populate', () => {
+  test('spec: gated, verbs resolve nothing, block lists populate', () => {
     const schema = parseSchemaYamlBin(SHIPPED('spec'), 'spec');
     assert.equal(schemaIsGatedBin(schema), true, 'spec schema must be gated on the CLI side');
-    assert.equal(artifactForGrantVerbBin(schema, 'open')?.id, 'brainstorm');
-    assert.equal(artifactForGrantVerbBin(schema, 'dig')?.id, 'investigate');
-    assert.equal(artifactForGrantVerbBin(schema, 'commit')?.id, 'plan');
-    assert.equal(artifactForGrantVerbBin(schema, 'build')?.id, 'execute');
+    for (const artifact of schema.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');
     const investigate = schema.artifacts.find((a: any) => a.id === 'investigate');
     assert.deepEqual(investigate?.requiresApproval, ['brainstorm']);
     assert.deepEqual(investigate?.unlocks, ['research']);

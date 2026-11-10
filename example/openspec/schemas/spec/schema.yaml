@@ -1,5 +1,5 @@
 name: spec
-version: 4
+version: 5
 x-declares: [action the spec, execute the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -35,7 +35,6 @@ artifacts:
       never gated.'
     requires: []
     x-sections: [Pain, Questions]
-    x-grant: open
   - id: investigate
     generates: 2-investigate.md
     description: De-risk the plan — findings, options, evidence; research instruments open here
@@ -53,7 +52,6 @@ artifacts:
       - brainstorm
     x-requires-approval: [brainstorm]
     x-unlocks: [research]
-    x-grant: dig
   - id: plan
     generates: 3-plan.md
     description: The contract — estimate, skills, route, slices, verification; writes open here
@@ -79,7 +77,6 @@ artifacts:
     x-requires-approval: [investigate]
     x-unlocks: [writes]
     x-sections: [Estimate, Skills, Workflow, Slices, Verification, History]
-    x-grant: commit
   - id: execute
     generates: 4-execute.md
     description: The ledger — per-Slice checkpoints, hash-evidenced commits, receipts, and the final human verdict
@@ -103,4 +100,3 @@ artifacts:
     x-receives-receipts: true
     x-completes: approved
     x-verdict-line: Human validation
-    x-grant: build

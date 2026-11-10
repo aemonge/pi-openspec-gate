@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, test } from 'node:test';
 
-import { artifactForGrantVerb, findSchemaFile, parseSchemaYaml, schemaIsGated } from '../src/schema.ts';
+import { findSchemaFile, parseSchemaYaml, schemaIsGated } from '../src/schema.ts';
 import { parseSchemaYaml as parseSchemaYamlBin } from '../bin/gate-lib.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
@@ -32,10 +32,8 @@ describe('the example schema (spec v4)', () => {
       src.artifacts.map((a) => a.id),
       ['brainstorm', 'investigate', 'plan', 'execute'],
     );
-    assert.equal(artifactForGrantVerb(src, 'open')?.id, 'brainstorm');
-    assert.equal(artifactForGrantVerb(src, 'dig')?.id, 'investigate');
-    assert.equal(artifactForGrantVerb(src, 'commit')?.id, 'plan');
-    assert.equal(artifactForGrantVerb(src, 'build')?.id, 'execute');
+    assert.equal(schemaIsGated(src), true);
+    for (const artifact of src.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');
 
     // the capability boundaries, declared in data
     assert.deepEqual(src.artifacts[1]!.unlocks, ['research']);
@@ -67,7 +65,7 @@ describe('the example schema (spec v4)', () => {
       'all artifacts granted — status: approved',
       'needs confirm (verdict open)',
       'ready to archive?',
-      'passed: 11',
+      'passed: 12',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);
     }

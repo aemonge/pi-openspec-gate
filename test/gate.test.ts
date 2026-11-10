@@ -370,10 +370,10 @@ test('touch-guard: the grant surface is human-terminal only — reserved words +
       'utf8',
     );
     const verbCtx = { cwd: verbRepo, sessionManager: { getEntries: () => [] } };
-    const blocked = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate kickoff demo' } }, verbCtx);
-    assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'declared verb blocked');
+    const blocked = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate go demo' } }, verbCtx);
+    assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'the walk advance is blocked from tools');
     const pass = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate someotherword demo' } }, verbCtx);
-    // undeclared words are not approval-touch — the touch guard passes
+    // non-gate words are not approval-touch — the touch guard passes
     // them through; the base law may still block them as unaccounted
     const reason = (pass as { reason?: string } | undefined)?.reason;
     assert.notEqual(reason, BLOCK_APPROVAL_TOUCH, 'undeclared word is not approval-touch');

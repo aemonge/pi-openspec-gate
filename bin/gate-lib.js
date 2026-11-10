@@ -280,13 +280,10 @@ export function parseSchemaYaml(content, source) {
       continue;
     }
     if (k === 'x-grant-verb' || k === 'x-grant') {
+      // the walk killed the declared verbs — schemas in the wild carrying
+      // the tag parse clean and simply resolve no verb (human ruling
+      // 2026-11-10: the echo names every act; go performs it)
       flushPending();
-      const verb = v.trim();
-      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' ${k} must be one word`);
-      if (current.grantVerb !== undefined) {
-        throw new Error(`${source}: artifact '${current.id}' declares x-grant and x-grant-verb both — choose one`);
-      }
-      current.grantVerb = verb;
       continue;
     }
     if (k === 'x-verdict-line') {
@@ -388,16 +385,6 @@ export function parseSchemaYaml(content, source) {
       }
     }
   }
-  const verbs = new Map();
-  for (const a of real) {
-    if (!a.grantVerb) continue;
-    if (RESERVED_WORDS.has(a.grantVerb)) {
-      throw new Error(`${source}: x-grant-verb '${a.grantVerb}' is reserved by the gate CLI`);
-    }
-    const owner = verbs.get(a.grantVerb);
-    if (owner) throw new Error(`${source}: x-grant-verb '${a.grantVerb}' declared by '${owner}' and '${a.id}'`);
-    verbs.set(a.grantVerb, a.id);
-  }
   for (const [bearers, tag] of [
     [real.filter((a) => a.completes !== undefined), 'x-completes'],
     [real.filter((a) => a.verdictLine !== undefined), 'x-verdict-line'],
@@ -460,39 +447,6 @@ export function artifactForRef(schema, ref) {
   return schema.artifacts.find((a) => a.generates === stem || a.generates.endsWith(`/${stem}`));
 }
 
-export function artifactForGrantVerb(schema, verb) {
-  return schema.artifacts.find((a) => a.grantVerb === verb);
-}
-
-const verbVocabCache = new Map();
-
-/** Every x-grant / x-grant-verb across the root's resolvable schemas
- *  (project + global homes) → schema name. Grant-shaped commands resolve
- *  against this vocabulary and never fall through to verbatim openspec
- *  (live-caught 2026-10-23: the silent skip printed openspec's "unknown
- *  command" for our own verbs). */
-export function grantVerbVocabulary(openspecRoot) {
-  if (verbVocabCache.has(openspecRoot)) return verbVocabCache.get(openspecRoot);
-  const vocab = new Map();
-  for (const schemasDir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
-    if (!existsSync(schemasDir)) continue;
-    for (const name of readdirSync(schemasDir)) {
-      const file = findSchemaFile(openspecRoot, name);
-      if (!file) continue;
-      try {
-        const schema = parseSchemaYaml(readFileSync(file, 'utf8'), file);
-        for (const a of schema.artifacts) {
-          if (a.grantVerb && !vocab.has(a.grantVerb)) vocab.set(a.grantVerb, name);
-        }
-      } catch {
-        // invalid schemas fail loudly when addressed by name
-      }
-    }
-  }
-  verbVocabCache.set(openspecRoot, vocab);
-  return vocab;
-}
-
 export function schemaIsGated(schema) {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0 || (a.requiresWritten ?? []).length > 0);
 }
@@ -527,15 +481,6 @@ export function capabilityUnlocked(schema, approvedSet, capability) {
 export function parseSectionPath(path) {
   const m = /^([\w-]+)\/([\w-]+)$/u.exec(path);
   return m ? { artifactId: m[1], sectionId: m[2] } : undefined;
-}
-
-/** The terminal command granting an artifact: declared verb, else the
- *  uniform `next` — the schema's act, never approve (that word is the
- *  legacy whole-change stamp; on a gated schema it means nothing). */
-export function grantHint(schema, artifactId, slug) {
-  const artifact = schema.artifacts.find((a) => a.id === artifactId);
-  if (artifact?.grantVerb) return `pios-gate ${artifact.grantVerb} ${slug}`;
-  return `pios-gate next ${slug}`;
 }
 
 /** The pending human act for a gated change in one line — read → grant,
@@ -644,7 +589,7 @@ export function grantArtifact(root, slug, artifactRef) {
   if (approved.has(artifactRef)) return { ok: false, error: `artifact '${artifactRef}' already granted ${meta[`granted_${artifactRef}`] ?? ''}`.trim() };
   const predecessor = schema.artifacts.slice(0, index).find((a) => !approved.has(a.id));
   if (predecessor) {
-    return { ok: false, error: `in sequence — grant '${predecessor.id}' first: ${grantHint(schema, predecessor.id, slug)}` };
+    return { ok: false, error: `in sequence — grant '${predecessor.id}' first: ${actHint(root, slug)}` };
   }
   const artifact = schema.artifacts[index];
   const file = join(root, 'changes', slug, artifact.generates);
@@ -687,7 +632,6 @@ export function grantArtifact(root, slug, artifactRef) {
     ok: true,
     granted: artifactRef,
     completed,
-    verb: artifact.grantVerb,
     at,
     next: completed ? undefined : pendingAct(root, slug, schema, approved),
     verdict: completed ? schemaVerdictLine(schema) : undefined,

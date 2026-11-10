@@ -13,7 +13,6 @@ import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import {
-  artifactForGrantVerb,
   allArtifactsGranted,
   parseSchemaYaml,
   parseSectionPath,
@@ -35,10 +34,8 @@ const RICH_SCHEMA = [
   'artifacts:',
   '  - id: dream',
   '    generates: 1-dream.md',
-  '    x-grant-verb: dream-up',
   '  - id: build',
   '    generates: 2-build.md',
-  '    x-grant-verb: build-it',
   '    x-requires-approval: [dream]',
   '    x-requires-written: [dream]',
   '    x-unlocks: [research, writes]',
@@ -62,8 +59,8 @@ describe('vocabulary: parsing and validation', () => {
     assert.deepEqual(sectionTitles(build), ['alpha', 'beta']);
     assert.deepEqual(build.sections[1]!.requiresApproval, ['alpha']);
     assert.deepEqual(build.requiresWritten, ['dream']);
-    assert.equal(artifactForGrantVerb(schema, 'dream-up')?.id, 'dream');
-    assert.equal(artifactForGrantVerb(schema, 'build-it')?.id, 'build');
+    assert.ok(!('grantVerb' in schema.artifacts[0]!), 'declared verbs died by silent ignore');
+    assert.ok(!('grantVerb' in schema.artifacts[1]!), 'declared verbs died by silent ignore');
     assert.equal(schemaVerdictLine(schema), 'Owner acceptance');
     assert.equal(receiptArtifactFor(schema)?.id, 'ship');
     assert.equal(schema.artifacts[2]!.completes, 'approved');
@@ -99,14 +96,6 @@ describe('vocabulary: parsing and validation', () => {
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-sections:\n      - id: one\n        x-requires-approval: [one]\n',
         /cannot require itself/u,
-      ],
-      [
-        'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: go\n  - id: b\n    generates: 2-b.md\n    x-grant-verb: go\n',
-        /'go' declared by 'a' and 'b'/u,
-      ],
-      [
-        'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-grant-verb: pending\n',
-        /reserved by the gate CLI/u,
       ],
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-completes: approved\n  - id: b\n    generates: 2-b.md\n    x-completes: approved\n',
@@ -170,11 +159,11 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       writeFileSync(join(changeDir, '2-build.md'), '# Build\n\n## alpha\n\n## beta\n', 'utf8');
       writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [ ] Owner acceptance — reply VALID\n', 'utf8');
 
-      // a declared verb grants artifact 1 — the engine never knew this word
-      assert.match(run(dir, ['dream-up', 'm2']).stdout, /granted m2 · dream/);
+      // the walk's advance grants artifact 1 — the engine never knew a verb
+      assert.match(run(dir, ['next', 'm2']).stdout, /granted m2 · dream/);
 
       // the artifact grant refuses while its gated section waits
-      const gated = run(dir, ['build-it', 'm2']);
+      const gated = run(dir, ['next', 'm2']);
       assert.equal(gated.status, 1);
       assert.match(gated.stdout, /gated sections awaiting grants: build\/beta/);
 
@@ -185,7 +174,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
 
       assert.match(run(dir, ['grant', 'm2', 'build/alpha']).stdout, /granted m2 · build\/alpha/);
       assert.match(run(dir, ['grant', 'm2', 'build/beta']).stdout, /granted m2 · build\/beta/);
-      assert.match(run(dir, ['build-it', 'm2']).stdout, /granted m2 · build/);
+      assert.match(run(dir, ['next', 'm2']).stdout, /granted m2 · build/);
 
       // early unlock: source may begin though grants are incomplete
       const meta = readFileSync(join(changeDir, '.openspec.yaml'), 'utf8');

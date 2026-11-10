@@ -79,7 +79,7 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
     );
     const reason = (blocked as { reason: string }).reason;
     assert.match(reason, /research window closed — 'c1'/u);
-    assert.match(reason, /grant:   pios-gate dig c1   ← your terminal/u);
+    assert.match(reason, /grant:   pios-gate grant c1 dig   ← your terminal/u);
     const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
     assert.equal((fact!.data as { kind: string }).kind, 'research-window');
   });

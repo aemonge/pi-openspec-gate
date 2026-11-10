@@ -17,11 +17,8 @@
  *                               of the focused change (archive after
  *                               confirm — the verdict wall intact)
  *   pios-gate list              the cockpit — every change, next acts
- *   pios-gate next <slug>       the uniform act — grants the first
- *                               ungranted artifact in declared sequence;
- *                               every verb-less schema's step verb
- *   pios-gate <verb> <slug>    an x-grant-verb the change's schema
- *                               declares (vocabulary from data, not code)
+ *   pios-gate next <slug>       the explicit advance — grants the first
+ *                               ungranted artifact in declared sequence
  *   pios-gate approve <slug> [artifact-id]
  *                               canonical stamp; none given = all
  *                               remaining artifacts on a gated schema, legacy
@@ -35,10 +32,7 @@
  *                               "pause 30m" in the session
  *   pios-gate help              the gate's own usage (bare invocation too)
  *   pios-gate <anything else>   exec openspec <argv> verbatim, exit code
- *                               intact — exec, never interpretation —
- *                               EXCEPT grant-shaped verbs (any schema's
- *                               x-grant-verb): those resolve or fail loudly,
- *                               never passthrough (live-caught 2026-10-23)
+ *                               intact — exec, never interpretation
  *
  * Reserved words never forward. Human terminal only: the gate's
  * approval-touch guard blocks tool-call invocations of every grant
@@ -51,12 +45,10 @@ import { join } from 'node:path';
 
 import {
   actHint,
-  artifactForGrantVerb,
   completionLine,
   findOpenspecRoot,
   grantedSet,
   grantArtifact,
-  grantVerbVocabulary,
   pendingAct,
   pendingReport,
   readChangeMeta,
@@ -169,15 +161,14 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
   pios-gate next <slug>                 the explicit advance: first ungranted artifact
   pios-gate act <slug>                  the next act in one line — for humans and renderers
-  pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
   pios-gate confirm <slug>              permits the declared verdict-line flip
   pios-gate pause|resume                teaching: pause is a session act — say it in the session
   pios-gate validate <args>             openspec's structure lint (passthrough)
   pios-gate <anything else>             exec openspec verbatim, exit code intact
 
-Grants are human-terminal: approve, confirm, grant, next, and every
-declared verb refuse tool-call invocations.`);
+Grants are human-terminal: approve, confirm, grant, next, and go
+refuse tool-call invocations.`);
   process.exit(0);
 }
 
@@ -292,57 +283,14 @@ if (command === 'approve') {
     // single approve for all steps is unacceptable, and scoped intent
     // must never approve more than its scope (the fail-open this change
     // cures once let a parse gap land here as a whole-change stamp).
-    const verbs = resolution.schema.artifacts
-      .filter((a) => a.grantVerb)
-      .map((a) => a.grantVerb)
-      .join(', ');
     console.error(`pios-gate: '${meta.schema}' is gated — approve is per-step:`);
-    console.error(`   pios-gate <verb> ${slug}   (verbs: ${verbs})`);
-    console.error(`   pios-gate grant ${slug} <step-id>`);
+    console.error(`   pios-gate go                       # stamps the first ungranted artifact (aim first: pios-gate <slug>)`);
+    console.error(`   pios-gate grant ${slug} <step-id>   # or name the step: id · row# · file`);
     process.exit(1);
   }
   writeChangeMeta(root, slug, { status: 'approved', approved_at: at });
   console.log(`approved ${slug} · at ${at}`);
   process.exit(0);
-}
-
-// schema-declared verb: pios-gate <x-grant-verb> <slug>
-// Grant-shaped input never falls through to openspec verbatim
-// (live-caught 2026-10-23: the silent skip let openspec answer
-// "unknown command" for the schema's own verbs).
-if (command && slug) {
-  const root = findOpenspecRoot(process.cwd());
-  const vocab = root ? grantVerbVocabulary(root) : new Map();
-  if (vocab.has(command)) {
-    if (!root) {
-      console.error('pios-gate: no openspec/changes/ found (walked up from cwd)');
-      process.exit(1);
-    }
-    if (!existsSync(join(root, 'changes', slug))) {
-      console.error(`no such change: ${slug} (under ${root}/changes/)`);
-      process.exit(1);
-    }
-    const meta = readChangeMeta(root, slug);
-    const resolution = resolveChangeSchema(root, meta.schema);
-    if (!resolution.ok) {
-      console.error(`pios-gate: schema problem for '${slug}' — ${resolution.reason}`);
-      process.exit(1);
-    }
-    if (!schemaIsGated(resolution.schema)) {
-      console.error(`pios-gate: schema '${meta.schema}' declares no gates — use: pios-gate approve ${slug}`);
-      process.exit(1);
-    }
-    const artifact = artifactForGrantVerb(resolution.schema, command);
-    if (!artifact) {
-      const verbs = resolution.schema.artifacts
-        .filter((a) => a.grantVerb)
-        .map((a) => a.grantVerb)
-        .join(', ');
-      console.error(`pios-gate: '${command}' is declared by schema '${vocab.get(command)}', not by '${meta.schema}' — verbs here: ${verbs}`);
-      process.exit(1);
-    }
-    doGrant(root, slug, artifact.id);
-  }
 }
 
 if (command === 'confirm') {

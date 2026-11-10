@@ -45,7 +45,6 @@ import {
   scanDeclares,
   schemaIsGated,
   schemaVerdictLine,
-  scanGrantVerbs,
   scanSchemaNames,
   sectionTitles,
   writesUnlocked,
@@ -136,8 +135,8 @@ export const BLOCK_UNAPPROVED = [
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
-export function blockArtifactApproval(slug: string, missing: string[], verb?: string): string {
-  const grant = verb ? `pios-gate ${verb} ${slug}` : `pios-gate next ${slug}`;
+export function blockArtifactApproval(slug: string, missing: string[]): string {
+  const grant = `pios-gate next ${slug}`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
     `   grant:   ${grant}   ← your terminal`,
@@ -145,13 +144,12 @@ export function blockArtifactApproval(slug: string, missing: string[], verb?: st
   ].join('\n');
 }
 
-/** The advance command for a gated change: the first ungranted
- *  artifact's declared verb, else the uniform next — approve is never
- *  named for a step (it is the legacy whole-change stamp). */
+/** The advance command for a gated change: the uniform next — approve is
+ *  never named for a step (it is the legacy whole-change stamp). */
 export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
   const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
   if (!nextRung) return undefined;
-  return nextRung.grantVerb ? `pios-gate ${nextRung.grantVerb} ${slug}` : `pios-gate next ${slug}`;
+  return `pios-gate next ${slug}`;
 }
 
 /** State-aware archive block: a gated change is advanced by its own act,
@@ -258,29 +256,13 @@ const PAUSE_CEILING_DEFAULT = 4 * 3_600_000;
 
 /** Any tool-call attempt to reach the approval surface — blocked before
  *  all else. Reserved surface: pi-openspec-gate approve|validate (old),
- *  pios-gate approve|confirm|grant|next (new). Beyond the reserved words
- *  the vocabulary is data: every x-grant-verb declared by any resolvable
- *  schema joins the guard (scanGrantVerbs, cached per root).
+ *  pios-gate approve|confirm|grant|next|go (new) — the walk's verbs are
+ *  the gate's own, so the guard is static; the declared-verb scan died
+ *  with the verbs (human ruling 2026-11-10).
  *  `pios-gate validate` forwards to openspec's structure lint and is NOT
  *  touch-guarded. */
 const APPROVAL_TOUCH_RESERVED =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|pause|resume))\b/u;
-
-const verbTouchCache = new Map<string, RegExp | null>();
-function approvalTouchVerbs(openspecRoot: string): RegExp | null {
-  if (verbTouchCache.has(openspecRoot)) return verbTouchCache.get(openspecRoot) ?? null;
-  const verbs = [...scanGrantVerbs(openspecRoot)];
-  let pattern: RegExp | null = null;
-  if (verbs.length > 0) {
-    const alternation = verbs
-      .sort((a, b) => b.length - a.length)
-      .map((v) => v.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
-      .join('|');
-    pattern = new RegExp(`pios-gate(?:\\.\\w+)?\\s+(?:${alternation})\\b`, 'u');
-  }
-  verbTouchCache.set(openspecRoot, pattern);
-  return pattern;
-}
+  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|go|pause|resume))\b/u;
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
@@ -478,8 +460,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         : '';
     if (bashCommand) {
       const touchRoot = openspecRootOf(cwd);
-      const verbs = touchRoot ? approvalTouchVerbs(touchRoot) : null;
-      if (APPROVAL_TOUCH_RESERVED.test(bashCommand) || (verbs && verbs.test(bashCommand))) {
+      if (APPROVAL_TOUCH_RESERVED.test(bashCommand)) {
         appendFact(FACT.unapproved, { kind: 'approval-touch', tool: toolName, paths: [], at: utcNow() });
         return { block: true, reason: BLOCK_APPROVAL_TOUCH };
       }
@@ -533,9 +514,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             !capabilityUnlocked(res.schema, grantedSet(meta), 'research')
           ) {
             const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
-            const grant = bearer.grantVerb
-              ? `pios-gate ${bearer.grantVerb} ${focusNow.change}`
-              : `pios-gate grant ${focusNow.change} ${bearer.id}`;
+            const grant = `pios-gate grant ${focusNow.change} ${bearer.id}`;
             appendFact(FACT.phasegate, {
               kind: 'research-window',
               tool: toolName,
@@ -637,7 +616,6 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         const approved = grantedSet(meta);
         const missingApproval = artifact.requiresApproval.filter((id) => !approved.has(id));
         if (missingApproval.length > 0) {
-          const verb = resolution.schema.artifacts.find((a) => a.id === missingApproval[0])?.grantVerb;
           appendFact(FACT.phasegate, {
             kind: 'missing-approval',
             tool: toolName,
@@ -646,7 +624,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             missing: missingApproval,
             at: utcNow(),
           });
-          return { block: true, reason: blockArtifactApproval(slug, missingApproval, verb) };
+          return { block: true, reason: blockArtifactApproval(slug, missingApproval) };
         }
         // x-requires-written — declared evidence must already exist on disk;
         // evidence, not approval: no grant needed, only the files

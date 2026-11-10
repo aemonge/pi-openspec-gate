@@ -54,12 +54,10 @@ x-declares: [action the mission, execute the mission, action the job, execute th
 artifacts:
   - id: proposition
     generates: 2-proposition.md
-    x-grant-verb: deal
     x-requires-approval: [idea]
     x-lines: [Claim]
   - id: execution
     generates: 5-execution.md
-    x-grant-verb: execute
     x-requires-approval: [plan]
     x-verdict-line: Human validation
     x-receives-receipts: true
@@ -70,9 +68,7 @@ artifacts:
 openspec strips unknown `x-` fields silently (non-strict schema); the gate
 is their only consumer and validates them loudly. Schemas without tags get
 no phase gates — legacy single-approve behavior. The vocabulary in full —
-`x-declares` (the human's declaration phrases), `x-grant` / `x-grant-verb`
-(the same tag, short and long form; both on one artifact fails loudly),
-`x-requires-approval` (grants), `x-requires-written` (evidence: the listed
+`x-declares` (the human's declaration phrases), `x-requires-approval` (grants), `x-requires-written` (evidence: the listed
 artifacts' files must be on disk before this one drafts — existence, not
 approval), `x-unlocks` (capability classes this grant opens: `research`,
 `writes`; `x-unlocks-source: true` is the legacy alias for `[writes]`),
@@ -99,27 +95,26 @@ approved` is written only when every artifact is granted — attribution
 is still not approval.
 
 ```sh
-pios-gate grant <slug> <artifact-id>   # canonical: id or artifact/section path
-pios-gate next <slug>                  # the uniform act: first ungranted artifact, declared sequence
-pios-gate <verb> <slug>                # an x-grant-verb the schema declares
+pios-gate <slug>                      # the walk's aim — focus a change
+pios-gate go                          # the walk's advance — stamp the next rung (archive after confirm)
+pios-gate list                        # the cockpit — every change, next acts (pending's twin)
+pios-gate grant <slug> <artifact-id>   # canonical: id, row#, file, or artifact/section path
+pios-gate next <slug>                  # the explicit advance: first ungranted artifact, declared sequence
 pios-gate approve <slug> [artifact-id] # canonical stamp (gated schemas: per-step only)
 pios-gate confirm <slug>               # permits the declared verdict-line flip
 pios-gate pause|resume                 # teaching: pause is a session act — say it in the session
-pios-gate pending                      # the cockpit — every change, next acts
 pios-gate inspect <slug>               # one change, verbose (artifacts, stamps, structure)
 pios-gate help                         # the gate's own usage (bare invocation too)
-pios-gate focus                        # teaching: focus is a session instrument
 pios-gate <anything else>              # exec openspec verbatim, exit code intact
 ```
 
 Grants are strictly next-artifact-only, you approve what you read
 (undrafted artifacts refuse), and the grant itself refuses to stamp
 artifacts missing declared structure or carrying ungranted gated
-sections. Every suggestion speaks the schema's act: the declared verb
-when one exists, `next` when it doesn't — `approve` is named only where
+sections. Every suggestion speaks the change's act: `go` when the room is
+focused, `next <slug>` when it isn't — `approve` is named only where
 it is true (the legacy whole-change stamp). Any tool-call attempt on the
-grant surface — approve, confirm, grant, next, or any verb the schemas
-declare — is itself blocked: approval is a
+grant surface — approve, confirm, grant, next, or go — is itself blocked: approval is a
 human act. **The pause**: say `pause 30m` (grammar `X{h,m,s}`, ceiling
 `approval.pauseCeiling`, default 4h) in the session and the work fences
 rest — approval teeth, phase gates, research window, archive guard —
@@ -163,8 +158,8 @@ drift from the teeth because the teeth are all there is.
 
 A self-verifying walkthrough in a scratch repo: the negatives first
 (grant sequence, approve-what-you-read, structure refusal), then the
-four-grant lifecycle of the v4 `spec` schema (open → dig → commit →
-build) to `status: approved`, confirm, and `ready to archive?` —
+four-grant lifecycle of the v5 `spec` schema — focus once, four `go`
+presses — to `status: approved`, confirm, and `ready to archive?` —
 asserting every step. Copy `example/openspec/schemas/spec` into your
 repo as the starting point. See `example/README.md`.
 

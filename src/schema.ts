@@ -42,8 +42,6 @@ export type Artifact = {
   sections: SectionSpec[];
   /** x-lines — top-level `Key:` lines the artifact must carry */
   lines: string[];
-  /** x-grant / x-grant-verb — the human's terminal alias for granting this artifact */
-  grantVerb?: string;
   /** x-verdict-line — the checkbox line only a human may tick */
   verdictLine?: string;
   /** x-receives-receipts — attribution receipts land in this artifact */
@@ -75,7 +73,7 @@ const WORD_ID = /^[\w-]+$/u;
 const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
 /** words a schema verb may never shadow — gate CLI surface + openspec passthroughs */
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'act', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'go', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 
@@ -266,13 +264,10 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       continue;
     }
     if (k === 'x-grant-verb' || k === 'x-grant') {
+      // the walk killed the declared verbs — schemas in the wild carrying
+      // the tag parse clean and simply resolve no verb (human ruling
+      // 2026-11-10: the echo names every act; go performs it)
       flushPending();
-      const verb = v.trim();
-      if (!WORD_ID.test(verb)) throw new Error(`${source}: artifact '${current.id}' ${k} must be one word`);
-      if (current.grantVerb !== undefined) {
-        throw new Error(`${source}: artifact '${current.id}' declares x-grant and x-grant-verb both — choose one`);
-      }
-      current.grantVerb = verb;
       continue;
     }
     if (k === 'x-verdict-line') {
@@ -384,16 +379,6 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       }
     }
   }
-  const verbs = new Map<string, string>();
-  for (const a of artifactsReal) {
-    if (!a.grantVerb) continue;
-    if (RESERVED_WORDS.has(a.grantVerb)) {
-      throw new Error(`${source}: x-grant-verb '${a.grantVerb}' is reserved by the gate CLI`);
-    }
-    const owner = verbs.get(a.grantVerb);
-    if (owner) throw new Error(`${source}: x-grant-verb '${a.grantVerb}' declared by '${owner}' and '${a.id}'`);
-    verbs.set(a.grantVerb, a.id);
-  }
   for (const [tag] of [
     ['x-completes'], ['x-verdict-line'], ['x-receives-receipts'],
   ] as const) {
@@ -453,13 +438,8 @@ export function artifactForFilename(schema: Schema, filename: string): Artifact 
   return schema.artifacts.find((a) => a.generates === base || a.generates.endsWith(`/${base}`));
 }
 
-/** Artifact addressed by a declared x-grant-verb. */
-export function artifactForGrantVerb(schema: Schema, verb: string): Artifact | undefined {
-  return schema.artifacts.find((a) => a.grantVerb === verb);
-}
-
 /** True when any artifact declares any gate — approval or written evidence;
- *  verbs and guards activate only then. */
+ *  gates activate only then. */
 export function schemaIsGated(schema: Schema): boolean {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0 || a.requiresWritten.length > 0);
 }
@@ -532,35 +512,6 @@ export function scanDeclares(openspecRoot: string): Set<string> {
   }
   declareScanCache.set(openspecRoot, phrases);
   return phrases;
-}
-
-const grantVerbCache = new Map<string, Set<string>>();
-
-/** Every x-grant-verb declared by any resolvable schema (project + user
- *  global) — the approval-touch guard's dynamic vocabulary. Cached per
- *  openspec root for the session; unparseable schemas contribute nothing
- *  (their own resolution fails loudly elsewhere). */
-export function scanGrantVerbs(openspecRoot: string): Set<string> {
-  const cached = grantVerbCache.get(openspecRoot);
-  if (cached) return cached;
-  const verbs = new Set<string>();
-  for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
-    if (!existsSync(dir)) continue;
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const file = join(dir, entry.name, 'schema.yaml');
-      if (!existsSync(file)) continue;
-      try {
-        for (const artifact of parseSchemaYaml(readFileSync(file, 'utf8'), file).artifacts) {
-          if (artifact.grantVerb) verbs.add(artifact.grantVerb);
-        }
-      } catch {
-        // invalid schema: contributes no verbs; loud failure happens at resolution
-      }
-    }
-  }
-  grantVerbCache.set(openspecRoot, verbs);
-  return verbs;
 }
 
 const schemaNameCache = new Map<string, string[]>();
