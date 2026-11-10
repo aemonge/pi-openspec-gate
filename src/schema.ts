@@ -75,7 +75,7 @@ const WORD_ID = /^[\w-]+$/u;
 const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
 /** words a schema verb may never shadow — gate CLI surface + openspec passthroughs */
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 

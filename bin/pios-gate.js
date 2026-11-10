@@ -9,6 +9,8 @@
  *                               generated file (artifact/section id-path
  *                               for sub-grants); structure and gated
  *                               sections checked before stamping
+ *   pios-gate act <slug>       the next act in one line — derived at read
+ *                              time, never stored; what renderers relay
  *   pios-gate next <slug>       the uniform act — grants the first
  *                               ungranted artifact in declared sequence;
  *                               every verb-less schema's step verb
@@ -43,10 +45,12 @@ import { join } from 'node:path';
 
 import {
   artifactForGrantVerb,
+  completionLine,
   findOpenspecRoot,
   grantedSet,
   grantArtifact,
   grantVerbVocabulary,
+  pendingAct,
   pendingReport,
   readChangeMeta,
   resolveChangeSchema,
@@ -86,8 +90,8 @@ const doGrant = (root, s, artifactId) => {
   }
   console.log(
     result.completed
-      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}`
-      : `granted ${s} · ${result.granted} · at ${result.at}`,
+      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: pios-gate confirm ${s}` : ''}`
+      : `granted ${s} · ${result.granted} · at ${result.at}${result.next ? ` · next: ${result.next}` : ''}`,
   );
   process.exit(0);
 };
@@ -131,6 +135,7 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
   pios-gate inspect <slug>              one change, verbose
   pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
   pios-gate next <slug>                 the uniform act: first ungranted artifact
+  pios-gate act <slug>                  the next act in one line — for humans and renderers
   pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
   pios-gate confirm <slug>              permits the declared verdict-line flip
@@ -152,6 +157,28 @@ if (command === 'grant') {
     process.exit(2);
   }
   doGrant(root, slug, artifactArg);
+}
+
+// the teacher: the change's next human act in one line — derived at read
+// time, never stored; what renderers relay (placement, never truth)
+if (command === 'act') {
+  const root = rootOf();
+  changeOrDie(root, slug, 'usage: pios-gate act <change-slug>');
+  const meta = readChangeMeta(root, slug);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
+    const status = meta.status ?? 'no-meta';
+    console.log(
+      status !== 'approved'
+        ? 'needs approve'
+        : meta.validated
+          ? 'ready to archive?'
+          : 'needs confirm (verdict open)',
+    );
+    process.exit(0);
+  }
+  console.log(pendingAct(root, slug, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta));
+  process.exit(0);
 }
 
 // the uniform act: grant the first ungranted artifact in declared

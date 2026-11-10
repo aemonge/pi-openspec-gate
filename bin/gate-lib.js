@@ -84,7 +84,7 @@ const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
-  'approve', 'confirm', 'grant', 'next', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
+  'approve', 'confirm', 'grant', 'next', 'act', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',
 ]);
 
@@ -511,6 +511,26 @@ export function grantHint(schema, artifactId, slug) {
   return `pios-gate next ${slug}`;
 }
 
+/** The pending human act for a gated change in one line — read → grant,
+ *  or awaiting draft; undefined once every artifact is granted and the
+ *  completion line takes over. Takes the granted set, not meta: callers
+ *  that just stamped pass the updated set. Derived at read time, never
+ *  stored: the meta counters stay the only truth. */
+export function pendingAct(root, slug, schema, approved) {
+  const next = schema.artifacts.find((a) => !approved.has(a.id));
+  if (!next) return undefined;
+  return existsSync(join(root, 'changes', slug, next.generates))
+    ? `read ${next.generates} → grant: ${grantHint(schema, next.id, slug)}`
+    : `awaiting draft of ${next.generates} (artifact ${next.id})`;
+}
+
+/** The gated change's completion sentence — what remains once every
+ *  artifact is granted: validation state, or the declared verdict. */
+export function completionLine(schema, meta) {
+  const verdictLine = schemaVerdictLine(schema);
+  return `all artifacts granted — ${meta.validated ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`;
+}
+
 // ── structure checkers ─────────────────────────────────────────────────
 
 export function sectionHeadingPresent(text, section) {
@@ -588,7 +608,7 @@ export function grantArtifact(root, slug, artifactRef) {
       granted: [...approved].join(','),
       [`granted_${artifactRef.replace('/', '_')}`]: at,
     });
-    return { ok: true, granted: artifactRef, completed: false, at };
+    return { ok: true, granted: artifactRef, completed: false, at, next: pendingAct(root, slug, schema, approved) };
   }
 
   // artifact grant
@@ -636,7 +656,15 @@ export function grantArtifact(root, slug, artifactRef) {
     Object.assign(values, { status: completing?.completes ?? 'approved', approved_at: at });
   }
   writeChangeMeta(root, slug, values);
-  return { ok: true, granted: artifactRef, completed, verb: artifact.grantVerb, at };
+  return {
+    ok: true,
+    granted: artifactRef,
+    completed,
+    verb: artifact.grantVerb,
+    at,
+    next: completed ? undefined : pendingAct(root, slug, schema, approved),
+    verdict: completed ? schemaVerdictLine(schema) : undefined,
+  };
 }
 
 /** Human-terminal cockpit: which changes need a human act. */
@@ -692,16 +720,8 @@ export function pendingReport(root) {
       const schema = resolution.schema;
       const approved = grantedSet(meta);
       const marks = schema.artifacts.map((a) => (approved.has(a.id) ? '✓' : existsSync(join(changesDir, dir.name, a.generates)) ? '◻' : '·')).join('');
-      const nextIndex = schema.artifacts.findIndex((a) => !approved.has(a.id));
-      let nextAct = '';
-      if (nextIndex >= 0) {
-        const next = schema.artifacts[nextIndex];
-        const drafted = existsSync(join(changesDir, dir.name, next.generates));
-        nextAct = drafted
-          ? `  next: read ${next.generates} → grant: ${grantHint(schema, next.id, dir.name)}`
-          : `  next: awaiting draft of ${next.generates} (artifact ${next.id})`;
-      }
-      rows.push(`${dir.name.padEnd(36)}[${schema.name}] ${marks} ${status}${approvedSuffix}\n${nextAct}`);
+      const act = pendingAct(root, dir.name, schema, approved);
+      rows.push(`${dir.name.padEnd(36)}[${schema.name}] ${marks} ${status}${approvedSuffix}\n${act ? `  next: ${act}` : ''}`);
     } else {
       const legacyNeed =
         status !== 'approved'
@@ -728,7 +748,6 @@ export function showReport(root, slug) {
   }
   const schema = resolution.schema;
   const approved = grantedSet(meta);
-  const verdictLine = schemaVerdictLine(schema);
   const lines = [`change: ${slug} · schema: ${schema.name} · status: ${meta.status ?? 'no-meta'}`];
   if (meta.granted) lines.push(`granted: ${meta.granted}`);
   schema.artifacts.forEach((a, i) => {
@@ -751,17 +770,8 @@ export function showReport(root, slug) {
     if (subGrants.length > 0) lines.push(`     sections: ${subGrants.join(' · ')}`);
   });
   if (schemaIsGated(schema)) {
-    const nextIndex = schema.artifacts.findIndex((a) => !approved.has(a.id));
-    if (nextIndex >= 0) {
-      const next = schema.artifacts[nextIndex];
-      lines.push(
-        existsSync(join(root, 'changes', slug, next.generates))
-          ? `next human act: read ${next.generates} → grant: ${grantHint(schema, next.id, slug)}`
-          : `next human act: awaiting draft of ${next.generates} (artifact ${next.id})`,
-      );
-    } else {
-      lines.push(`all artifacts granted — ${meta.validated ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`);
-    }
+    const act = pendingAct(root, slug, schema, approved);
+    lines.push(act ? `next human act: ${act}` : completionLine(schema, meta));
   }
   return lines.join('\n');
 }

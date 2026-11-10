@@ -278,6 +278,50 @@ test('grants: human-typed aliases — row number and generated file stamp canoni
   }
 });
 
+test('teaching: the gate names the next act — echo suffix and the act verb', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\n\nClaim: x\n');
+    draft(repo, 'm1', '3-proposal.md', '# Proposal\n\n## Done when\n');
+    draft(repo, 'm1', '4-plan.md', '# Plan\n');
+    draft(repo, 'm1', '5-execution.md', '# Execution\n');
+
+    const proposed = run(repo, ['propose', 'm1']);
+    assert.equal(proposed.status, 0);
+    assert.match(proposed.stdout, /next: read 2-proposition\.md → grant: pios-gate deal m1/);
+
+    const act = run(repo, ['act', 'm1']);
+    assert.equal(act.status, 0);
+    assert.match(act.stdout, /read 2-proposition\.md → grant: pios-gate deal m1/);
+    assert.equal(act.called, false, 'act never forwards');
+
+    for (const verb of ['deal', 'plan', 'order']) assert.equal(run(repo, [verb, 'm1']).status, 0);
+    const done = run(repo, ['execute', 'm1']);
+    assert.match(done.stdout, /all artifacts granted — status: approved/);
+
+    const final = run(repo, ['act', 'm1']);
+    assert.match(final.stdout, /all artifacts granted — no verdict declared/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('teaching: act on a legacy change points at the legacy acts', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'x', 'status: proposed\n');
+    assert.match(run(repo, ['act', 'x']).stdout, /needs approve/);
+    change(repo, 'y', 'status: approved\napproved_at: 2026-10-19T10:00:00Z\n');
+    assert.match(run(repo, ['act', 'y']).stdout, /needs confirm \(verdict open\)/);
+    change(repo, 'z', 'status: approved\nvalidated: 2026-10-19T11:00:00Z\n');
+    assert.match(run(repo, ['act', 'z']).stdout, /ready to archive\?/);
+    assert.equal(run(repo, ['act', 'missing']).status, 2);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('help: bare invocation and help print gate usage — never openspec banner', () => {
   const repo = makeRepo();
   try {
