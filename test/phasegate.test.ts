@@ -79,7 +79,7 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
     );
     const reason = (blocked as { reason: string }).reason;
     assert.match(reason, /research window closed — 'c1'/u);
-    assert.match(reason, /grant:   pios-gate grant c1 dig   ← your terminal/u);
+    assert.match(reason, /grant:   pios-gate go   ← your terminal/u);
     const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
     assert.equal((fact!.data as { kind: string }).kind, 'research-window');
   });
@@ -177,7 +177,7 @@ describe('artifact gates: creating gated change artifacts', () => {
       block: true,
       reason: [
         '⛔ phase gate — a not granted yet',
-        '   grant:   pios-gate next c1   ← your terminal',
+        '   grant:   pios-gate go   ← your terminal',
         '   docs:    the schema gates this artifact (x-requires-approval)',
       ].join('\n'),
     });

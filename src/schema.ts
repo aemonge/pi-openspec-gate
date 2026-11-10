@@ -26,8 +26,6 @@ export type SectionSpec = {
   id: string;
   /** x-requires-written — sibling sections that must exist before this heading */
   requiresWritten: string[];
-  /** x-requires-approval — sibling sections that must bear a sub-grant first */
-  requiresApproval: string[];
 };
 
 export type Artifact = {
@@ -70,7 +68,7 @@ const ARTIFACT_ENTRY = /^-\s+(.*)$/u;
 const FLOW_LIST = /^\[(.*)\]$/u;
 const WORD_ID = /^[\w-]+$/u;
 /** keys a rich x-sections entry may carry — anything else fails loudly */
-const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
+const SECTION_KEYS = new Set(['id', 'x-requires-written']);
 /** The gate CLI's own words — never schema-declared (the declared-verb
  *  scan died with the verbs; this set is static law). */
 export const RESERVED_WORDS = new Set([
@@ -103,7 +101,7 @@ type SectionChunk = { head: string; keys: { key: string; value: string }[] };
 function buildSections(chunks: SectionChunk[], source: string, artifactId: string): SectionSpec[] {
   const specs: SectionSpec[] = [];
   for (const chunk of chunks) {
-    const spec: SectionSpec = { id: '', requiresWritten: [], requiresApproval: [] };
+    const spec: SectionSpec = { id: '', requiresWritten: [] };
     const headKey = KEY_LINE.exec(chunk.head.trim());
     if (headKey && headKey[1] === 'id') spec.id = headKey[2]!.trim();
     else if (headKey) {
@@ -112,6 +110,11 @@ function buildSections(chunks: SectionChunk[], source: string, artifactId: strin
       );
     } else spec.id = chunk.head.trim();
     for (const { key, value } of chunk.keys) {
+      if (key === 'x-requires-approval') {
+        throw new Error(
+          `${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — retired: the walk stamps whole artifacts`,
+        );
+      }
       if (!SECTION_KEYS.has(key)) {
         throw new Error(
           `${source}: artifact '${artifactId}' section '${spec.id}' carries unknown key '${key}' (one level only)`,
@@ -128,10 +131,9 @@ function buildSections(chunks: SectionChunk[], source: string, artifactId: strin
         }
         const list = flow[1]!.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
         if (key === 'x-requires-written') spec.requiresWritten = list;
-        else spec.requiresApproval = list;
       }
     }
-    const gated = spec.requiresWritten.length > 0 || spec.requiresApproval.length > 0;
+    const gated = spec.requiresWritten.length > 0;
     if (gated && !WORD_ID.test(spec.id)) {
       throw new Error(
         `${source}: gated section '${spec.id}' needs a single-word id (sub-grants address it as ${artifactId}/${spec.id})`,
@@ -310,7 +312,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
           }
           current.unlocks = value;
         }
-        else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [], requiresApproval: [] }));
+        else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [] }));
         else current.lines = value;
       } else {
         pendingKey = k;
@@ -363,7 +365,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       sectionIds.add(s.id);
     }
     for (const s of a.sections) {
-      for (const ref of [...s.requiresWritten, ...s.requiresApproval]) {
+      for (const ref of [...s.requiresWritten]) {
         if (ref === s.id) {
           throw new Error(`${source}: section '${a.id}/${s.id}' cannot require itself`);
         }

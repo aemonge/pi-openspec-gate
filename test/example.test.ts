@@ -58,13 +58,10 @@ describe('the example schema (spec v4)', () => {
     const result = spawnSync('sh', [join(REPO_ROOT, 'example', 'try.sh')], { encoding: 'utf8' });
     assert.equal(result.status, 0, `walkthrough failed:\n${result.stdout}\n${result.stderr}`);
     for (const marker of [
-      'in sequence',
       'not drafted yet',
       'missing declared structure: Workflow',
-      'pios-gate next hello-gate',
       'all artifacts granted — status: approved',
       '→ pios-gate done',
-      'all artifacts granted — status: approved',
       'not done — tick',
       'done hello-gate · validated · archiving',
       'passed: 12',

@@ -42,7 +42,6 @@ const RICH_SCHEMA = [
   '    x-sections:',
   '      - id: alpha',
   '      - id: beta',
-  '        x-requires-approval: [alpha]',
   '  - id: ship',
   '    generates: 3-ship.md',
   '    x-requires-approval: [build]',
@@ -57,7 +56,6 @@ describe('vocabulary: parsing and validation', () => {
     assert.deepEqual(schema.declares, ['launch the rich thing', 'ship the rich thing']);
     const build = schema.artifacts[1]!;
     assert.deepEqual(sectionTitles(build), ['alpha', 'beta']);
-    assert.deepEqual(build.sections[1]!.requiresApproval, ['alpha']);
     assert.deepEqual(build.requiresWritten, ['dream']);
     assert.ok(!('grantVerb' in schema.artifacts[0]!), 'declared verbs died by silent ignore');
     assert.ok(!('grantVerb' in schema.artifacts[1]!), 'declared verbs died by silent ignore');
@@ -95,7 +93,7 @@ describe('vocabulary: parsing and validation', () => {
       ],
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-sections:\n      - id: one\n        x-requires-approval: [one]\n',
-        /cannot require itself/u,
+        /retired: the walk stamps whole artifacts/u,
       ],
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-completes: approved\n  - id: b\n    generates: 2-b.md\n    x-completes: approved\n',
@@ -159,26 +157,16 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       writeFileSync(join(changeDir, '2-build.md'), '# Build\n\n## alpha\n\n## beta\n', 'utf8');
       writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [ ] Owner acceptance — reply VALID\n', 'utf8');
 
-      // the walk's advance grants artifact 1 — the engine never knew a verb
-      assert.match(run(dir, ['next', 'm2']).stdout, /granted m2 · dream/);
+      // aim, then go grants artifact 1 — the engine never knew a verb
+      assert.equal(run(dir, ['m2']).status, 0);
+      assert.match(run(dir, ['go']).stdout, /granted m2 · dream/);
 
-      // the artifact grant refuses while its gated section waits
-      const gated = run(dir, ['next', 'm2']);
-      assert.equal(gated.status, 1);
-      assert.match(gated.stdout, /gated sections awaiting grants: build\/beta/);
-
-      // sub-grant sequence: beta before alpha refuses
-      const early = run(dir, ['grant', 'm2', 'build/beta']);
-      assert.equal(early.status, 1);
-      assert.match(early.stdout, /in sequence — grant 'build\/alpha' first/);
-
-      assert.match(run(dir, ['grant', 'm2', 'build/alpha']).stdout, /granted m2 · build\/alpha/);
-      assert.match(run(dir, ['grant', 'm2', 'build/beta']).stdout, /granted m2 · build\/beta/);
-      assert.match(run(dir, ['next', 'm2']).stdout, /granted m2 · build/);
+      // the walk's advance stamps whole artifacts — sections are structure
+      assert.match(run(dir, ['go']).stdout, /granted m2 · build/);
 
       // early unlock: source may begin though grants are incomplete
       const meta = readFileSync(join(changeDir, '.openspec.yaml'), 'utf8');
-      assert.match(meta, /granted: dream,build\/alpha,build\/beta,build/);
+      assert.match(meta, /granted: dream,build/);
       assert.doesNotMatch(meta, /status: approved/); // ship still ungranted
       const approvedList = meta
         .split('\n')
@@ -189,12 +177,12 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
       assert.equal(writesUnlocked(schema, new Set(approvedList)), true);
 
-      // completion grants by bare id (no verb declared) → status approved
-      assert.match(run(dir, ['grant', 'm2', 'ship']).stdout, /all artifacts granted — status: approved/);
+      // completion: the last go stamps the declared verdict state
+      assert.match(run(dir, ['go']).stdout, /all artifacts granted — status: approved/);
       assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /status: approved/);
 
       // the cockpit names the declared verdict, never a hardcoded one
-      assert.match(run(dir, ['pending']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending → pios-gate done/u);
+      assert.match(run(dir, ['list']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending → pios-gate done/u);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

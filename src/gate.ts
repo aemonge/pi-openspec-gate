@@ -136,7 +136,7 @@ export const BLOCK_UNAPPROVED = [
 ].join('\n');
 
 export function blockArtifactApproval(slug: string, missing: string[]): string {
-  const grant = `pios-gate next ${slug}`;
+  const grant = `pios-gate go`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
     `   grant:   ${grant}   ← your terminal`,
@@ -144,12 +144,12 @@ export function blockArtifactApproval(slug: string, missing: string[]): string {
   ].join('\n');
 }
 
-/** The advance command for a gated change: the uniform next — approve is
- *  never named for a step (it is the legacy whole-change stamp). */
+/** The advance command for a gated change: the walk's own word — approve
+ *  is never named for a step (it is the legacy whole-change stamp). */
 export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
   const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
   if (!nextRung) return undefined;
-  return `pios-gate next ${slug}`;
+  return `pios-gate go`;
 }
 
 /** State-aware archive block: a gated change is advanced by its own act,
@@ -514,7 +514,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             !capabilityUnlocked(res.schema, grantedSet(meta), 'research')
           ) {
             const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
-            const grant = `pios-gate grant ${focusNow.change} ${bearer.id}`;
+            const grant = `pios-gate go`;
             appendFact(FACT.phasegate, {
               kind: 'research-window',
               tool: toolName,

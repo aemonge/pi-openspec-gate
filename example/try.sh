@@ -55,34 +55,32 @@ md() {
   { printf '# %s\n' "$t"; for s in "$@"; do printf '\n## %s\n' "$s"; done; } > "$C/$f"
 }
 
-echo '1 ── sequence: declaration sequence is grant sequence'
-expect_fail 'in sequence' grant hello-gate investigate
-
-echo '2 ── you approve what you read'
+echo "1 ── aim, and the walk refuses what isn't there"
 expect 'focused hello-gate · next: awaiting draft of 1-brainstorm.md' hello-gate
 expect_fail 'not drafted yet' go
+expect_fail 'not done' done hello-gate
 md 1-brainstorm.md Brainstorm Pain Questions
 expect 'granted hello-gate · brainstorm' go
 
-echo '3 ── the journal is free: investigate needs no shape, only substance'
+echo '2 ── the journal is free: investigate needs no shape, only substance'
 printf '# Investigate\n\nFindings: the gate reads only x- tags.\nNo alternatives needed — direct route.\n' > "$C/2-investigate.md"
 expect 'granted hello-gate · investigate' go
 
-echo '4 ── the contract is hard: every declared section at stamp time'
+echo '3 ── the contract is hard: every declared section at stamp time'
 md 3-plan.md Plan Estimate Skills
 expect_fail 'missing declared structure: Workflow' go
 md 3-plan.md Plan Estimate Skills Workflow Slices Verification History
 expect 'granted hello-gate · plan' go
 
-echo '5 ── the cockpit names the next human act'
+echo '4 ── the cockpit names the next human act'
 printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
 expect '→ pios-gate go' list hello-gate
 
-echo '6 ── completion: the last grant stamps the change approved'
+echo '5 ── completion: the walk stamps the change approved'
 expect 'all artifacts granted — status: approved' go
 
-echo '7 ── the close: tick the verdict, then done'
-expect '→ pios-gate done' pending hello-gate
+echo '6 ── the close: tick the verdict, then done'
+expect '→ pios-gate done' list hello-gate
 expect_fail 'not done — tick' done hello-gate
 printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
 expect 'done hello-gate · validated · archiving' done hello-gate

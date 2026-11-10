@@ -502,7 +502,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g1'));
     const reason = (result as { reason: string }).reason;
     assert.match(reason, /⛔ focused change is not approved/u);
-    assert.match(reason, /advance: pios-gate next g1/u);
+    assert.match(reason, /advance: pios-gate go/u);
     assert.doesNotMatch(reason, /approve:/u);
   });
 
@@ -512,7 +512,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     writeChangeMeta(root, 'g2', { schema: 'runway', status: 'proposed', granted: 'brief' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g2'));
     const reason = (result as { reason: string }).reason;
-    assert.match(reason, /advance: pios-gate next g2/u);
+    assert.match(reason, /advance: pios-gate go/u);
     assert.doesNotMatch(reason, /approve:/u);
   });
 
@@ -526,7 +526,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
       { cwd: repo, sessionManager: { getEntries: () => [] } },
     );
     const gatedReason = (gated as { reason: string }).reason;
-    assert.match(gatedReason, /advance: pios-gate next g3/u);
+    assert.match(gatedReason, /advance: pios-gate go/u);
     assert.doesNotMatch(gatedReason, /approve:/u);
     // the legacy change (no schema) keeps the byte-matched copy
     writeChangeMeta(root, 'l1', { status: 'proposed' });
@@ -557,12 +557,12 @@ describe('state-aware blocks: gated changes never hear approve', () => {
       { toolName: 'bash', input: { command: 'git add openspec/learnings/debt.md' } },
       focusOn('g1'),
     );
-    assert.match((blocked as { reason: string }).reason, /advance: pios-gate next g1/u);
+    assert.match((blocked as { reason: string }).reason, /advance: pios-gate go/u);
     const blocked2 = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'git add src/a.ts' } },
       focusOn('g1'),
     );
-    assert.match((blocked2 as { reason: string }).reason, /advance: pios-gate next g1/u, 'non-openspec bash mutates and blocks the same way');
+    assert.match((blocked2 as { reason: string }).reason, /advance: pios-gate go/u, 'non-openspec bash mutates and blocks the same way');
   });
 });

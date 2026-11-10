@@ -107,7 +107,7 @@ const KEY_LINE = /^([A-Za-z_][\w-]*):\s*(.*)$/u;
 const ARTIFACT_ENTRY = /^-\s+(.*)$/u;
 const FLOW_LIST = /^\[(.*)\]$/u;
 const WORD_ID = /^[\w-]+$/u;
-const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
+const SECTION_KEYS = new Set(['id', 'x-requires-written']);
 /** capability classes the engine enforces — x-unlocks entries must name one */
 const KNOWN_CAPABILITIES = new Set(['research', 'writes']);
 export const RESERVED_WORDS = new Set([
@@ -132,13 +132,16 @@ function parseFlag(value, tag, source, artifactId) {
 function buildSections(chunks, source, artifactId) {
   const specs = [];
   for (const chunk of chunks) {
-    const spec = { id: '', requiresWritten: [], requiresApproval: [] };
+    const spec = { id: '', requiresWritten: [] };
     const headKey = KEY_LINE.exec(chunk.head.trim());
     if (headKey && headKey[1] === 'id') spec.id = headKey[2].trim();
     else if (headKey) {
       throw new Error(`${source}: artifact '${artifactId}' x-sections entries start with id or a bare heading — got '${chunk.head}'`);
     } else spec.id = chunk.head.trim();
     for (const { key, value } of chunk.keys) {
+      if (key === 'x-requires-approval') {
+        throw new Error(`${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — retired: the walk stamps whole artifacts`);
+      }
       if (!SECTION_KEYS.has(key)) {
         throw new Error(`${source}: artifact '${artifactId}' section '${spec.id}' carries unknown key '${key}' (one level only)`);
       }
@@ -151,10 +154,9 @@ function buildSections(chunks, source, artifactId) {
         }
         const list = flow[1].split(',').map((s) => s.trim()).filter((s) => s.length > 0);
         if (key === 'x-requires-written') spec.requiresWritten = list;
-        else spec.requiresApproval = list;
       }
     }
-    const gated = spec.requiresWritten.length > 0 || spec.requiresApproval.length > 0;
+    const gated = spec.requiresWritten.length > 0;
     if (gated && !WORD_ID.test(spec.id)) {
       throw new Error(`${source}: gated section '${spec.id}' needs a single-word id (sub-grants address it as ${artifactId}/${spec.id})`);
     }
@@ -325,7 +327,7 @@ export function parseSchemaYaml(content, source) {
           }
           current.unlocks = value;
         }
-        else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [], requiresApproval: [] }));
+        else if (k === 'x-sections') current.sections = value.map((id) => ({ id, requiresWritten: [] }));
         else current.lines = value;
       } else {
         pendingKey = k;
@@ -372,7 +374,7 @@ export function parseSchemaYaml(content, source) {
       sectionIds.add(s.id);
     }
     for (const s of a.sections) {
-      for (const ref of [...s.requiresWritten, ...s.requiresApproval]) {
+      for (const ref of [...s.requiresWritten]) {
         if (ref === s.id) throw new Error(`${source}: section '${a.id}/${s.id}' cannot require itself`);
         if (!sectionIds.has(ref)) throw new Error(`${source}: section '${a.id}/${s.id}' references unknown sibling section '${ref}'`);
       }
@@ -525,15 +527,14 @@ export function grantedSet(meta) {
   );
 }
 
-/** Stamp one artifact (id or artifact/section id-path): strict
- *  sequence, file must exist, declared structure must be present, gated
- *  sections must bear sub-grants. Returns { ok, granted, completed } or
- *  { ok: false, error }. */
+/** Stamp the next-named artifact — go's engine. Strict sequence, the
+ *  file must exist, declared structure must be present. Returns
+ *  { ok, granted, completed } or { ok: false, error }. */
 export function grantArtifact(root, slug, artifactRef) {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
-    return { ok: false, error: `schema declares no gates (${resolution.ok ? resolution.schema.name : resolution.reason}) — use: pios-gate approve ${slug}` };
+    return { ok: false, error: `schema declares no gates (${resolution.ok ? resolution.schema.name : resolution.reason}) — pios-gate done closes ungated changes as they stand` };
   }
   const schema = resolution.schema;
   const approved = grantedSet(meta);
@@ -541,47 +542,7 @@ export function grantArtifact(root, slug, artifactRef) {
   // humans type what the cockpit prints — the row number or the generated
   // file — not always the declared word id; resolve any alias before any
   // matching or stamping so meta keys stay id-shaped whatever was typed
-  const alias = parseSectionPath(artifactRef);
-  artifactRef = alias
-    ? `${artifactForRef(schema, alias.artifactId)?.id ?? alias.artifactId}/${alias.sectionId}`
-    : artifactForRef(schema, artifactRef)?.id ?? artifactRef;
-
-  // sub-grant: artifact/section id-path
-  const sectionPath = parseSectionPath(artifactRef);
-  if (sectionPath) {
-    const artifact = schema.artifacts.find((a) => a.id === sectionPath.artifactId);
-    if (!artifact) return { ok: false, error: `no artifact '${sectionPath.artifactId}' in schema ${schema.name}` };
-    const section = artifact.sections.find((s) => s.id === sectionPath.sectionId);
-    if (!section) {
-      const grantable = artifact.sections.filter((s) => WORD_ID.test(s.id)).map((s) => `${artifact.id}/${s.id}`);
-      return {
-        ok: false,
-        error: `no section '${sectionPath.sectionId}' in artifact '${artifact.id}'${grantable.length > 0 ? ` — grantable: ${grantable.join(' · ')}` : ' (no addressable sections)'}`,
-      };
-    }
-    if (approved.has(artifactRef)) return { ok: false, error: `artifact '${artifactRef}' already granted ${meta[`granted_${artifactRef.replace('/', '_')}`] ?? ''}`.trim() };
-    const file = join(root, 'changes', slug, artifact.generates);
-    if (!existsSync(file)) return { ok: false, error: `${artifact.generates} not drafted yet — you approve what you read` };
-    const text = readFileSync(file, 'utf8');
-    if (!sectionHeadingPresent(text, section.id)) {
-      return { ok: false, error: `${artifact.generates} has no '${section.id}' section yet — write it before granting` };
-    }
-    const unwritten = section.requiresWritten.filter((sib) => !sectionHeadingPresent(text, sib));
-    if (unwritten.length > 0) {
-      return { ok: false, error: `in sequence — write ${unwritten.map((s) => `'${s}'`).join(', ')} before granting ${artifact.id}/${section.id}` };
-    }
-    const ungranted = section.requiresApproval.filter((sib) => !approved.has(`${artifact.id}/${sib}`));
-    if (ungranted.length > 0) {
-      return { ok: false, error: `in sequence — grant '${artifact.id}/${ungranted[0]}' first: pios-gate grant ${slug} ${artifact.id}/${ungranted[0]}` };
-    }
-    const at = utcNowStamp();
-    approved.add(artifactRef);
-    writeChangeMeta(root, slug, {
-      granted: [...approved].join(','),
-      [`granted_${artifactRef.replace('/', '_')}`]: at,
-    });
-    return { ok: true, granted: artifactRef, completed: false, at, next: pendingAct(root, slug, schema, approved) };
-  }
+  artifactRef = artifactForRef(schema, artifactRef)?.id ?? artifactRef;
 
   // artifact grant
   const index = schema.artifacts.findIndex((a) => a.id === artifactRef);
@@ -611,13 +572,6 @@ export function grantArtifact(root, slug, artifactRef) {
   ];
   if (missing.length > 0) {
     return { ok: false, error: `${artifact.generates} missing declared structure: ${missing.join(' · ')}` };
-  }
-  const gatedSections = artifact.sections.filter((s) => s.requiresApproval.length > 0 && !approved.has(`${artifact.id}/${s.id}`));
-  if (gatedSections.length > 0) {
-    return {
-      ok: false,
-      error: `${artifact.generates} has gated sections awaiting grants: ${gatedSections.map((s) => `${artifact.id}/${s.id}`).join(' · ')} — grant: pios-gate grant ${slug} ${artifact.id}/${gatedSections[0].id}`,
-    };
   }
   const at = utcNowStamp();
   approved.add(artifactRef);
@@ -717,39 +671,3 @@ export function pendingReport(root) {
   return rows.length === 0 ? 'nothing pending — no active changes' : rows.join('\n');
 }
 
-/** Verbose one-change view: artifacts, drafts, grants, structure, next act. */
-export function showReport(root, slug) {
-  const meta = readChangeMeta(root, slug);
-  const resolution = resolveChangeSchema(root, meta.schema);
-  if (!resolution.ok) {
-    return [`change: ${slug}`, `  schema: ${meta.schema ?? 'none'} (${resolution.reason})`, `  status: ${meta.status ?? 'no-meta'}`].join('\n');
-  }
-  const schema = resolution.schema;
-  const approved = grantedSet(meta);
-  const lines = [`change: ${slug} · schema: ${schema.name} · status: ${meta.status ?? 'no-meta'}`];
-  if (meta.granted) lines.push(`granted: ${meta.granted}`);
-  schema.artifacts.forEach((a, i) => {
-    const file = join(root, 'changes', slug, a.generates);
-    const drafted = existsSync(file);
-    const granted = approved.has(a.id) ? `✓ granted ${meta[`granted_${a.id}`] ?? ''}`.trimEnd() : '◻ ungranted';
-    const subGrants = a.sections
-      .filter((s) => approved.has(`${a.id}/${s.id}`))
-      .map((s) => `${a.id}/${s.id} ✓`);
-    let structure = '';
-    if (drafted && (a.sections.length > 0 || a.lines.length > 0)) {
-      const text = readFileSync(file, 'utf8');
-      const missing = [
-        ...sectionTitles(a).filter((s) => !sectionHeadingPresent(text, s)),
-        ...a.lines.filter((l) => !lineKeyPresent(text, l)),
-      ];
-      structure = missing.length > 0 ? ` · missing: ${missing.join(' · ')}` : ' · structure ✓';
-    }
-    lines.push(`  ${String(i + 1).padStart(2)} ${a.id.padEnd(13)} ${a.generates.padEnd(17)} ${drafted ? 'drafted' : '—'} · ${granted}${structure}`);
-    if (subGrants.length > 0) lines.push(`     sections: ${subGrants.join(' · ')}`);
-  });
-  if (schemaIsGated(schema)) {
-    const act = pendingAct(root, slug, schema, approved);
-    lines.push(act ? `next human act: ${act}` : completionLine(schema, meta));
-  }
-  return lines.join('\n');
-}
