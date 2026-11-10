@@ -436,18 +436,6 @@ export function artifactForFilename(schema, filename) {
   return schema.artifacts.find((a) => a.generates === base || a.generates.endsWith(`/${base}`));
 }
 
-/** Resolve a human-typed artifact ref to its artifact: the declared word
- *  id first (exact id always wins), then the 1-based row number inspect
- *  prints, then the generated file — stem or with extension, suffix match
- *  for subpath generates. Undefined when nothing matches: the caller's
- *  loud no-artifact error is the only answer a wrong ref gets. */
-export function artifactForRef(schema, ref) {
-  const byId = schema.artifacts.find((a) => a.id === ref);
-  if (byId) return byId;
-  if (/^\d+$/u.test(ref)) return schema.artifacts[Number(ref) - 1];
-  const stem = `${ref.replace(/\.md$/u, '')}.md`;
-  return schema.artifacts.find((a) => a.generates === stem || a.generates.endsWith(`/${stem}`));
-}
 
 export function schemaIsGated(schema) {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0 || (a.requiresWritten ?? []).length > 0);
@@ -480,10 +468,6 @@ export function capabilityUnlocked(schema, approvedSet, capability) {
   return schema.artifacts.some((a) => (a.unlocks ?? []).includes(capability) && approvedSet.has(a.id));
 }
 
-export function parseSectionPath(path) {
-  const m = /^([\w-]+)\/([\w-]+)$/u.exec(path);
-  return m ? { artifactId: m[1], sectionId: m[2] } : undefined;
-}
 
 /** The pending human act for a gated change in one line — read → grant,
  *  or awaiting draft; undefined once every artifact is granted and the
@@ -539,20 +523,9 @@ export function grantArtifact(root, slug, artifactRef) {
   const schema = resolution.schema;
   const approved = grantedSet(meta);
 
-  // humans type what the cockpit prints — the row number or the generated
-  // file — not always the declared word id; resolve any alias before any
-  // matching or stamping so meta keys stay id-shaped whatever was typed
-  artifactRef = artifactForRef(schema, artifactRef)?.id ?? artifactRef;
-
   // artifact grant
-  const index = schema.artifacts.findIndex((a) => a.id === artifactRef);
-  if (index < 0) return { ok: false, error: `no artifact '${artifactRef}' in schema ${schema.name}` };
-  if (approved.has(artifactRef)) return { ok: false, error: `artifact '${artifactRef}' already granted ${meta[`granted_${artifactRef}`] ?? ''}`.trim() };
-  const predecessor = schema.artifacts.slice(0, index).find((a) => !approved.has(a.id));
-  if (predecessor) {
-    return { ok: false, error: `in sequence — grant '${predecessor.id}' first: ${actHint(root, slug)}` };
-  }
-  const artifact = schema.artifacts[index];
+  const artifact = schema.artifacts.find((a) => a.id === artifactRef);
+  if (!artifact) return { ok: false, error: `no artifact '${artifactRef}' in schema ${schema.name}` };
   const file = join(root, 'changes', slug, artifact.generates);
   if (!existsSync(file)) {
     return { ok: false, error: `${artifact.generates} not drafted yet — you approve what you read` };
@@ -657,14 +630,14 @@ export function pendingReport(root) {
     } else {
       const legacyNeed =
         status !== 'approved'
-          ? 'needs approve'
+          ? 'needs done (aim first — it closes ungated rooms)'
           : humanWait && !meta.validated
-            ? 'needs confirm (verdict open)'
+            ? 'tick the verdict — pios-gate done closes it'
             : open > 0
               ? `${open} open steps`
               : unhashed > 0
                 ? `${unhashed} unhashed commits`
-                : 'ready to archive?';
+                : 'done — ready to archive';
       rows.push(`${dir.name.padEnd(36)}${status.padEnd(10)}${legacyNeed}${approvedSuffix}`);
     }
   }

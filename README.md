@@ -111,16 +111,17 @@ pios-gate focus [slug]                # show or set the aim
 pios-gate approve <slug> [artifact-id] # legacy whole-change stamp (ungated schemas only)
 ```
 
-Grants are strictly next-artifact-only, you approve what you read
-(undrafted artifacts refuse), and the grant itself refuses to stamp
-artifacts missing declared structure or carrying ungranted gated
-sections. Every suggestion speaks the change's act: `go` when the room is
-focused, `next <slug>` when it isn't — `approve` is named only where
-it is true (the legacy whole-change stamp). Any tool-call attempt on the
-grant surface — approve, confirm, grant, next, or go — is itself blocked: approval is a
-human act. **The pause**: say `pause 30m` (grammar `X{h,m,s}`, ceiling
-`approval.pauseCeiling`, default 4h) in the session and the work fences
-rest — approval teeth, phase gates, research window, archive guard —
+Stamps are strictly next-step-only — you approve what you read
+(undrafted steps refuse), and `go` refuses to stamp steps missing
+declared structure. Every suggestion speaks the walk: `go` when the
+room is aimed, `done` to close after the verdict is ticked. Any
+tool-call attempt on the stamp surface — go or done — is itself
+blocked: approval is a human act. **The aim is per room, single-writer**
+(`openspec/.focus`): two terminals aiming different changes = last aim
+wins, and every echo tells you which room is armed. **The pause**: say
+`pause 30m` (grammar `X{h,m,s}`, ceiling `approval.pauseCeiling`, default
+4h) in the session and the work fences rest — approval teeth, phase
+gates, research window, archive guard —
 while the touch guard, attribution, and receipts stay absolute, and the
 unaccounted block still refuses (no landing place, no pause). `resume`
 ends it early; the permit dies with the session; only a human reply can
@@ -162,7 +163,7 @@ drift from the teeth because the teeth are all there is.
 A self-verifying walkthrough in a scratch repo: the negatives first
 (grant sequence, approve-what-you-read, structure refusal), then the
 four-grant lifecycle of the v5 `spec` schema — focus once, four `go`
-presses — to `status: approved`, confirm, and `ready to archive?` —
+presses — to `status: approved`, the verdict tick, and `done` —
 asserting every step. Copy `example/openspec/schemas/spec` into your
 repo as the starting point. See `example/README.md`.
 

@@ -33,10 +33,11 @@ topic-keyed files every step reads, any change may append.
 ./example/try.sh          # from the repo/package root — or: just try
 ```
 
-The script builds a scratch repo, runs the **negatives first** (grant
-sequence, approve-what-you-read, structure refusal), then walks the full
-lifecycle — focus once, four `go` presses — to `status: approved` and
-`ready to archive?` — asserting every step. Exit 0 = the gate works.
+The script builds a scratch repo, runs the **negatives first** (an
+undrafted stamp refusal, a structure refusal, the verdict wall), then
+walks the full lifecycle — focus once, four `go` presses — to
+`status: approved`, and `done` to validated + archived — asserting
+every step. Exit 0 = the gate works.
 
 ## Use it in your own repo
 

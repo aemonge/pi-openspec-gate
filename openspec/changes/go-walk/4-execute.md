@@ -43,6 +43,8 @@
         hash: 33ed6a5
   - [x] feat(cli): the walk goes slugless — confirm resolves the aim
         hash: 14162a7
+  - [x] feat(cli): hard-delete the verb surface — four words, one vocabulary
+        hash: 44b4780
   - [x] feat(cli): done — the four-word walk closes: <slug>, go, list, done
         hash: 51b444e
   - [x] docs(cli): the walk, not const walk
@@ -311,3 +313,335 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-10T15:18:40Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-10T15:18:40Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:21:57Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:21:57Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:22:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:22:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:22:40Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:22:40Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:22:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:22:54Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:23:01Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:23:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:23:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:23:10Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:28:39Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:28:39Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:28:55Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:28:55Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T15:29:04Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-10T15:29:04Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:31:17Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:31:18Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:32:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:32:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:33:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:33:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:34:12Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:34:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:34:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:34:18Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:34:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:34:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-10T15:35:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-10T15:35:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:35:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:35:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:06Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:06Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:20Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:21Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:26Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-10T15:36:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-10T15:36:35Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:36:40Z
+
+  gate-attributed · tool: write · paths: /tmp/fix-wrapper-tests.py · at 2026-11-10T15:40:23Z
+
+  gate-attributed · tool: write · paths: /tmp/fix-wrapper-tests.py · at 2026-11-10T15:40:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:40:29Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:40:29Z
+
+  gate-attributed · tool: write · paths: /tmp/fix2.py · at 2026-11-10T15:43:47Z
+
+  gate-attributed · tool: write · paths: /tmp/fix2.py · at 2026-11-10T15:43:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:43:52Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:43:52Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:07Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:07Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:50Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:44:51Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:45:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:45:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:45:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:45:47Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:46:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:46:39Z
+
+  gate-attributed · tool: write · paths: /tmp/fix3.py · at 2026-11-10T15:48:14Z
+
+  gate-attributed · tool: write · paths: /tmp/fix3.py · at 2026-11-10T15:48:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:48:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:48:26Z
+
+  gate-attributed · tool: write · paths: /tmp/fix4.py · at 2026-11-10T15:49:02Z
+
+  gate-attributed · tool: write · paths: /tmp/fix4.py · at 2026-11-10T15:49:02Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:49:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:49:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:51:04Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:51:04Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:51:17Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:51:17Z
+
+  gate-attributed · tool: write · paths: /tmp/fix5.py · at 2026-11-10T15:51:56Z
+
+  gate-attributed · tool: write · paths: /tmp/fix5.py · at 2026-11-10T15:51:56Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:52:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:53:09Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:53:09Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:53:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:53:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:53:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:53:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:53:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/pios-gate.js · at 2026-11-10T15:53:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:53:50Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:53:50Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:55:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:55:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:55:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:55:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:02Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:02Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:41Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:57:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:58:21Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:58:21Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-10T15:58:21Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-10T15:58:21Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:58:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:58:33Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:59:00Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:59:01Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:59:13Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T15:59:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:59:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T15:59:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:00:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:00:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:01:51Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:01:52Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:02:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:02:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:02:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:02:33Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:03:05Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:03:05Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:03:31Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:03:31Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:04:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:04:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:04:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:04:27Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:04:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:04:45Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:05:18Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-10T16:05:18Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:05:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:05:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:05:52Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:05:52Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:25Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:57Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:06:57Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:17Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:17Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:40Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:40Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:53Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:07:53Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-10T16:08:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-10T16:08:15Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:08:40Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:08:40Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:08:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:08:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:10Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:09:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:10:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-10T16:10:01Z

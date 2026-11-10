@@ -15,7 +15,6 @@ import { describe, test } from 'node:test';
 import {
   allArtifactsGranted,
   parseSchemaYaml,
-  parseSectionPath,
   receiptArtifactFor,
   schemaVerdictLine,
   sectionTitles,
@@ -107,11 +106,6 @@ describe('vocabulary: parsing and validation', () => {
     for (const [yaml, pattern] of cases) assert.throws(() => parseSchemaYaml(yaml, 'fixture'), pattern);
   });
 
-  test('parseSectionPath splits artifact/section and rejects everything else', () => {
-    assert.deepEqual(parseSectionPath('some/one'), { artifactId: 'some', sectionId: 'one' });
-    assert.equal(parseSectionPath('plain'), undefined);
-    assert.equal(parseSectionPath('a/b/c'), undefined);
-  });
 
   test('declared headings match case-insensitively — headings are prose, not ids', async () => {
     const { sectionHeadingPresent } = await import('../src/gate.ts');

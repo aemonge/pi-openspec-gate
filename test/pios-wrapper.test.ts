@@ -82,7 +82,7 @@ test('wrapper: pending reports what needs the human', () => {
     );
     const out = run(repo, ['list']);
     assert.equal(out.status, 0);
-    assert.match(out.stdout, /needs-approve\s+proposed\s+needs approve/);
+    assert.match(out.stdout, /needs-approve\s+proposed\s+needs done/);
     assert.match(out.stdout, /needs-confirm\s+approved\s+1 open steps/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });

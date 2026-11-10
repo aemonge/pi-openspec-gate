@@ -2,6 +2,41 @@
 
 The archive (`openspec/changes/archive/`) is the source of truth — every
 entry below cites the changes that produced it. Dates are release dates.
+## 0.9.0 — 2026-11-10
+
+- **the four-word walk** — the CLI's whole vocabulary is `<slug>` (aim,
+  and see its act), `go` (stamp the next step), `list` (the cockpit),
+  `done` (the close: validated + archived + focus released, only after
+  you tick the declared verdict). `go` stamps exactly one step per
+  press — intent can never over-run its scope, structurally.
+
+- **the verbs die by silent ignore** — `open/dig/commit/build` and
+  `x-grant`/`x-grant-verb` are gone as words: schemas carrying the tag
+  parse clean and resolve nothing; the teaching echo names every act,
+  `go` performs it. Section sub-grants are retired loudly — a schema
+  carrying section-level `x-requires-approval` fails parse
+  ("retired: the walk stamps whole artifacts"). **Breaking:** schemas
+  relying on either must drop the tags before upgrading.
+
+- **the verb handlers are deleted** — `grant`, `next`, `confirm`,
+  `act <slug>`, `inspect`, `focus <slug>`, `approve`, `pending` no
+  longer answer as gate commands; unknown words forward to openspec
+  verbatim. Kept: bare `act` (the aim's act in one line — the renderer
+  relay), `focus [slug]` (the named aim), `pause|resume`, `validate`.
+  **Behavior change for legacy ungated rooms:** `done` closes them
+  directly (approved + validated + archived — the human's done is the
+  judgment); the old approve-then-stay-open state is gone.
+
+- **remedies speak the walk** — phase-gate blocks, the archive guard
+  and the cockpit name `pios-gate go` / `pios-gate done`; the
+  approval-touch guard gains `go` and `done` (the walk's stamps are
+  human-terminal too).
+
+- **carries** [go-walk](openspec/changes/go-walk) (the walk, `done`,
+  hard deletion) and supersedes the naming layer of
+  [grant-ref-aliases](openspec/changes/grant-ref-aliases) — in the
+  four-word walk nothing names an artifact, so nothing needs an alias.
+
 ## 0.8.0 — 2026-11-04
 
 - **polishment batch** — one ceremony, three fixes: **pause** (say

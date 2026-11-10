@@ -483,10 +483,6 @@ export function capabilityUnlocked(schema: Schema, approved: ReadonlySet<string>
 }
 
 /** Sub-grant id path: 'artifact/section'. */
-export function parseSectionPath(path: string): { artifactId: string; sectionId: string } | undefined {
-  const match = /^([\w-]+)\/([\w-]+)$/u.exec(path);
-  return match ? { artifactId: match[1]!, sectionId: match[2]! } : undefined;
-}
 
 const declareScanCache = new Map<string, Set<string>>();
 
