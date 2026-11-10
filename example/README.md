@@ -1,21 +1,23 @@
 # The example — a strong starting point for testing the gate
 
 A self-contained, self-verifying walkthrough of `pi-openspec-gate`, built
-on the **v4 `spec` schema** — four steps, strictness at the two
-boundaries humans own (spend at Plan, judge at the verdict):
+on the **v5 `spec` schema** — four steps, strictness at the two
+boundaries humans own (spend at Plan, judge at the verdict). The walk is
+two words: aim once (`pios-gate lab-run`), then `pios-gate go` at each
+step:
 
-| # | artifact | verb (`x-grant`) | gates declared |
-|---|---|---|---|
-| 1 | `1-brainstorm.md` | `open` | `x-sections: [Pain, Questions]` — drafts free, first grant |
-| 2 | `2-investigate.md` | `dig` | requires `brainstorm` · `x-unlocks: [research]` — **no structure: the journal is free** |
-| 3 | `3-plan.md` | `commit` | requires `investigate` · `x-unlocks: [writes]` — **the docs→code boundary** · six declared sections |
-| 4 | `4-execute.md` | `build` | requires `plan` · `x-receives-receipts` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
+| # | artifact | gates declared |
+|---|---|---|
+| 1 | `1-brainstorm.md` | `x-sections: [Pain, Questions]` — drafts free, first grant |
+| 2 | `2-investigate.md` | requires `brainstorm` · `x-unlocks: [research]` — **no structure: the journal is free** |
+| 3 | `3-plan.md` | requires `investigate` · `x-unlocks: [writes]` — **the docs→code boundary** · six declared sections |
+| 4 | `4-execute.md` | requires `plan` · `x-receives-receipts` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
 
 Plus schema-level `x-declares: [action the spec, execute the spec]`.
 
 **The research window**: with a change focused on this schema, research
 instruments (web/docs tools, and bash verbs named in config — `graphify`
-by default here) block until `dig` is granted; research with no focused
+by default here) block until the investigate step is granted; research with no focused
 change blocks too inside any repo with a local `openspec/` — the same
 state-aware remedies (focus → create → declare) — because void research
 is unaccounted work. **The ledger anatomy** (in the templates, ungated):
@@ -33,8 +35,8 @@ topic-keyed files every step reads, any change may append.
 
 The script builds a scratch repo, runs the **negatives first** (grant
 sequence, approve-what-you-read, structure refusal), then walks the full
-seven-grant lifecycle to `status: approved` and `ready to archive?` —
-asserting every step. Exit 0 = the gate works.
+lifecycle — focus once, four `go` presses — to `status: approved` and
+`ready to archive?` — asserting every step. Exit 0 = the gate works.
 
 ## Use it in your own repo
 
@@ -70,8 +72,8 @@ In-session checklist:
    mutation proceeds, one debt line in `openspec/bare-work.md`
 3. Set the focus (`openspec_focus`) on your change → mutations attributed;
    receipts land in the `x-receives-receipts` artifact when declared
-4. Try `bash: pios-gate propose my-change` → **approval-touch blocked** —
-   every declared verb joins the guarded surface, grants are yours
+4. Try `bash: pios-gate go my-change` → **approval-touch blocked** — the
+   walk's advance is human-terminal, stamps are yours
 5. Create `2-drafted-requirements.md` while `idea` is ungranted →
    phase-gate block naming the exact terminal command; grant it in your
    terminal, watch the same call pass

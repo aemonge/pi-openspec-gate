@@ -8,7 +8,7 @@
  * reader owns their validation and fails LOUDLY — a typo in an x- tag is
  * a fact and a block reason, never a silent no-op.
  *
- * The engine carries zero flow knowledge: every verb, gate, section
+ * The engine carries zero flow knowledge: every gate, section
  * rule, receipt target, verdict line, unlock point, and completion
  * stamp lives here, in data. Declaration phrases (x-declares) too —
  * the human's latch vocabulary is schema data, not engine words.
@@ -71,7 +71,8 @@ const FLOW_LIST = /^\[(.*)\]$/u;
 const WORD_ID = /^[\w-]+$/u;
 /** keys a rich x-sections entry may carry — anything else fails loudly */
 const SECTION_KEYS = new Set(['id', 'x-requires-written', 'x-requires-approval']);
-/** words a schema verb may never shadow — gate CLI surface + openspec passthroughs */
+/** The gate CLI's own words — never schema-declared (the declared-verb
+ *  scan died with the verbs; this set is static law). */
 export const RESERVED_WORDS = new Set([
   'approve', 'confirm', 'grant', 'next', 'act', 'go', 'pause', 'resume', 'pending', 'inspect', 'focus', 'validate',
   'new', 'init', 'archive', 'list', 'show', 'status', 'help', 'version',

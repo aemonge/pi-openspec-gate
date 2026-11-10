@@ -153,16 +153,22 @@ if (command === 'pause' || command === 'resume') {
 if (!command || command === 'help' || command === '--help' || command === '-h') {
   console.log(`pios-gate — the gate as a feature extension of openspec
 
-  pios-gate pending                     the cockpit — every change, next acts
-  pios-gate inspect <slug>              one change, verbose
-  pios-gate <slug>                      the walk's aim — focus a change
-  pios-gate go                          the walk's advance — stamp the next step (archive after confirm)
+  the walk:
+  pios-gate <slug>                      aim — focus a change (one active per room)
+  pios-gate go                          advance — stamp the next step (archive after confirm)
   pios-gate list                        the cockpit — every change, next acts (pending's twin)
+  pios-gate confirm <slug>              the verdict — permits the declared verdict-line flip
+
+  power verbs (when you want to name things):
   pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
   pios-gate next <slug>                 the explicit advance: first ungranted artifact
   pios-gate act <slug>                  the next act in one line — for humans and renderers
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
-  pios-gate confirm <slug>              permits the declared verdict-line flip
+
+  the room:
+  pios-gate pending                     the cockpit (list's twin)
+  pios-gate inspect <slug>              one change, verbose
+  pios-gate focus [slug]                show or set the walk's aim
   pios-gate pause|resume                teaching: pause is a session act — say it in the session
   pios-gate validate <args>             openspec's structure lint (passthrough)
   pios-gate <anything else>             exec openspec verbatim, exit code intact
