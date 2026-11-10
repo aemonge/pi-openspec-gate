@@ -248,6 +248,36 @@ test('grants: structure refusal — a Claim-less proposition will not stamp', ()
   }
 });
 
+test('grants: human-typed aliases — row number and generated file stamp canonical ids', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\n\nClaim: x\n');
+    assert.equal(run(repo, ['propose', 'm1']).status, 0);
+
+    const replayed = run(repo, ['grant', 'm1', '1']);
+    assert.equal(replayed.status, 1);
+    assert.match(replayed.stdout, /'idea' already granted/, 'row alias hits the canonical already-granted branch');
+
+    assert.equal(run(repo, ['grant', 'm1', '2']).status, 0);
+    let meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /granted: idea,proposition/);
+    assert.match(meta, /granted_proposition:/);
+
+    draft(repo, 'm1', '3-proposal.md', '# Proposal\n\n## Done when\n');
+    assert.equal(run(repo, ['grant', 'm1', '3-proposal.md']).status, 0);
+    meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
+    assert.match(meta, /granted: idea,proposition,proposal/);
+    assert.match(meta, /granted_proposal:/);
+
+    const miss = run(repo, ['grant', 'm1', '9']);
+    assert.equal(miss.status, 1);
+    assert.match(miss.stdout, /no artifact '9' in schema gated/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('help: bare invocation and help print gate usage — never openspec banner', () => {
   const repo = makeRepo();
   try {

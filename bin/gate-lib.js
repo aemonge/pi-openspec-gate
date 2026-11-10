@@ -420,6 +420,19 @@ export function artifactForFilename(schema, filename) {
   return schema.artifacts.find((a) => a.generates === base || a.generates.endsWith(`/${base}`));
 }
 
+/** Resolve a human-typed artifact ref to its artifact: the declared word
+ *  id first (exact id always wins), then the 1-based row number inspect
+ *  prints, then the generated file — stem or with extension, suffix match
+ *  for subpath generates. Undefined when nothing matches: the caller's
+ *  loud no-artifact error is the only answer a wrong ref gets. */
+export function artifactForRef(schema, ref) {
+  const byId = schema.artifacts.find((a) => a.id === ref);
+  if (byId) return byId;
+  if (/^\d+$/u.test(ref)) return schema.artifacts[Number(ref) - 1];
+  const stem = `${ref.replace(/\.md$/u, '')}.md`;
+  return schema.artifacts.find((a) => a.generates === stem || a.generates.endsWith(`/${stem}`));
+}
+
 export function artifactForGrantVerb(schema, verb) {
   return schema.artifacts.find((a) => a.grantVerb === verb);
 }
@@ -532,6 +545,14 @@ export function grantArtifact(root, slug, artifactRef) {
   }
   const schema = resolution.schema;
   const approved = grantedSet(meta);
+
+  // humans type what the cockpit prints — the row number or the generated
+  // file — not always the declared word id; resolve any alias before any
+  // matching or stamping so meta keys stay id-shaped whatever was typed
+  const alias = parseSectionPath(artifactRef);
+  artifactRef = alias
+    ? `${artifactForRef(schema, alias.artifactId)?.id ?? alias.artifactId}/${alias.sectionId}`
+    : artifactForRef(schema, artifactRef)?.id ?? artifactRef;
 
   // sub-grant: artifact/section id-path
   const sectionPath = parseSectionPath(artifactRef);

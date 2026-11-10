@@ -4,9 +4,11 @@
  * not be TypeScript).
  *
  *   pios-gate grant <slug> <artifact-id>
- *                               the canonical grant — an artifact id or
- *                               an artifact/section id-path; structure
- *                               and gated sections checked before stamping
+ *                               the canonical grant — the declared word
+ *                               id, inspect's row number, or the
+ *                               generated file (artifact/section id-path
+ *                               for sub-grants); structure and gated
+ *                               sections checked before stamping
  *   pios-gate next <slug>       the uniform act — grants the first
  *                               ungranted artifact in declared sequence;
  *                               every verb-less schema's step verb
@@ -127,7 +129,7 @@ if (!command || command === 'help' || command === '--help' || command === '-h') 
 
   pios-gate pending                     the cockpit — every change, next acts
   pios-gate inspect <slug>              one change, verbose
-  pios-gate grant <slug> <artifact-id>  canonical grant (id or artifact/section)
+  pios-gate grant <slug> <artifact-id>  canonical grant (id · row# · file · artifact/section)
   pios-gate next <slug>                 the uniform act: first ungranted artifact
   pios-gate <verb> <slug>               an x-grant-verb the change's schema declares
   pios-gate approve <slug> [artifact]   canonical stamp — legacy whole-change only
@@ -141,12 +143,12 @@ declared verb refuse tool-call invocations.`);
   process.exit(0);
 }
 
-// canonical grant: pios-gate grant <slug> <artifact-id | artifact/section>
+// canonical grant: pios-gate grant <slug> <artifact-id | row# | file | artifact/section>
 if (command === 'grant') {
   const root = rootOf();
-  changeOrDie(root, slug, 'usage: pios-gate grant <change-slug> <artifact-id | artifact/section>');
+  changeOrDie(root, slug, 'usage: pios-gate grant <change-slug> <artifact-id | row# | file | artifact/section>');
   if (!artifactArg) {
-    console.error('usage: pios-gate grant <change-slug> <artifact-id | artifact/section>');
+    console.error('usage: pios-gate grant <change-slug> <artifact-id | row# | file | artifact/section>');
     process.exit(2);
   }
   doGrant(root, slug, artifactArg);
