@@ -10,9 +10,11 @@ Each call lands in exactly one of four buckets:
 - **attributed** — the room is aimed at a change (the `openspec/.focus`
   snapshot); the call proceeds and a receipt (tool · paths · UTC) lands in
   that change's ledger
-- **declared** — you say a phrase the schema declares (the shipped `spec`
-  schema declares **"action the spec"** / **"execute the spec"**); one
-  visible debt line in `openspec/bare-work.md`, then one mutation proceeds
+- **declared** — you say a phrase the schema declares; the shipped `spec`
+  schema declares two doors: **"walk the spec"** — run the ceremony
+  (create, aim, draft — that part needs no declaration) — and
+  **"skip the spec"** — land the next mutation as declared work, one
+  debt line in `openspec/bare-work.md`
 - **refused** — with a stop directive and the exact remedy for this state:
   aim a change, create one, or wait for your phrase
 

@@ -107,7 +107,7 @@ export function blockUnaccounted(options?: {
   const phrases = [...(options?.declares ?? [])].sort();
   if (phrases.length > 0) {
     lines.push(
-      `   declare: relay to the human — their reply says one of ${phrases.map((p) => `"${p}"`).join(' · ')} (an assistant's own message never declares); recorded as declared work, proceeds`,
+      `   declare: relay to the human — their reply says one of ${phrases.map((p) => `"${p}"`).join(' · ')}; a declared phrase lands the next mutation as declared work — an assistant's own message never declares — while opening a change and drafting needs no phrase at all (aim: eospec focus <slug>; the walk is below)`,
     );
   }
   if (options?.subagent) {

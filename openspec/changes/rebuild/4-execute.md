@@ -128,6 +128,21 @@
       wording fixed (flat top-level `goal:`); README one line
       started_at: 2026-11-11T12:04:00Z · ended_at: 2026-11-11T12:07:00Z · total: 3m · check: ✓ v7; the loop the human designed, applied to its own change first · paths: openspec/schemas/spec/schema.yaml, openspec/schemas/spec/templates/4-execute.md, README.md, openspec/changes/rebuild/3-plan.md
 - [x] docs(schema): v7 — the delivery-addings loop
+      hash: b879a29
+
+## Slice 11 — the two doors (schema v8, live-caught in the lab #2)
+
+- [x] declare phrases renamed: "walk the spec" (run the ceremony —
+      create, aim, draft needs no declaration) / "skip the spec" (land
+      one mutation as declared work) — self-describing doors, plain
+      words; the agent's two-door improv in the lab was the right design,
+      the words just never said so
+      started_at: 2026-11-11T12:14:00Z · ended_at: 2026-11-11T12:18:00Z · total: 4m · check: ✓ schema + both copies mirror-identical (example had silently drifted to v5 — cp root→example kills the drift class) · paths: openspec/schemas/spec/schema.yaml, example/openspec/schemas/spec/schema.yaml
+- [x] the declare remedy teaches the doors generically: a declared
+      phrase lands one mutation; opening a change and drafting needs no
+      phrase at all
+      started_at: 2026-11-11T12:18:00Z · ended_at: 2026-11-11T12:20:00Z · total: 2m · check: ✓ README + example/README + block line + tests · paths: src/gate.ts, README.md, example/README.md, test/gate.test.ts, test/example.test.ts
+- [x] docs(schema): v8 — the two doors
       hash:
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
@@ -609,3 +624,55 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:29Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:29Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T13:42:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T13:42:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:43:06Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:43:07Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:43:11Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:43:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:43:32Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:43:32Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:03Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:03Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:44:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:44:27Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:27Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:27Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:44:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T13:44:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:49Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:44:50Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:45:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:45:12Z

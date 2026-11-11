@@ -135,7 +135,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
         reason?: string;
       };
       assert.match(result.reason!, /focus:\s+openspec_focus/, 'the session has the instrument → its remedy may speak');
-      assert.ok(!result.reason!.includes('aim:'), 'no live change → nothing to name');
+      assert.ok(!/^\s{3}aim:\s+eospec focus \S/m.test(result.reason!), 'no live change → no aim remedy line (the declare tail may mention aim generically)');
       assert.match(result.reason!, /the walk: create → aim → draft → approve/, 'the loop order is taught here too');
     } finally {
       rmSync(lab, { recursive: true, force: true });
@@ -255,12 +255,12 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const base = blockUnaccounted();
     assert.equal(base, EXPECTED_BASE_COPY, 'base copy pinned');
     assert.ok(!base.includes('declare:'), 'no declare line without declared phrases');
-    const withPhrases = blockUnaccounted({ declares: ['execute the spec', 'action the spec'] });
+    const withPhrases = blockUnaccounted({ declares: ['skip the spec', 'walk the spec'] });
     assert.ok(
       withPhrases.includes(
-        'declare: relay to the human — their reply says one of "action the spec" · "execute the spec" (an assistant\'s own message never declares); recorded as declared work, proceeds',
+        'declare: relay to the human — their reply says one of "skip the spec" · "walk the spec"; a declared phrase lands the next mutation as declared work — an assistant\'s own message never declares — while opening a change and drafting needs no phrase at all (aim: eospec focus <slug>; the walk is below)',
       ),
-      'exact phrases, sorted, SPEAKER named — relay, never self-declare',
+      'exact phrases, sorted, SPEAKER named, doors taught — relay, never self-declare',
     );
     assert.ok(!withPhrases.includes('do it'), 'the retired alias appears nowhere');
     const bare = blockUnaccounted({ focusable: false });

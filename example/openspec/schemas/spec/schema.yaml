@@ -1,6 +1,6 @@
 name: spec
-version: 5
-x-declares: [action the spec, execute the spec]
+version: 8
+x-declares: [walk the spec, skip the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
   comes before any spec is started. Hand-off is always the human's
@@ -19,8 +19,11 @@ description: "Coding runs in one of two modes — human-coder assisted
   commit at Plan, judge at the verdict. Learnings live outside the
   flow in openspec/learnings/, read by every step, written by any
   change that learned something. x- tags declare the human gates that
-  pi-openspec-gate enforces; openspec itself strips them silently, so
-  the gate validates its own tags."
+  eospec enforces; openspec itself strips them silently, so
+  the gate validates its own tags. The declared phrases are two doors:
+  "skip the spec" lands the next mutation as declared work; "walk the
+  spec" tells the agent to run the ceremony — create, aim, draft — which
+  needs no declaration; approvals stay human-terminal either way."
 artifacts:
   - id: brainstorm
     generates: 1-brainstorm.md
@@ -31,7 +34,7 @@ artifacts:
       Questions (the open questions — this artifact''s product; Investigate
       aims at them, Plan retires them). Direction (one mutable paragraph
       of hunch) is optional free prose. The one-line Goal lives in
-      .openspec.yaml (meta goal:), not here. Free step — schema entry,
+      .openspec.yaml (top-level `goal:` key), not here. Free step — schema entry,
       never gated.'
     requires: []
     x-sections: [Pain, Questions]
@@ -46,7 +49,7 @@ artifacts:
       the trade-off · pick-when — ONLY when genuine; manufacturing one is
       lying, not research). No recommendation, no ranking: the committed
       choice happens at Plan''s Workflow. Research instruments (web, docs,
-      graphify) are gated to this step — the grant that opens them is the
+      graphify) are gated to this step — the approval that opens them is the
       human''s.'
     requires:
       - brainstorm
@@ -70,7 +73,7 @@ artifacts:
       each Slice, checkbox Tasks as quick checkpoints, no per-Task
       commit) · Verification (deterministic checks, then the one
       human-only act, named) · History (commit subject, or
-      evidence-as-of-date). Depth scales with risk. This grant is the
+      evidence-as-of-date). Depth scales with risk. This approval is the
       docs→code boundary: writes unlock here.'
     requires:
       - investigate
@@ -89,7 +92,13 @@ artifacts:
       message; a hash: slot beneath — a tick without a hash is not done;
       no repo → `hash: n/a — no repo`, visible debt) — the commit IS the
       receipt. Gate-appended receipts (tool · paths · UTC) land while
-      work runs. The final countable checkbox is always the declared
+      work runs. Findings surfaced while delivering — bugs, tech debt,
+      enhancements the plan could not have named — do not open a new
+      spec: append them as new Slices here (same tasks + commit-hash
+      law) and add a one-line amendment to the Plan''s Slices so the
+      mirror holds; the verdict waits until they land. Post-close
+      findings go to openspec/learnings/debt.md and become their own
+      follow-up change. The final countable checkbox is always the declared
       verdict — Human validation, response · outcome · surfaced: (bugs/
       errors/debt routed to openspec/learnings/debt.md) — only a Human
       reply ticks it. Status truth lives in counters, never prose.

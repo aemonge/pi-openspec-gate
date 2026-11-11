@@ -27,7 +27,7 @@ describe('the example schema (spec)', () => {
     const bin = parseSchemaYamlBin(yaml, file!);
 
     assert.equal(schemaIsGated(src), true);
-    assert.deepEqual(src.declares, ['action the spec', 'execute the spec']);
+    assert.deepEqual(src.declares, ['walk the spec', 'skip the spec']);
     assert.deepEqual(
       src.artifacts.map((a) => a.id),
       ['brainstorm', 'investigate', 'plan', 'execute'],
