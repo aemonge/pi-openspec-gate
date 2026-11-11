@@ -17,6 +17,7 @@ import {
 import {
   actHint as actHintBin,
   parseSchemaYaml as parseSchemaYamlBin,
+  pendingAct as pendingActBin,
   schemaIsGated as schemaIsGatedBin,
 } from '../bin/gate-lib.js';
 
@@ -221,7 +222,7 @@ describe('schema reader: resolution and grant semantics', () => {
     const resolution = resolveChangeSchema(openspecRoot, 'spec');
     assert.ok(resolution.ok);
     if (resolution.ok) {
-      assert.equal(resolution.schema.artifacts.length, 4);
+      assert.equal(resolution.schema.artifacts.length, 5, 'the walk is five steps (the fifth conditional)');
       assert.ok(schemaIsGated(resolution.schema));
     }
   });
@@ -338,5 +339,55 @@ test('scanDeclares: a project-local schema shadows a global one by name', () => 
     else process.env.XDG_DATA_HOME = prevData;
     rmSync(lab, { recursive: true, force: true });
     rmSync(fakeGlobal, { recursive: true, force: true });
+  }
+});
+
+test('x-optional and x-requires-verdict parse as flags on both parsers', () => {
+  const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-optional: true\n    x-requires-verdict: true\n';
+  for (const parse of [parseSchemaYaml, parseSchemaYamlBin]) {
+    const schema = parse(yaml, 'inline');
+    assert.equal(schema.artifacts[1]!.optional, true, 'x-optional parsed');
+    assert.equal(schema.artifacts[1]!.requiresVerdict, true, 'x-requires-verdict parsed');
+    assert.equal(schema.artifacts[0]!.optional, false, 'absent flag defaults false');
+    assert.equal(schema.artifacts[0]!.requiresVerdict, false, 'absent flag defaults false');
+  }
+});
+
+test('x-optional must be true or absent — fails loudly otherwise', () => {
+  const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-optional: sometimes\n';
+  for (const parse of [parseSchemaYaml, parseSchemaYamlBin]) {
+    assert.throws(() => parse(yaml, 'inline'), /must be true \(or absent\)/u);
+  }
+});
+
+test('x-requires-verdict must be true or absent — fails loudly otherwise', () => {
+  const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-requires-verdict: false\n';
+  for (const parse of [parseSchemaYaml, parseSchemaYamlBin]) {
+    assert.throws(() => parse(yaml, 'inline'), /must be true \(or absent\)/u);
+  }
+});
+
+test('allArtifactsGranted: optional artifact skips while absent, demands once on disk', () => {
+  const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: post\n    generates: 5-post.md\n    x-requires-approval: [a]\n    x-optional: true\n';
+  const schema = parseSchemaYaml(yaml, 'fixture');
+  const grants = new Set(['a']);
+  assert.equal(allArtifactsGranted(schema, grants, () => false), true, 'absent fifth: satisfied — findings never surfaced');
+  assert.equal(allArtifactsGranted(schema, grants, () => true), false, 'fifth on disk: the walk demands it');
+  assert.equal(allArtifactsGranted(schema, grants), false, 'no filesystem evidence: conservative default demands');
+  assert.equal(allArtifactsGranted(schema, new Set(['a', 'post']), () => true), true, 'granted: satisfied regardless');
+});
+
+test('pendingAct: optional-absent fifth never owns the echo; on disk it does', () => {
+  const lab = mkdtempSync(join(tmpdir(), 'pending-act-'));
+  try {
+    const changes = join(lab, 'changes', 's');
+    mkdirSync(changes, { recursive: true });
+    const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: post\n    generates: 5-post.md\n    x-requires-approval: [a]\n    x-optional: true\n';
+    const schema = parseSchemaYamlBin(yaml, 'fixture');
+    assert.equal(pendingActBin(lab, 's', schema, new Set(['a'])), undefined, 'absent: no pending act — the walk is complete');
+    writeFileSync(join(changes, '5-post.md'), '# Post-delivery\n', 'utf8');
+    assert.match(pendingActBin(lab, 's', schema, new Set(['a']))!, /read 5-post\.md/u, 'on disk: the echo demands it');
+  } finally {
+    rmSync(lab, { recursive: true, force: true });
   }
 });

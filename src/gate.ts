@@ -151,6 +151,14 @@ export function blockArtifactApproval(slug: string, missing: string[]): string {
   ].join('\n');
 }
 
+export function blockRequiresVerdict(slug: string, ledger: string, verdict: string): string {
+  return [
+    `⛔ phase gate — ${slug} cannot draft yet: the verdict is unticked`,
+    `   tick:    '${verdict}' in ${ledger}`,
+    '   why:     this artifact reads the verdict line (x-requires-verdict) — the tick is a data dependency',
+  ].join('\n');
+}
+
 /** The advance command for a gated change: the human verb itself. */
 export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
   const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
@@ -649,7 +657,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         const resolution = resolveChangeSchema(openspecRoot, meta.raw.schema);
         if (!resolution.ok || !schemaIsGated(resolution.schema)) continue;
         const artifact = artifactForFilename(resolution.schema, path);
-        if (!artifact || (artifact.requiresApproval.length === 0 && artifact.requiresWritten.length === 0)) {
+        if (!artifact || (artifact.requiresApproval.length === 0 && artifact.requiresWritten.length === 0 && !artifact.requiresVerdict)) {
           continue; // declares no gates: drafts free
         }
         const approved = grantedSet(meta);
@@ -681,6 +689,28 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             at: utcNow(),
           });
           return { block: true, reason: blockArtifactWritten(artifact.generates, missingWritten) };
+        }
+        // x-requires-verdict — the artifact reads the bearer's verdict line,
+        // so the tick is a data dependency, not just strictness: refuse the
+        // draft until the declared verdict is ticked in the receipt ledger
+        if (artifact.requiresVerdict) {
+          const bearer = receiptArtifactFor(resolution.schema);
+          const verdict = schemaVerdictLine(resolution.schema);
+          const ledger = bearer ? join(openspecRoot, 'changes', slug, bearer.generates) : undefined;
+          if (verdict && ledger && exists(ledger)) {
+            const escaped = verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+            const unticked = new RegExp(`^- \\[ \\][^\\n]*${escaped}`, 'mu').test(readFileSync(ledger, 'utf8'));
+            if (unticked) {
+              appendFact(FACT.phasegate, {
+                kind: 'requires-verdict',
+                tool: toolName,
+                change: slug,
+                artifact: artifact.id,
+                at: utcNow(),
+              });
+              return { block: true, reason: blockRequiresVerdict(slug, bearer!.generates, verdict) };
+            }
+          }
         }
         if (artifact.requiresApproval.length > 0 && (toolName === 'edit' || toolName === 'write')) {
           const record = input as Record<string, unknown> | null;

@@ -40,13 +40,14 @@ const UNGATED_SCHEMA = `name: ungated\nversion: 1\nartifacts:\n  - id: a\n    ge
 const MULTI_SCHEMA = `name: multi\nversion: 1\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n  - id: c\n    generates: 3-c.md\n    x-requires-approval: [a, b]\n`;
 const WRITTEN_SCHEMA = `name: written\nversion: 1\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-written: [a]\n`;
 const WINDOW_SCHEMA = `name: window\nversion: 1\nartifacts:\n  - id: brief\n    generates: 1-brief.md\n  - id: dig\n    generates: 2-dig.md\n    x-grant-verb: dig\n    x-requires-approval: [brief]\n    x-unlocks: [research]\n`;
+const VERDICT_SCHEMA = `name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n`;
 
 function fixture(schemaName: string, meta: Record<string, string> = {}) {
   const root = mkdtempSync(join(tmpdir(), 'phasegate-'));
   const openspec = join(root, 'openspec');
   mkdirSync(join(openspec, 'schemas', schemaName), { recursive: true });
   const yaml =
-    schemaName === 'gated' ? GATED_SCHEMA : schemaName === 'multi' ? MULTI_SCHEMA : schemaName === 'written' ? WRITTEN_SCHEMA : schemaName === 'window' ? WINDOW_SCHEMA : UNGATED_SCHEMA;
+    schemaName === 'gated' ? GATED_SCHEMA : schemaName === 'multi' ? MULTI_SCHEMA : schemaName === 'written' ? WRITTEN_SCHEMA : schemaName === 'window' ? WINDOW_SCHEMA : schemaName === 'verdict' ? VERDICT_SCHEMA : UNGATED_SCHEMA;
   writeFileSync(join(openspec, 'schemas', schemaName, 'schema.yaml'), yaml, 'utf8');
   mkdirSync(join(openspec, 'changes', 'c1'), { recursive: true });
   const metaLines = [`schema: ${schemaName}`, ...Object.entries(meta).map(([k, v]) => `${k}: ${v}`)];
@@ -341,5 +342,42 @@ describe('artifact gates: creating gated change artifacts', () => {
       ctxOf(root),
     );
     assert.equal(result, undefined);
+  });
+});
+
+describe('x-requires-verdict: the tick is a data dependency', () => {
+  const VERDICT_CONFIG = {
+    ...CONFIG,
+    approval: { ...CONFIG.approval, humanGateSteps: true },
+  };
+
+  test('unticked verdict blocks the fifth draft, naming the tick', async () => {
+    const { root, changeDir } = fixture('verdict', { 'x-granted': 'ledger' });
+    writeFileSync(join(changeDir, '4-ledger.md'), '# Execute\n\n- [ ] Human validation — response: · outcome: · surfaced:\n', 'utf8');
+    const fake = makeFakePi();
+    createGate(fake.pi as never, VERDICT_CONFIG as never);
+    const blocked = await fake.fire(
+      'tool_call',
+      { toolName: 'write', input: { path: join(changeDir, '5-post.md'), content: '# Post-delivery\n\n## F1 — the finding\n' } },
+      ctxFocusedOn(root, 'c1'),
+    );
+    const reason = (blocked as { reason: string }).reason;
+    assert.match(reason, /cannot draft yet: the verdict is unticked/u);
+    assert.match(reason, /tick:    'Human validation' in 4-ledger\.md/u);
+    const fact = fake.entries.find((e) => (e.data as { kind?: string } | undefined)?.kind === 'requires-verdict');
+    assert.ok(fact, 'requires-verdict fact recorded');
+  });
+
+  test('ticked verdict opens the draft', async () => {
+    const { root, changeDir } = fixture('verdict', { 'x-granted': 'ledger' });
+    writeFileSync(join(changeDir, '4-ledger.md'), '# Execute\n\n- [x] Human validation — response: yes · outcome: pass · surfaced: none\n', 'utf8');
+    const fake = makeFakePi();
+    createGate(fake.pi as never, VERDICT_CONFIG as never);
+    const pass = await fake.fire(
+      'tool_call',
+      { toolName: 'write', input: { path: join(changeDir, '5-post.md'), content: '# Post-delivery\n\n## F1 — the finding\n' } },
+      ctxFocusedOn(root, 'c1'),
+    );
+    assert.equal(pass, undefined, 'ticked verdict lets the fifth draft');
   });
 });

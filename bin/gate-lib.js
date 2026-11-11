@@ -121,7 +121,8 @@ function renderRoom(root, slug) {
   }
   const schema = resolution.schema;
   const approved = grantedSet(meta);
-  const idx = schema.artifacts.findIndex((a) => !approved.has(a.id));
+  const fileOnDisk = (g) => existsSync(join(root, 'changes', slug, g));
+  const idx = schema.artifacts.findIndex((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
   const last = receiptArtifactFor(schema) ?? schema.artifacts[schema.artifacts.length - 1];
   if (idx === -1) {
     fields['artifact-name'] = last.generates;
@@ -243,7 +244,7 @@ export function parseSchemaYaml(content, source) {
 
   const newArtifact = () => ({
     id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
-    receivesReceipts: false, unlocks: [],
+    receivesReceipts: false, unlocks: [], optional: false, requiresVerdict: false,
   });
 
   const flushPending = () => {
@@ -367,6 +368,16 @@ export function parseSchemaYaml(content, source) {
     if (k === 'x-receives-receipts') {
       flushPending();
       current.receivesReceipts = parseFlag(v.trim(), k, source, current.id);
+      continue;
+    }
+    if (k === 'x-optional') {
+      flushPending();
+      current.optional = parseFlag(v.trim(), k, source, current.id);
+      continue;
+    }
+    if (k === 'x-requires-verdict') {
+      flushPending();
+      current.requiresVerdict = parseFlag(v.trim(), k, source, current.id);
       continue;
     }
     if (k === 'x-unlocks-source') {
@@ -505,8 +516,8 @@ export function schemaIsGated(schema) {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0 || (a.requiresWritten ?? []).length > 0);
 }
 
-export function allArtifactsGranted(schema, approvedSet) {
-  return schema.artifacts.every((a) => approvedSet.has(a.id));
+export function allArtifactsGranted(schema, approvedSet, exists = () => true) {
+  return schema.artifacts.every((a) => approvedSet.has(a.id) || (a.optional && !exists(a.generates)));
 }
 
 export function sectionTitles(artifact) {
@@ -539,7 +550,8 @@ export function capabilityUnlocked(schema, approvedSet, capability) {
  *  that just stamped pass the updated set. Derived at read time, never
  *  stored: the meta counters stay the only truth. */
 export function pendingAct(root, slug, schema, approved) {
-  const next = schema.artifacts.find((a) => !approved.has(a.id));
+  const fileOnDisk = (g) => existsSync(join(root, 'changes', slug, g));
+  const next = schema.artifacts.find((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
   if (!next) return undefined;
   return existsSync(join(root, 'changes', slug, next.generates))
     ? `read ${next.generates} → ${actHint(root, slug)}`
@@ -613,7 +625,7 @@ export function grantArtifact(root, slug, artifactRef) {
   const at = utcNowStamp();
   approved.add(artifactRef);
   const values = { 'x-granted': [...approved].join(','), [`x-granted_${artifactRef}`]: at };
-  const completed = allArtifactsGranted(schema, approved);
+  const completed = allArtifactsGranted(schema, approved, (g) => existsSync(join(root, 'changes', slug, g)));
   if (completed) {
     const completing = schema.artifacts.find((a) => a.completes);
     Object.assign(values, { 'x-status': completing?.completes ?? 'approved', 'x-approved_at': at });

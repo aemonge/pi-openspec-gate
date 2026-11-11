@@ -1,5 +1,5 @@
 name: spec
-version: 8
+version: 9
 x-declares: [start the spec, skip the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -12,10 +12,13 @@ description: "Coding runs in one of two modes — human-coder assisted
   with the content · DELETE: path — and the human codes it by hand.
   The gate is untouched: a mutating call still needs focus, a change,
   or a declaration. The openspec mode is one human-validatable value
-  slice as a four-step flow — Brainstorm (why + questions) →
+  slice as a five-step flow — Brainstorm (why + questions) →
   Investigate (de-risk; research opens) → Plan (the contract; writes
   open) → Execute (the ledger; receipts land, the human verdict
-  closes it). Strictness sits at the two boundaries humans own —
+  closes it) → Post-delivery (conditional; findings too big for
+  slices, designed inside the change that surfaced them, drafted
+  only when the verdict's surfaced: line names them). Strictness
+  sits at the two boundaries humans own —
   commit at Plan, judge at the verdict. Learnings live outside the
   flow in openspec/learnings/, read by every step, written by any
   change that learned something. x- tags declare the human gates that
@@ -94,18 +97,47 @@ artifacts:
       receipt. Gate-appended receipts (tool · paths · UTC) land while
       work runs. Findings surfaced while delivering — bugs, tech debt,
       enhancements the plan could not have named — do not open a new
-      spec: append them as new Slices here (same tasks + commit-hash
-      law) and add a one-line amendment to the Plan''s Slices so the
-      mirror holds; the verdict waits until they land. Post-close
-      findings go to openspec/learnings/debt.md and become their own
-      follow-up change. The final countable checkbox is always the declared
-      verdict — Human validation, response · outcome · surfaced: (bugs/
-      errors/debt routed to openspec/learnings/debt.md) — only a Human
-      reply ticks it. Status truth lives in counters, never prose.
-      Approving this artifact completes the schema.'
+      spec: append the small ones as new Slices here (same tasks +
+      commit-hash law) and add a one-line amendment to the Plan''s
+      Slices so the mirror holds; the verdict waits until they land.
+      The surfaced: line routes every named finding — slice ·
+      → post-delivery — binary: the post-delivery artifact designs the
+      too-big ones inside this change; a deferred finding parks through
+      it (route park — the stub commit is its receipt). Post-close
+      findings open their own change — parked when not walked now; the
+      declared-work door covers the tiny. The final countable checkbox
+      is always the declared verdict — Human validation, response ·
+      outcome · surfaced: (slice · → post-delivery, one route per
+      finding) — only a Human reply ticks it. Status truth lives in
+      counters, never prose. Approving this artifact hands the walk to
+      post-delivery when findings surfaced; the schema completes when
+      post-delivery is granted or cleanly absent.'
     requires:
       - plan
     x-requires-approval: [plan]
     x-receives-receipts: true
     x-completes: approved
     x-verdict-line: Human validation
+  - id: post-delivery
+    generates: 5-post-delivery.md
+    description: The delivery's afterlife — findings too big for slices, designed inside the change that surfaced them
+    template: 5-post-delivery.md
+    instruction: 'Drafts only when the delivery surfaced findings too
+      big for execute''s slices — the ledger''s surfaced: line names
+      them (→ post-delivery), and the verdict must be ticked first
+      (x-requires-verdict): the fifth reads that routing, so the tick
+      is a data dependency, not just strictness. One H2 per finding,
+      in the order named: from · why here (the boundary, drawn in one
+      sentence) · route · risk, then checkbox Tasks and a Commit
+      checkbox with a hash: slot — the execute law, scaled down. A
+      finding deferred graduates through this artifact: route park,
+      one task (open the parked change stub), the stub commit is its
+      receipt. No findings → never drafted: x-optional lets grant,
+      room, and close skip it while absent, and it blocks hard the
+      moment its file exists. A ticked Human validation closes this
+      artifact''s own walk; the schema''s verdict lives in execute.'
+    requires:
+      - execute
+    x-requires-approval: [execute]
+    x-optional: true
+    x-requires-verdict: true

@@ -1,10 +1,13 @@
 /**
  * The shipped example — a strong starting point, kept honest.
  *
- * The example carries the v5 `spec` schema: four steps (brainstorm →
- * investigate → plan → execute), strictness at the two boundaries humans
- * own — commit at plan (x-unlocks: [writes]), the verdict at execute —
- * and the research window opening at investigate (x-unlocks: [research]).
+ * The example carries the v9 `spec` schema: five steps (brainstorm →
+ * investigate → plan → execute → post-delivery), strictness at the two
+ * boundaries humans own — commit at plan (x-unlocks: [writes]), the
+ * verdict at execute — and the research window opening at investigate
+ * (x-unlocks: [research]). The fifth is conditional: x-optional and
+ * x-requires-verdict — drafted only when the verdict's surfaced: line
+ * names findings too big for slices.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -30,7 +33,7 @@ describe('the example schema (spec)', () => {
     assert.deepEqual(src.declares, ['start the spec', 'skip the spec']);
     assert.deepEqual(
       src.artifacts.map((a) => a.id),
-      ['brainstorm', 'investigate', 'plan', 'execute'],
+      ['brainstorm', 'investigate', 'plan', 'execute', 'post-delivery'],
     );
     assert.equal(schemaIsGated(src), true);
     for (const artifact of src.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');
@@ -47,11 +50,21 @@ describe('the example schema (spec)', () => {
     assert.equal(src.artifacts[3]!.receivesReceipts, true);
     assert.equal(src.artifacts[3]!.completes, 'approved');
 
+    // the conditional fifth: optional, verdict-first, chained to execute
+    const fifth = src.artifacts[4]!;
+    assert.equal(fifth.optional, true);
+    assert.equal(fifth.requiresVerdict, true);
+    assert.deepEqual(fifth.requiresApproval, ['execute']);
+    assert.equal(src.artifacts[3]!.optional, false);
+    assert.equal(src.artifacts[3]!.requiresVerdict, false);
+
     // bin ≡ src mirror on the example itself
     assert.deepEqual(
       bin.artifacts.map((a) => [a.id, a.requiresApproval, a.grantVerb, a.unlocks, a.sections.map((s) => s.id)]),
       src.artifacts.map((a) => [a.id, a.requiresApproval, a.grantVerb, a.unlocks, a.sections.map((s) => s.id)]),
     );
+    assert.equal((bin.artifacts[4] as { optional?: boolean }).optional, true, 'bin parses x-optional too');
+    assert.equal((bin.artifacts[4] as { requiresVerdict?: boolean }).requiresVerdict, true, 'bin parses x-requires-verdict too');
   });
 
   test('the schema parses under real yaml — openspec itself reads it', () => {

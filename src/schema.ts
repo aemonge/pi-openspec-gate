@@ -46,6 +46,13 @@ export type Artifact = {
   receivesReceipts: boolean;
   /** x-completes — status stamp written when this grant completes the schema */
   completes?: string;
+  /** x-optional — skipped by grant, room, and close while its file is absent;
+   *  blocks hard the moment the file exists (findings surfaced) */
+  optional: boolean;
+  /** x-requires-verdict — drafting refuses until the receipt bearer's verdict
+   *  line is ticked (the artifact reads that line, so the tick is a data
+   *  dependency) */
+  requiresVerdict: boolean;
   /** x-unlocks — capability classes this artifact's grant opens (research, writes);
    *  x-unlocks-source: true folds into [writes] */
   unlocks: string[];
@@ -159,7 +166,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
 
   const newArtifact = (): Artifact => ({
     id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
-    receivesReceipts: false, unlocks: [],
+    receivesReceipts: false, unlocks: [], optional: false, requiresVerdict: false,
   });
 
   const flushPending = () => {
@@ -288,6 +295,16 @@ export function parseSchemaYaml(content: string, source: string): Schema {
     if (k === 'x-receives-receipts') {
       flushPending();
       current.receivesReceipts = parseFlag(v.trim(), k, source, current.id);
+      continue;
+    }
+    if (k === 'x-optional') {
+      flushPending();
+      current.optional = parseFlag(v.trim(), k, source, current.id);
+      continue;
+    }
+    if (k === 'x-requires-verdict') {
+      flushPending();
+      current.requiresVerdict = parseFlag(v.trim(), k, source, current.id);
       continue;
     }
     if (k === 'x-unlocks-source') {
@@ -447,9 +464,16 @@ export function schemaIsGated(schema: Schema): boolean {
   return schema.artifacts.some((a) => a.requiresApproval.length > 0 || a.requiresWritten.length > 0);
 }
 
-/** Schema complete when every declared artifact bears a grant (order enforced elsewhere). */
-export function allArtifactsGranted(schema: Schema, approved: ReadonlySet<string>): boolean {
-  return schema.artifacts.every((a) => approved.has(a.id));
+/** Schema complete when every declared artifact bears a grant — optional
+ *  artifacts count as satisfied while their file is absent (findings never
+ *  surfaced) and block hard the moment it exists. `exists` defaults to
+ *  always-present: callers without filesystem access stay conservative. */
+export function allArtifactsGranted(
+  schema: Schema,
+  approved: ReadonlySet<string>,
+  exists: (generates: string) => boolean = () => true,
+): boolean {
+  return schema.artifacts.every((a) => approved.has(a.id) || (a.optional && !exists(a.generates)));
 }
 
 /** Declared heading titles, for structure checks. */

@@ -198,7 +198,9 @@ if (command === 'close') {
     }
     process.exit(archive.status ?? 1);
   }
-  const ungranted = resolution.schema.artifacts.filter((a) => !grantedSet(meta).has(a.id));
+  const ungranted = resolution.schema.artifacts.filter(
+    (a) => !grantedSet(meta).has(a.id) && !(a.optional && !existsSync(join(root, 'changes', focused, a.generates))),
+  );
   if (ungranted.length > 0) {
     console.error(`not closed — ${ungranted.length} artifact(s) ungranted (${ungranted.map((a) => a.id).join(', ')}) — eospec approve`);
     process.exit(1);
