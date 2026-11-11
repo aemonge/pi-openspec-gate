@@ -11,7 +11,7 @@
  * Handler failure blocks the call as a fail-safe.
  */
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
-import { existsSync as exists } from 'node:fs';
+import { existsSync as exists, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
@@ -391,6 +391,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       state.pendingCreation = undefined;
       if (exists(join(root, 'changes', slug))) {
         writeChangeMeta(root, slug, { 'x-status': 'proposed', 'x-created_by': 'assistant' }, { onlyIfAbsent: true });
+        // the room's name goes in the room's files: template copies carry
+        // `<!-- slug -->` — the stamp fills it (the plan's make-real ruling)
+        const changeDir = join(root, 'changes', slug);
+        for (const f of readdirSync(changeDir)) {
+          if (!f.endsWith('.md')) continue;
+          const p = join(changeDir, f);
+          const text = readFileSync(p, 'utf8');
+          if (text.includes('<!-- slug -->')) {
+            writeFileSync(p, text.replaceAll('<!-- slug -->', slug), 'utf8');
+          }
+        }
         appendFact(FACT.creationStamped, { change: slug, tool, at });
       }
     }

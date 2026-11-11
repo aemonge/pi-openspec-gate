@@ -328,12 +328,18 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal(existsSync(metaFile), false, 'no pre-created meta — openspec\'s scaffolder runs freely');
     // openspec runs (the real command creates the dir); then the turn ends
     mkdirSync(join(repo, 'openspec', 'changes', 'fresh-one'), { recursive: true });
+    writeFileSync(join(repo, 'openspec', 'changes', 'fresh-one', '1-brainstorm.md'), '> Spec: <!-- slug -->\n');
     await fire('message_end', { message: { role: 'assistant', content: 'created' } }, ctx);
     assert.ok(existsSync(metaFile), 'meta stamped after the call completed');
     const meta = readChangeMeta(root, 'fresh-one');
     assert.equal(meta.status, 'proposed');
     assert.equal(meta.raw['x-created_by'], 'assistant');
     assert.ok(entries.some((e) => e.customType === 'gate.creation-stamped'));
+    assert.equal(
+      readFileSync(join(repo, 'openspec', 'changes', 'fresh-one', '1-brainstorm.md'), 'utf8'),
+      '> Spec: fresh-one\n',
+      'the stamp fills <!-- slug --> in template copies',
+    );
   });
 
   test('creation stamping: wrapper form witnessed too; no dir → no stamp', async () => {
