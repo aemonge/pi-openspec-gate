@@ -185,7 +185,7 @@
       command tip is no longer lossable, because the tip is now a fact
       started_at: 2026-11-11T12:43:00Z · ended_at: 2026-11-11T12:45:00Z · total: 2m · check: ✓ stamp-time auto-aim + test · paths: src/gate.ts, test/approval.test.ts
 - [x] fix(gate): the room follows a birth; fix(schema): yaml-safe doors
-      hash:
+      hash: 03a8946
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
@@ -826,3 +826,7 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:36:13Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:36:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:49:35Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:49:35Z
