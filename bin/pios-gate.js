@@ -1,25 +1,24 @@
 /**
- * pios-gate — the gate as a feature extension of openspec (plain JS:
- * node refuses type-stripping under node_modules, so installed bins must
- * not be TypeScript).
+ * eospec — openspec, extended: three words, then openspec.
  *
- *   the walk — the vocabulary, four words, one for human and AI alike:
- *   pios-gate <slug>            aim — focus a change (and see its act)
- *   pios-gate go                advance — stamp the next step of the
- *                               focused change
- *   pios-gate list              the cockpit — every change, next acts
- *   pios-gate done              the close — after the human ticks the
- *                               verdict: validated, archived, focus dies
+ * (bin file still named pios-gate.js until the package cut; every
+ * teaching string below already speaks the final name.)
  *
- *   Older verbs (act, inspect, grant, next, focus, approve, confirm,
- *   pending) keep answering for scripts and sessions that learned them —
- *   they are undocumented compatibility, never features.
+ *   eospec focus <change>   aim the room at a change
+ *   eospec focus            the room + every change, one line each
+ *   eospec approve          approve the next pending step of the aim
+ *   eospec close            tick-checked close: validate, archive, release
  *
- *   Anything else execs openspec verbatim, exit code intact — never
- *   interpretation.
+ *   eospec -- <args>        everything after -- is openspec, verbatim
+ *   eospec help             this
  *
- * Reserved words never forward. Human terminal only: aim, go, done,
- * confirm, grant, next, and approve refuse tool-call invocations.
+ * Anything else execs openspec verbatim, exit code intact — never
+ * interpretation. A bare change name aims the room (resolved, never
+ * interpreted — unknown names keep the passthrough below).
+ *
+ * approve and close are human-terminal: the pi gate refuses any
+ * assistant tool call that names them (the watcher's stamp-surface
+ * guard); the bin never sees those invocations.
  */
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
@@ -45,7 +44,7 @@ import {
   writeFocus,
 } from './gate-lib.js';
 
-const [command, slug] = process.argv.slice(2);
+const [command, ...rest] = process.argv.slice(2);
 
 const rootOf = () => {
   const root = findOpenspecRoot(process.cwd());
@@ -56,158 +55,140 @@ const rootOf = () => {
   return root;
 };
 
-const changeOrDie = (root, s, usage) => {
-  if (!s) {
-    console.error(usage);
-    process.exit(2);
-  }
-  if (!existsSync(join(root, 'changes', s))) {
-    console.error(`no such change: ${s} (under ${root}/changes/)`);
-    process.exit(2);
-  }
-};
-
-/** The walk's aim — write focus, then teach what the next go will do. */
+/** The walk's aim — write focus, then teach what the next approve does. */
 const aimFocus = (root, target) => {
   writeFocus(root, target);
   const meta = readChangeMeta(root, target);
   const resolution = resolveChangeSchema(root, meta.schema);
   const act = resolution.ok && schemaIsGated(resolution.schema)
     ? (pendingAct(root, target, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta))
-    : 'no gates — pios-gate done closes it as it stands';
+    : 'no gates — eospec close closes it as it stands';
   console.log(`focused ${target} · next: ${act}`);
   process.exit(0);
 };
 
-const doGrant = (root, s, artifactId) => {
-  const result = grantArtifact(root, s, artifactId);
+/** The stamp echo — what was approved, and what the next approve does. */
+const doApprove = (root, slug, artifactId) => {
+  const result = grantArtifact(root, slug, artifactId);
   if (!result.ok) {
     console.error(result.error);
     process.exit(1);
   }
   console.log(
     result.completed
-      ? `granted ${s} · ${result.granted} · all artifacts granted — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: pios-gate done` : ''}`
-      : `granted ${s} · ${result.granted} · at ${result.at}${result.next ? ` · next: ${result.next}` : ''}`,
+      ? `approved ${slug} · ${result.granted} · all steps approved — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: eospec close` : ''}`
+      : `approved ${slug} · ${result.granted} · at ${result.at}${result.next ? ` · next: ${result.next}` : ''}`,
   );
   process.exit(0);
 };
 
-if (command === 'list') {
-  console.log(pendingReport(rootOf()));
-  process.exit(0);
-}
+const exitPassthrough = (args) => {
+  const filtered = args.filter((a) => a !== '--i-am-the-human');
+  const result = spawnSync('openspec', filtered, { stdio: 'inherit' });
+  if (result.error) {
+    console.error(`eospec: cannot exec openspec (${result.error.message}) — is it on PATH?`);
+    process.exit(127);
+  }
+  process.exit(result.status ?? 1);
+};
 
-// pause/resume are session acts (the permit lives in the session and
-// dies with it — arming from a terminal would need a session-id channel
-// pi does not expose): the verb teaches, the reply arms
-if (command === 'pause' || command === 'resume') {
-  console.log(
-    command === 'pause'
-      ? 'pause is a session act — say "pause 30m" (grammar X{h,m,s}, ceiling 4h) in your session; the permit dies with the session'
-      : 'resume is a session act — say "resume" in your session',
-  );
-  process.exit(0);
-}
+// the escape hatch: after --, openspec verbatim — bypassing even
+// bare-change-name interception
+if (command === '--') exitPassthrough(rest);
 
-// the gate introduces itself: bare invocation and help print gate usage —
-// never openspec's banner under the gate's name (live-caught 2026-11-04,
-// human ruling: no debt, fix now)
+// the gate introduces itself: bare invocation and help print eospec
+// usage — never openspec's banner under this name
 if (!command || command === 'help' || command === '--help' || command === '-h') {
-  console.log(`pios-gate — the gate as a feature extension of openspec
+  console.log(`eospec — openspec, extended: three words, then openspec
 
-  pios-gate <slug>    aim — focus a change (and see its act)
-  pios-gate go        advance — stamp the next step
-  pios-gate list      the cockpit — every change
-  pios-gate done      the close — after you tick the verdict:
-                      validated, archived, focus released
+  eospec focus <change>   aim the room at a change
+  eospec focus            the room + every change, one line each
+  eospec approve          approve the next pending step of the aim
+  eospec close            tick-checked close: validate, archive, release
 
-  pios-gate help      this
-  pios-gate <anything else>   exec openspec verbatim, exit code intact
+  eospec -- <args>        everything after -- is openspec, verbatim
+  eospec help             this
 
-Grants are human-terminal — go and done refuse tool-call invocations.`);
+Anything else runs openspec verbatim, exit code intact.
+approve and close are human-terminal — the pi gate refuses the
+assistant's tool calls that name them.`);
   process.exit(0);
 }
 
-// the teacher is gone with the verbs — four words answer everything
+// the aim: focus <change>
+if (command === 'focus' && rest[0]) {
+  const root = rootOf();
+  const target = rest[0];
+  if (!existsSync(join(root, 'changes', target))) {
+    console.error(`no such change: ${target} (under ${root}/changes/)`);
+    process.exit(2);
+  }
+  aimFocus(root, target);
+}
 
-// the aim's act in one line — the renderer's relay (stardeck reads one
-// line, owns no state); bare only — the walk has no named form for it
-if (command === 'act' && !slug) {
+// the room: bare focus — where the room points, every change's pending state
+if (command === 'focus') {
   const root = rootOf();
   const focused = readFocus(root);
-  if (!focused) {
-    console.log('no focus — pios-gate <slug>');
-    process.exit(0);
-  }
-  if (!existsSync(join(root, 'changes', focused))) {
-    console.log('focus is stale — pios-gate <slug>');
-    process.exit(0);
-  }
-  const meta = readChangeMeta(root, focused);
-  const resolution = resolveChangeSchema(root, meta.schema);
-  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
-    console.log(meta.validated ? 'ready to archive?' : 'no gates — pios-gate done closes it as it stands');
-    process.exit(0);
-  }
-  console.log(pendingAct(root, focused, resolution.schema, grantedSet(meta)) ?? completionLine(resolution.schema, meta));
+  console.log(focused ? `aim: ${focused}` : 'nothing aimed — eospec focus <change>');
+  console.log(pendingReport(root));
   process.exit(0);
 }
 
-// the walk's advance: stamp the next step of the focused change — same
-// grantArtifact checks as every surface; the verdict wall and archive
-// discipline intact (archive fires only after the verdict, via done)
-if (command === 'go') {
+// the advance: approve the next pending step of the aimed change — the
+// same grantArtifact checks as every surface; verdict wall and archive
+// discipline intact (archiving fires only via close)
+if (command === 'approve') {
   const root = rootOf();
   const focused = readFocus(root);
   if (!focused) {
-    console.error('no focus — pios-gate <slug>');
+    console.error('nothing aimed — eospec focus <change>');
     process.exit(1);
   }
   if (!existsSync(join(root, 'changes', focused))) {
-    console.error('focus is stale — pios-gate <slug>');
+    console.error('the aim is stale — the change is gone — eospec focus <change>');
     process.exit(1);
   }
   const meta = readChangeMeta(root, focused);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
-    console.error(`pios-gate: '${focused}' has no gates — pios-gate done closes it as it stands`);
+    console.error(`eospec: '${focused}' has no gates — eospec close closes it as it stands`);
     process.exit(1);
   }
   const pending = pendingAct(root, focused, resolution.schema, grantedSet(meta));
   if (!pending) {
     if (!meta.validated) {
       const verdict = schemaVerdictLine(resolution.schema);
-      console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: pios-gate done`);
+      console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: eospec close`);
       process.exit(1);
     }
-    console.error(`validated ${focused} — nothing to advance: pios-gate done`);
+    console.error(`validated ${focused} — nothing to approve: eospec close`);
     process.exit(1);
   }
   const nextArtifact = resolution.schema.artifacts.find((a) => !grantedSet(meta).has(a.id));
-  doGrant(root, focused, nextArtifact.id);
+  doApprove(root, focused, nextArtifact.id);
 }
 
-// the close: after the human ticks the verdict — validated, archived.
-// One word for the whole ending; the tick before it stays human-only.
-if (command === 'done') {
+// the close: after the human ticks the verdict — validated, archived,
+// aim released. One word for the whole ending; the tick stays human-only.
+if (command === 'close') {
   const root = rootOf();
   const focused = readFocus(root);
   if (!focused) {
-    console.error('no focus — pios-gate <slug>');
+    console.error('nothing aimed — eospec focus <change>');
     process.exit(1);
   }
   if (!existsSync(join(root, 'changes', focused))) {
-    console.error('focus is stale — pios-gate <slug>');
+    console.error('the aim is stale — the change is gone — eospec focus <change>');
     process.exit(1);
   }
   const meta = readChangeMeta(root, focused);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
-    // ungated room: nothing to walk — done IS the judgment
+    // ungated room: nothing to walk — close IS the judgment
     const at = utcNowStamp();
     writeChangeMeta(root, focused, { status: 'approved', approved_at: at, validated: at, validated_at: at });
-    console.log(`done ${focused} · ungated — approved, validated · archiving`);
+    console.log(`closed ${focused} · ungated — approved, validated · archiving`);
     const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
     if (archive.status === 0) {
       try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
@@ -216,7 +197,7 @@ if (command === 'done') {
   }
   const ungranted = resolution.schema.artifacts.filter((a) => !grantedSet(meta).has(a.id));
   if (ungranted.length > 0) {
-    console.error(`not done — ${ungranted.length} artifact(s) ungranted (${ungranted.map((a) => a.id).join(', ')}) — pios-gate go`);
+    console.error(`not closed — ${ungranted.length} artifact(s) ungranted (${ungranted.map((a) => a.id).join(', ')}) — eospec approve`);
     process.exit(1);
   }
   const verdict = schemaVerdictLine(resolution.schema);
@@ -227,13 +208,13 @@ if (command === 'done') {
       ? new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'))
       : true;
     if (unticked) {
-      console.error(`not done — tick '${verdict}' in ${bearer?.generates ?? 'the ledger'} first, then: pios-gate done`);
+      console.error(`not closed — tick '${verdict}' in ${bearer?.generates ?? 'the ledger'} first, then: eospec close`);
       process.exit(1);
     }
   }
   const at = utcNowStamp();
   writeChangeMeta(root, focused, { validated: at, validated_at: at });
-  console.log(`done ${focused} · validated · archiving`);
+  console.log(`closed ${focused} · validated · archiving`);
   const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
   if (archive.status === 0) {
     try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
@@ -242,20 +223,13 @@ if (command === 'done') {
 }
 
 // everything else: exec openspec verbatim — no arg rewriting, ever —
-// EXCEPT the walk's aim: a bare change name focuses (resolved, never
-// interpreted — unknown names keep the passthrough below)
-if (command && !slug) {
+// EXCEPT a bare change name, which aims the room (resolved, never
+// interpreted — unknown names keep the passthrough)
+if (command && rest.length === 0) {
   const root = findOpenspecRoot(process.cwd());
   if (root && existsSync(join(root, 'changes', command))) aimFocus(root, command);
 }
 // EXCEPT gate-side flags: --i-am-the-human is the archive guard's escape
 // hatch (the hook honors it and steps aside); openspec would reject it as
 // unknown, so the wrapper keeps it off the argv it forwards
-// (live-caught 2026-11-04: the hatch broke at its own exec)
-const passthroughArgs = process.argv.slice(2).filter((a) => a !== '--i-am-the-human');
-const result = spawnSync('openspec', passthroughArgs, { stdio: 'inherit' });
-if (result.error) {
-  console.error(`pios-gate: cannot exec openspec (${result.error.message}) — is it on PATH?`);
-  process.exit(127);
-}
-process.exit(result.status ?? 1);
+exitPassthrough(process.argv.slice(2));

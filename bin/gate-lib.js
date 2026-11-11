@@ -94,11 +94,11 @@ export function writeFocus(openspecRoot, slug) {
   writeFileSync(focusPath(openspecRoot), `${slug}\n`, 'utf8');
 }
 
-/** The act hint for a change: focused rooms say `go`, everything else
- *  names the explicit form. The echo teaches the two-word walk without
- *  ever assuming the aim. */
+/** The act hint for a change: an aimed room says `approve`, everything
+ *  else names the aim. The echo teaches the walk without ever assuming
+ *  the aim. */
 export function actHint(openspecRoot, slug) {
-  return readFocus(openspecRoot) === slug ? 'pios-gate go' : `pios-gate next ${slug}`;
+  return readFocus(openspecRoot) === slug ? 'eospec approve' : `eospec focus ${slug}`;
 }
 
 // ── schema mirror (x- vocabulary) ──────────────────────────────────────
@@ -518,7 +518,7 @@ export function grantArtifact(root, slug, artifactRef) {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
-    return { ok: false, error: `schema declares no gates (${resolution.ok ? resolution.schema.name : resolution.reason}) — pios-gate done closes ungated changes as they stand` };
+    return { ok: false, error: `schema declares no gates (${resolution.ok ? resolution.schema.name : resolution.reason}) — eospec close closes ungated changes as they stand` };
   }
   const schema = resolution.schema;
   const approved = grantedSet(meta);
@@ -612,33 +612,36 @@ export function pendingReport(root) {
         }
       }
     }
-    const approvedSuffix = meta.approved_at ? ` · approved ${meta.approved_at}` : '';
-
     if (gated) {
       const schema = resolution.schema;
       const approved = grantedSet(meta);
       const marks = schema.artifacts.map((a) => (approved.has(a.id) ? '✓' : existsSync(join(changesDir, dir.name, a.generates)) ? '◻' : '·')).join('');
       const act = pendingAct(root, dir.name, schema, approved);
-      const tail = act
-        ? `  next: ${act}`
+      const state = meta.validated
+        ? `validated ${meta.validated_at ?? ''}`.trim()
+        : meta.approved_at
+          ? `approved ${meta.approved_at}`
+          : (meta.status ?? 'proposed');
+      const next = act
+        ? `next: ${act}`
         : unhashed > 0
-          ? `${unhashed} unhashed commits — pios-gate done closes after the hash`
+          ? `${unhashed} unhashed commits — eospec close closes after the hash`
           : meta.validated
-            ? '  done — ready to archive?'
-            : `  next: ${completionLine(schema, meta)} → pios-gate done`;
-      rows.push(`${dir.name.padEnd(36)}[${schema.name}] ${marks} ${status}${approvedSuffix}\n${tail}`);
+            ? 'ready to close'
+            : `next: ${completionLine(schema, meta)} — eospec close`;
+      rows.push(`${dir.name.padEnd(28)}${marks} ${state} · ${next}`);
     } else {
-      const legacyNeed =
+      const need =
         status !== 'approved'
-          ? 'needs done (aim first — it closes ungated rooms)'
+          ? 'aim first — eospec close closes ungated rooms'
           : humanWait && !meta.validated
-            ? 'tick the verdict — pios-gate done closes it'
+            ? 'tick the verdict — eospec close closes it'
             : open > 0
-              ? `${open} open steps`
+              ? `${open} open tasks`
               : unhashed > 0
                 ? `${unhashed} unhashed commits`
-                : 'done — ready to archive';
-      rows.push(`${dir.name.padEnd(36)}${status.padEnd(10)}${legacyNeed}${approvedSuffix}`);
+                : 'ready to close';
+      rows.push(`${dir.name.padEnd(28)}${status.padEnd(10)}${need}`);
     }
   }
   return rows.length === 0 ? 'nothing pending — no active changes' : rows.join('\n');

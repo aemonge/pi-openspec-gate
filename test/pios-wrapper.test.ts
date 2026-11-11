@@ -12,7 +12,7 @@ type Repo = { dir: string; fakeDir: string; log: string };
 
 /** temp repo with openspec/changes/ and a fake openspec on PATH */
 function makeRepo(): Repo {
-  const dir = mkdtempSync(join(tmpdir(), 'pios-repo-'));
+  const dir = mkdtempSync(join(tmpdir(), 'eospec-repo-'));
   const fakeDir = join(dir, 'fakebin');
   mkdirSync(join(dir, 'openspec', 'changes'), { recursive: true });
   mkdirSync(fakeDir, { recursive: true });
@@ -53,17 +53,32 @@ test('wrapper: passthrough execs openspec verbatim, exit code intact', () => {
   }
 });
 
-test('wrapper: approve/confirm are gate-owned, never forwarded', () => {
+test('wrapper: the escape hatch — everything after -- is openspec, verbatim', () => {
+  const repo = makeRepo();
+  try {
+    const r = run(repo, ['--', 'status', '--json']);
+    assert.equal(r.status, 0);
+    assert.equal(readFileSync(repo.log, 'utf8').trim(), 'status --json');
+
+    // a change named like nothing special still aims without the hatch
+    change(repo, 'x', 'status: proposed\n');
+    assert.equal(run(repo, ['x']).status, 0);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('wrapper: approve/close are gate-owned, never forwarded', () => {
   const repo = makeRepo();
   try {
     change(repo, 'x', 'status: proposed\n');
     assert.equal(run(repo, ['x']).status, 0);
-    const advanced = run(repo, ['go']);
+    const advanced = run(repo, ['approve']);
     assert.equal(advanced.status, 1);
-    assert.match(advanced.stdout, /no gates — pios-gate done closes it as it stands/);
-    const closed = run(repo, ['done']);
+    assert.match(advanced.stdout, /has no gates — eospec close closes it as it stands/);
+    const closed = run(repo, ['close']);
     assert.equal(closed.status, 0);
-    assert.match(closed.stdout, /done x · ungated — approved, validated · archiving/);
+    assert.match(closed.stdout, /closed x · ungated — approved, validated · archiving/);
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'x', '.openspec.yaml'), 'utf8');
     assert.doesNotMatch(meta, /granted:/);
   } finally {
@@ -71,19 +86,19 @@ test('wrapper: approve/confirm are gate-owned, never forwarded', () => {
   }
 });
 
-test('wrapper: pending reports what needs the human', () => {
+test('wrapper: the room view reports what needs the human', () => {
   const repo = makeRepo();
   try {
     change(repo, 'needs-approve', 'status: proposed\ncreated_by: assistant\n');
-    change(repo, 'needs-confirm', 'status: approved\n\napproved_at: 2026-10-19T10:00:00Z\n');
+    change(repo, 'needs-close', 'status: approved\n\napproved_at: 2026-10-19T10:00:00Z\n');
     writeFileSync(
-      join(repo.dir, 'openspec', 'changes', 'needs-confirm', '4-tasks.md'),
+      join(repo.dir, 'openspec', 'changes', 'needs-close', '4-tasks.md'),
       '# Tasks\n\n- [x] Step 1 — done\n- [ ] Step 2 — Human validation — live proof response: · outcome:\n',
     );
-    const out = run(repo, ['list']);
+    const out = run(repo, ['focus']);
     assert.equal(out.status, 0);
-    assert.match(out.stdout, /needs-approve\s+proposed\s+needs done/);
-    assert.match(out.stdout, /needs-confirm\s+approved\s+1 open steps/);
+    assert.match(out.stdout, /needs-approve\s+proposed\s+aim first — eospec close closes ungated rooms/);
+    assert.match(out.stdout, /needs-close\s+approved\s+1 open tasks/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -92,9 +107,21 @@ test('wrapper: pending reports what needs the human', () => {
 test('wrapper: usage errors exit 2 without forwarding', () => {
   const repo = makeRepo();
   try {
-    assert.equal(run(repo, ['done']).status, 1);
-    assert.match(run(repo, ['done']).stdout, /no focus/);
-    assert.equal(run(repo, ['go']).status, 1);
+    assert.equal(run(repo, ['close']).status, 1);
+    assert.match(run(repo, ['close']).stdout, /nothing aimed/);
+    assert.equal(run(repo, ['approve']).status, 1);
+    assert.equal(existsSync(repo.log), false);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('wrapper: focus on an unknown change exits 2 without forwarding', () => {
+  const repo = makeRepo();
+  try {
+    const r = run(repo, ['focus', 'missing']);
+    assert.equal(r.status, 2);
+    assert.match(r.stdout, /no such change: missing/);
     assert.equal(existsSync(repo.log), false);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
@@ -102,12 +129,12 @@ test('wrapper: usage errors exit 2 without forwarding', () => {
 });
 
 test('wrapper: missing openspec binary exits 127', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'pios-empty-'));
+  const dir = mkdtempSync(join(tmpdir(), 'eospec-empty-'));
   try {
     mkdirSync(join(dir, 'openspec', 'changes'), { recursive: true });
     const emptyBin = join(dir, 'emptybin');
     mkdirSync(emptyBin);
-    const result = spawnSync(WRAPPER, ['list'], {
+    const result = spawnSync(WRAPPER, ['focus'], {
       cwd: dir,
       env: { PATH: emptyBin, HOME: dir },
       encoding: 'utf8',
@@ -119,19 +146,19 @@ test('wrapper: missing openspec binary exits 127', () => {
 });
 
 test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
-  // npm links global bins as symlinks: <prefix>/bin/pios-gate →
-  // …/node_modules/<pkg>/bin/pios-gate. dirname "$0" through the link
-  // points at the link farm — the .ts companion is in the package copy.
-  const dir = mkdtempSync(join(tmpdir(), 'pios-npm-layout-'));
+  // npm links global bins as symlinks: <prefix>/bin/eospec →
+  // …/node_modules/<pkg>/bin/eospec. dirname "$0" through the link
+  // points at the link farm — the .js companion is in the package copy.
+  const dir = mkdtempSync(join(tmpdir(), 'eospec-npm-layout-'));
   try {
-    const pkgBin = join(dir, 'lib', 'node_modules', '@aemonge-dev', 'pi-openspec-gate', 'bin');
+    const pkgBin = join(dir, 'lib', 'node_modules', '@aemonge-dev', 'eospec', 'bin');
     const linkDir = join(dir, 'bin');
     mkdirSync(pkgBin, { recursive: true });
     mkdirSync(linkDir, { recursive: true });
     const fakeDir = join(dir, 'fakebin');
     mkdirSync(fakeDir);
     writeFileSync(join(fakeDir, 'openspec'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    // package copy: the real shims + the real .ts companions
+    // package copy: the real shims + the real .js companions
     const repoBin = join(import.meta.dirname, '..', 'bin');
     for (const f of ['gate-lib.js', 'pi-openspec-gate', 'pi-openspec-gate.js', 'pios-gate', 'pios-gate.js']) {
       copyFileSync(join(repoBin, f), join(pkgBin, f));
@@ -147,9 +174,9 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
         env: { ...process.env, PATH: `${fakeDir}:${process.env.PATH}` },
         encoding: 'utf8',
       });
-    const cockpit = viaLink('pios-gate', ['list']);
-    assert.equal(cockpit.status, 0, `pios-gate through npm link: ${cockpit.stderr}`);
-    assert.match(cockpit.stdout, /nothing pending/);
+    const room = viaLink('pios-gate', ['focus']);
+    assert.equal(room.status, 0, `wrapper through npm link: ${room.stderr}`);
+    assert.match(room.stdout, /nothing pending/);
     const usage = viaLink('pi-openspec-gate', ['--help']);
     assert.notEqual(usage.status, 0); // usage error — but NOT MODULE_NOT_FOUND
     assert.doesNotMatch(usage.stderr, /Cannot find module/);
@@ -158,7 +185,7 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
   }
 });
 
-// ── phase gates: the five grants ─────────────────────────────────────────
+// ── approvals: the walk stamps in declaration order ──────────────────────
 
 const GATED_SCHEMA = `name: gated
 version: 1
@@ -175,11 +202,9 @@ artifacts:
     x-sections: [Done when]
   - id: plan
     generates: 4-plan.md
-    x-grant-verb: order
     x-requires-approval: [proposal]
   - id: execution
     generates: 5-execution.md
-    x-grant-verb: execute
     x-requires-approval: [plan]
 `;
 
@@ -195,7 +220,7 @@ function draft(repo: Repo, slug: string, file: string, content: string): void {
   writeFileSync(join(repo.dir, 'openspec', 'changes', slug, file), content);
 }
 
-test('grants: the full five-step walk stamps in order and completes the schema', () => {
+test('approvals: the full five-step walk approves in order and completes the schema', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'pain and direction');
@@ -204,35 +229,35 @@ test('grants: the full five-step walk stamps in order and completes the schema',
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
-    const aim = run(repo, ['m1']);
+    const aim = run(repo, ['focus', 'm1']);
     assert.equal(aim.status, 0);
-    assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → pios-gate go/);
+    assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → eospec approve/);
 
     let first;
     for (let i = 0; i < 5; i += 1) {
-      first = run(repo, ['go']);
-      assert.equal(first.status, 0, `go #${i + 1}`);
+      first = run(repo, ['approve']);
+      assert.equal(first.status, 0, `approve #${i + 1}`);
     }
-    assert.match(first!.stdout, /granted m1 · execution/);
+    assert.match(first!.stdout, /approved m1 · execution/);
 
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
     assert.match(meta, /granted: idea,proposition,proposal,plan,execution/);
     assert.match(meta, /status: approved/);
     assert.match(meta, /granted_execution:/);
-    assert.equal(existsSync(repo.log), false, 'grants never forward to openspec');
+    assert.equal(existsSync(repo.log), false, 'approvals never forward to openspec');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('grants: structure refusal — a Claim-less proposition will not stamp', () => {
+test('approvals: structure refusal — a Claim-less proposition will not stamp', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
     draft(repo, 'm1', '2-proposition.md', '# Proposition\nno claim line\n');
-    assert.equal(run(repo, ['m1']).status, 0);
-    assert.equal(run(repo, ['go']).status, 0);
-    const deal = run(repo, ['go']);
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
+    assert.equal(run(repo, ['approve']).status, 0);
+    const deal = run(repo, ['approve']);
     assert.equal(deal.status, 1);
     assert.match(deal.stdout, /missing declared structure: Claim/);
   } finally {
@@ -240,7 +265,7 @@ test('grants: structure refusal — a Claim-less proposition will not stamp', ()
   }
 });
 
-test('teaching: the gate names the next act — echo suffix and the act verb', () => {
+test('teaching: the gate names the next act — aim echo, approval echo, room view', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -249,52 +274,33 @@ test('teaching: the gate names the next act — echo suffix and the act verb', (
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
-    const aim = run(repo, ['m1']);
+    const aim = run(repo, ['focus', 'm1']);
     assert.equal(aim.status, 0);
-    assert.match(aim.stdout, /next: read 1-idea\.md → pios-gate go/);
+    assert.match(aim.stdout, /next: read 1-idea\.md → eospec approve/);
 
-    const advanced = run(repo, ['go']);
+    const advanced = run(repo, ['approve']);
     assert.equal(advanced.status, 0);
-    assert.match(advanced.stdout, /next: read 2-proposition\.md → pios-gate go/);
+    assert.match(advanced.stdout, /next: read 2-proposition\.md → eospec approve/);
 
-    const act = run(repo, ['act']);
-    assert.equal(act.status, 0);
-    assert.match(act.stdout, /read 2-proposition\.md → pios-gate go/);
-    assert.equal(act.called, false, 'act never forwards');
+    const room = run(repo, ['focus']);
+    assert.equal(room.status, 0);
+    assert.match(room.stdout, /aim: m1/);
+    assert.match(room.stdout, /read 2-proposition\.md → eospec approve/);
+    assert.equal(room.called, false, 'the room view never forwards');
 
     let done;
-    for (let i = 0; i < 4; i += 1) done = run(repo, ['go']);
+    for (let i = 0; i < 4; i += 1) done = run(repo, ['approve']);
     assert.equal(done!.status, 0);
-    assert.match(done!.stdout, /all artifacts granted — status: approved/);
+    assert.match(done!.stdout, /all steps approved — status: approved/);
 
-    const final = run(repo, ['act']);
+    const final = run(repo, ['focus']);
     assert.match(final.stdout, /all artifacts granted — no verdict declared/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('act: the aim keeps its truth — every room, one line', () => {
-  const repo = makeRepo();
-  try {
-    assert.match(run(repo, ['act']).stdout, /no focus — pios-gate <slug>/);
-    change(repo, 'x', 'status: proposed\n');
-    assert.equal(run(repo, ['x']).status, 0);
-    assert.match(run(repo, ['act']).stdout, /no gates — pios-gate done closes it as it stands/);
-    change(repo, 'y', 'status: approved\napproved_at: 2026-10-19T10:00:00Z\n');
-    assert.equal(run(repo, ['y']).status, 0);
-    assert.match(run(repo, ['act']).stdout, /no gates — pios-gate done closes it as it stands/);
-    change(repo, 'z', 'status: approved\nvalidated: 2026-10-19T11:00:00Z\n');
-    assert.equal(run(repo, ['z']).status, 0);
-    assert.match(run(repo, ['act']).stdout, /ready to archive\?/);
-    const missingAim = run(repo, ['act', 'missing']);
-    assert.equal(missingAim.called, true, 'named act forwards — the walk has no named act');
-  } finally {
-    rmSync(repo.dir, { recursive: true, force: true });
-  }
-});
-
-test('walk: <slug> aims, go advances, done closes — archive is the last go', () => {
+test('walk: focus aims, approve advances, close closes — archive is the last close', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -303,90 +309,105 @@ test('walk: <slug> aims, go advances, done closes — archive is the last go', (
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
 
-    // bare act resolves the aim — the renderer's one-line contract
-    const aimless = run(repo, ['act']);
+    // bare aim resolves the room — the renderer's one-line contract
+    const aimless = run(repo, ['focus']);
     assert.equal(aimless.status, 0);
-    assert.match(aimless.stdout, /no focus — pios-gate <slug>/);
+    assert.match(aimless.stdout, /nothing aimed — eospec focus <change>/);
 
-    // bare slug aims; the echo teaches the next go
-    const aim = run(repo, ['m1']);
+    // focus aims; the echo teaches the next approve
+    const aim = run(repo, ['focus', 'm1']);
     assert.equal(aim.status, 0);
-    assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → pios-gate go/);
+    assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → eospec approve/);
     assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), true);
-    assert.match(run(repo, ['act']).stdout, /read 1-idea\.md → pios-gate go/);
-    const renderer = run(repo, ['act']);
-    assert.equal(renderer.status, 0);
-    assert.match(renderer.stdout, /read 1-idea\.md → pios-gate go/);
+    const room = run(repo, ['focus']);
+    assert.equal(room.status, 0);
+    assert.match(room.stdout, /aim: m1/);
 
     // unknown bare names still forward verbatim
     assert.equal(run(repo, ['whatever']).called, true, 'unknown single arg forwards');
 
-    // go ladders the rungs — same grantArtifact checks, focused
+    // approve ladders the rungs — same grantArtifact checks, aimed
     for (let i = 0; i < 5; i += 1) {
-      const step = run(repo, ['go']);
-      assert.equal(step.status, 0, `go #${i + 1}`);
+      const step = run(repo, ['approve']);
+      assert.equal(step.status, 0, `approve #${i + 1}`);
     }
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
     assert.match(meta, /granted: idea,proposition,proposal,plan,execution/);
     assert.match(meta, /status: approved/);
 
-    // the verdict wall: go refuses — done closes, only after the tick
-    const wall = run(repo, ['go']);
+    // the verdict wall: approve refuses — close closes, only after the tick
+    const wall = run(repo, ['approve']);
     assert.equal(wall.status, 1);
-    assert.match(wall.stdout, /tick 'the verdict' then: pios-gate done/);
+    assert.match(wall.stdout, /tick 'the verdict' then: eospec close/);
 
-    const close = run(repo, ['done']);
+    const close = run(repo, ['close']);
     assert.equal(close.status, 0);
-    assert.match(close.stdout, /done m1 · validated · archiving/);
-    assert.equal(close.called, true, 'done execs the archive');
+    assert.match(close.stdout, /closed m1 · validated · archiving/);
+    assert.equal(close.called, true, 'close execs the archive');
     assert.match(readFileSync(repo.log, 'utf8'), /archive m1/);
-    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), false, 'done releases the aim');
+    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), false, 'close releases the aim');
 
-    // list is the cockpit
+    // the room view is read-only; the close released the aim (the fake
+    // openspec never archives, so the change itself stays listed)
     rmSync(repo.log, { force: true });
-    const list = run(repo, ['list']);
-    assert.equal(list.status, 0);
-    assert.equal(list.called, false);
-    assert.match(list.stdout, /m1/);
+    const room2 = run(repo, ['focus']);
+    assert.equal(room2.status, 0);
+    assert.equal(room2.called, false);
+    assert.match(room2.stdout, /nothing aimed/);
+    assert.match(room2.stdout, /validated/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('walk: stale focus and aimless go refuse loudly', () => {
+test('walk: stale aim and aimless approve refuse loudly', () => {
   const repo = gatedRepo();
   try {
-    const aimless = run(repo, ['go']);
+    const aimless = run(repo, ['approve']);
     assert.equal(aimless.status, 1);
-    assert.match(aimless.stdout, /no focus — pios-gate <slug>/);
+    assert.match(aimless.stdout, /nothing aimed — eospec focus <change>/);
     writeFileSync(join(repo.dir, 'openspec', '.focus'), 'gone\n');
-    const stale = run(repo, ['go']);
+    const stale = run(repo, ['approve']);
     assert.equal(stale.status, 1);
-    assert.match(stale.stdout, /focus is stale — pios-gate <slug>/);
-    const staleAct = run(repo, ['act']);
-    assert.equal(staleAct.status, 0);
-    assert.match(staleAct.stdout, /focus is stale — pios-gate <slug>/);
-    const staleDone = run(repo, ['done']);
-    assert.equal(staleDone.status, 1);
-    assert.match(staleDone.stdout, /focus is stale — pios-gate <slug>/);
+    assert.match(stale.stdout, /the aim is stale — the change is gone/);
+    const staleRoom = run(repo, ['focus']);
+    assert.equal(staleRoom.status, 0);
+    assert.match(staleRoom.stdout, /aim: gone/);
+    const staleClose = run(repo, ['close']);
+    assert.equal(staleClose.status, 1);
+    assert.match(staleClose.stdout, /the aim is stale — the change is gone/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('help: bare invocation and help print gate usage — never openspec banner', () => {
+test('help: bare invocation and help print eospec usage — never openspec banner', () => {
   const repo = makeRepo();
   try {
     for (const args of [[], ['help'], ['--help'], ['-h']]) {
       const r = run(repo, args);
-      assert.equal(r.status, 0, `pios-gate ${args.join(' ')}`);
-      assert.match(r.stdout, /pios-gate <slug>/u, args.join(' '));
+      assert.equal(r.status, 0, `eospec ${args.join(' ')}`);
+      assert.match(r.stdout, /eospec focus <change>/u, args.join(' '));
       assert.doesNotMatch(r.stdout, /AI-native/u, 'openspec banner must not answer for the gate');
       assert.equal(r.called, false, 'help never forwards');
     }
     // unknown verbs keep the documented passthrough
     const unknown = run(repo, ['some-openspec-verb', 'x']);
     assert.equal(unknown.called, true, 'unknown argv still execs openspec verbatim');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('dead verbs forward — the three words are the whole gate surface', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'x', 'status: proposed\n');
+    assert.equal(run(repo, ['x']).status, 0);
+    for (const dead of [['act'], ['go'], ['done'], ['list'], ['inspect'], ['grant', 'x', 'idea'], ['next'], ['confirm']]) {
+      const r = run(repo, dead);
+      assert.equal(r.called, true, `'${dead.join(' ')}' forwards verbatim — nothing gate-owned answers it`);
+    }
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -406,21 +427,19 @@ test('archive: the gate-side flag never reaches openspec argv (catch #5)', () =>
   }
 });
 
-test('pause: a session act — the terminal verb teaches, never forwards', () => {
+test('pause/resume forward — session acts are taught by the extension, not the CLI', () => {
   const repo = makeRepo();
   try {
     for (const args of [['pause', '30m'], ['resume']]) {
       const r = run(repo, args);
-      assert.equal(r.status, 0, args.join(' '));
-      assert.match(r.stdout, /session act/u, args.join(' '));
-      assert.equal(existsSync(repo.log), false, 'pause/resume never forward');
+      assert.equal(r.called, true, `'${args.join(' ')}' forwards verbatim`);
     }
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('next: the uniform act — first ungranted stamps, refusals never forward', () => {
+test('approvals: the uniform advance — first ungranted stamps, refusals never forward', () => {
   const repo = makeRepo();
   try {
     mkdirSync(join(repo.dir, 'openspec', 'schemas', 'verbless'), { recursive: true });
@@ -432,31 +451,31 @@ test('next: the uniform act — first ungranted stamps, refusals never forward',
     draft(repo, 'v1', '1-idea.md', 'pain');
     draft(repo, 'v1', '2-memo.md', 'memo');
 
-    // aim, then go finds the first rung in declaration order
-    assert.equal(run(repo, ['v1']).status, 0);
-    const first = run(repo, ['go']);
+    // aim, then approve finds the first rung in declaration order
+    assert.equal(run(repo, ['focus', 'v1']).status, 0);
+    const first = run(repo, ['approve']);
     assert.equal(first.status, 0);
-    assert.match(first.stdout, /granted v1 · idea/);
+    assert.match(first.stdout, /approved v1 · idea/);
 
     // declaration order continues: memo follows idea without naming it
-    const second = run(repo, ['go']);
+    const second = run(repo, ['approve']);
     assert.equal(second.status, 0);
-    assert.match(second.stdout, /granted v1 · memo/);
+    assert.match(second.stdout, /approved v1 · memo/);
 
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'v1', '.openspec.yaml'), 'utf8');
     assert.match(meta, /granted: idea,memo/);
 
     // nothing left: the close owns what remains
-    const over = run(repo, ['go']);
+    const over = run(repo, ['approve']);
     assert.equal(over.status, 1);
-    assert.match(over.stdout, /all artifacts granted — next: tick 'the verdict' then: pios-gate done/);
-    assert.equal(existsSync(repo.log), false, 'grants never forward to openspec');
+    assert.match(over.stdout, /all artifacts granted — next: tick 'the verdict' then: eospec close/);
+    assert.equal(existsSync(repo.log), false, 'approvals never forward to openspec');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('next: an undrafted rung refuses — you approve what you read', () => {
+test('approvals: an undrafted rung refuses — you approve what you read', () => {
   const repo = makeRepo();
   try {
     mkdirSync(join(repo.dir, 'openspec', 'schemas', 'verbless'), { recursive: true });
@@ -465,8 +484,8 @@ test('next: an undrafted rung refuses — you approve what you read', () => {
       'name: verbless\nartifacts:\n  - id: idea\n    generates: 1-idea.md\n  - id: memo\n    generates: 2-memo.md\n    x-requires-approval: [idea]\n',
     );
     change(repo, 'v1', 'schema: verbless\nstatus: proposed\n');
-    assert.equal(run(repo, ['v1']).status, 0);
-    const refused = run(repo, ['go']);
+    assert.equal(run(repo, ['focus', 'v1']).status, 0);
+    const refused = run(repo, ['approve']);
     assert.equal(refused.status, 1);
     assert.match(refused.stdout, /1-idea\.md not drafted yet — you approve what you read/);
     assert.equal(existsSync(repo.log), false);
@@ -475,53 +494,53 @@ test('next: an undrafted rung refuses — you approve what you read', () => {
   }
 });
 
-test('go: a legacy change points at done — schema-less and ungated alike', () => {
+test('approve: ungated rooms are told the truth — close owns them', () => {
   const repo = makeRepo();
   try {
-    // legacy shape one: no schema at all
+    // ungated shape one: no schema at all
     change(repo, 'legacy', 'status: proposed\n');
-    assert.equal(run(repo, ['legacy']).status, 0);
-    const bare = run(repo, ['go']);
+    assert.equal(run(repo, ['focus', 'legacy']).status, 0);
+    const bare = run(repo, ['approve']);
     assert.equal(bare.status, 1);
-    assert.match(bare.stdout, /has no gates — pios-gate done closes it as it stands/);
+    assert.match(bare.stdout, /has no gates — eospec close closes it as it stands/);
     assert.equal(existsSync(repo.log), false);
 
-    // legacy shape two: a declared schema with no gates
+    // ungated shape two: a declared schema with no gates
     mkdirSync(join(repo.dir, 'openspec', 'schemas', 'plain'), { recursive: true });
     writeFileSync(
       join(repo.dir, 'openspec', 'schemas', 'plain', 'schema.yaml'),
       'name: plain\nartifacts:\n  - id: a\n    generates: 1-a.md\n',
     );
     change(repo, 'plain', 'schema: plain\nstatus: proposed\n');
-    assert.equal(run(repo, ['plain']).status, 0);
-    const ungated = run(repo, ['go']);
+    assert.equal(run(repo, ['focus', 'plain']).status, 0);
+    const ungated = run(repo, ['approve']);
     assert.equal(ungated.status, 1);
-    assert.match(ungated.stdout, /has no gates — pios-gate done closes it as it stands/);
+    assert.match(ungated.stdout, /has no gates — eospec close closes it as it stands/);
     assert.equal(existsSync(repo.log), false);
-    const closed = run(repo, ['done']);
+    const closed = run(repo, ['close']);
     assert.equal(closed.status, 0);
-    assert.match(closed.stdout, /done plain · ungated — approved, validated · archiving/);
+    assert.match(closed.stdout, /closed plain · ungated — approved, validated · archiving/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('grants: x-requires-written — a deleted dependency file refuses the stamp', () => {
+test('approvals: x-requires-written — a deleted dependency file refuses the stamp', () => {
   const repo = makeRepo();
   try {
     mkdirSync(join(repo.dir, 'openspec', 'schemas', 'ev'), { recursive: true });
     writeFileSync(
       join(repo.dir, 'openspec', 'schemas', 'ev', 'schema.yaml'),
-      'name: ev\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-grant-verb: seal\n    x-requires-approval: [a]\n    x-requires-written: [a]\n',
+      'name: ev\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-requires-written: [a]\n',
     );
     change(repo, 'e1', 'schema: ev\nstatus: proposed\n');
     draft(repo, 'e1', '1-a.md', '# A\n');
     draft(repo, 'e1', '2-b.md', '# B\n');
-    assert.equal(run(repo, ['e1']).status, 0);
-    assert.equal(run(repo, ['go']).status, 0);
+    assert.equal(run(repo, ['focus', 'e1']).status, 0);
+    assert.equal(run(repo, ['approve']).status, 0);
     // evidence vanished after its grant: the next stamp refuses (fail-safe)
     rmSync(join(repo.dir, 'openspec', 'changes', 'e1', '1-a.md'));
-    const seal = run(repo, ['go']);
+    const seal = run(repo, ['approve']);
     assert.equal(seal.status, 1);
     assert.match(seal.stdout, /2-b\.md awaits declared evidence: 1-a\.md not on disk/u);
     assert.equal(existsSync(repo.log), false, 'refusals never forward to openspec');
@@ -530,7 +549,7 @@ test('grants: x-requires-written — a deleted dependency file refuses the stamp
   }
 });
 
-test('cockpit: ticked commits without a hash are visible debt', () => {
+test('room view: ticked commits without a hash are visible debt', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -543,33 +562,18 @@ test('cockpit: ticked commits without a hash are visible debt', () => {
       '5-execution.md',
       '# Execution\n\n- [x] fix(core): thing\n      hash: \n- [x] feat(x): other\n      hash: abc123\n',
     );
-    assert.equal(run(repo, ['m1']).status, 0);
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
     for (let i = 0; i < 5; i += 1) {
-      assert.equal(run(repo, ['go']).status, 0);
+      assert.equal(run(repo, ['approve']).status, 0);
     }
-    const pending = run(repo, ['list']);
-    assert.match(pending.stdout, /1 unhashed commits/u); // empty hash slot = debt; abc123 = receipt
+    const room = run(repo, ['focus']);
+    assert.match(room.stdout, /1 unhashed commits/u); // empty hash slot = debt; abc123 = receipt
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('grants: you approve what you read — undrafted artifacts refuse', () => {
-  const repo = gatedRepo();
-  try {
-    draft(repo, 'm1', '1-idea.md', 'why');
-    assert.equal(run(repo, ['m1']).status, 0);
-    const first = run(repo, ['go']);
-    assert.equal(first.status, 0);
-    const deal = run(repo, ['go']);
-    assert.equal(deal.status, 1);
-    assert.match(deal.stdout, /2-proposition.md not drafted yet/);
-  } finally {
-    rmSync(repo.dir, { recursive: true, force: true });
-  }
-});
-
-test('go: one press stamps exactly one step — intent can never over-run its scope', () => {
+test('approvals: one press stamps exactly one step — intent can never over-run its scope', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
@@ -577,13 +581,12 @@ test('go: one press stamps exactly one step — intent can never over-run its sc
     draft(repo, 'm1', '3-proposal.md', '## Done when\n');
     draft(repo, 'm1', '4-plan.md', '# Plan\n');
     draft(repo, 'm1', '5-execution.md', '# Execution\n');
-    assert.equal(run(repo, ['m1']).status, 0);
-    assert.equal(run(repo, ['go']).status, 0);
-    assert.equal(run(repo, ['go']).status, 0);
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
+    assert.equal(run(repo, ['approve']).status, 0);
+    assert.equal(run(repo, ['approve']).status, 0);
 
-    // one press, one step: even with every artifact drafted, a single go
-    // can never stamp more than the next rung (the Human ruling 2026-10-23
-    // intent-scope law, now structural)
+    // one press, one step: even with every artifact drafted, a single
+    // approve can never stamp more than the next rung
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'm1', '.openspec.yaml'), 'utf8');
     assert.match(meta, /granted: idea,proposition\n/);
     assert.doesNotMatch(meta, /status: approved/);
@@ -592,48 +595,34 @@ test('go: one press stamps exactly one step — intent can never over-run its sc
   }
 });
 
-test('cockpit: pending shows grant marks and the next grant; show is verbose', () => {
+test('room view: approval marks and the next act, one line per change, no schema tag', () => {
   const repo = gatedRepo();
   try {
     draft(repo, 'm1', '1-idea.md', 'why');
     draft(repo, 'm1', '2-proposition.md', 'Claim: x\n');
-    assert.equal(run(repo, ['m1']).status, 0);
-    assert.equal(run(repo, ['go']).status, 0);
-    const pending = run(repo, ['list']);
-    assert.match(pending.stdout, /\[gated\] ✓◻···/);
-    assert.match(pending.stdout, /read 2-proposition\.md → pios-gate go/);
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
+    assert.equal(run(repo, ['approve']).status, 0);
+    const room = run(repo, ['focus']);
+    assert.match(room.stdout, /✓◻···/);
+    assert.match(room.stdout, /read 2-proposition\.md → eospec approve/);
+    assert.doesNotMatch(room.stdout, /\[gated\]/u, 'the schema tag is not cockpit noise');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
 
-test('go: an ungated room is told the truth politely', () => {
-  const repo = makeRepo();
-  try {
-    change(repo, 'legacy', 'status: proposed\n');
-    assert.equal(run(repo, ['legacy']).status, 0);
-    const verb = run(repo, ['go']);
-    assert.equal(verb.status, 1);
-    assert.match(verb.stdout, /has no gates — pios-gate done closes it as it stands/);
-  } finally {
-    rmSync(repo.dir, { recursive: true, force: true });
-  }
-});
-
-// ── cli-schema-tag-parity — the SHIPPED schemas through the CLI ────────
-// F6 closed: no fixture ever parsed a shipped schema through the bin
-// parser. These pin the live 2026-10-23 symptoms on the real thing.
+// ── cli-schema-tag-parity — the SHIPPED schema through the CLI ──────────
+// No fixture ever parsed a shipped schema through the bin parser. These
+// pin the live 2026-10-23 symptoms on the real thing.
 
 function shippedRepo(): Repo {
   const repo = makeRepo();
-  for (const name of ['spec']) {
-    const dir = join(repo.dir, 'openspec', 'schemas', name);
-    mkdirSync(dir, { recursive: true });
-    copyFileSync(
-      join(import.meta.dirname, '..', 'openspec', 'schemas', name, 'schema.yaml'),
-      join(dir, 'schema.yaml'),
-    );
-  }
+  const dir = join(repo.dir, 'openspec', 'schemas', 'spec');
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(
+    join(import.meta.dirname, '..', 'openspec', 'schemas', 'spec', 'schema.yaml'),
+    join(dir, 'schema.yaml'),
+  );
   return repo;
 }
 
@@ -642,7 +631,7 @@ function specChange(repo: Repo, slug: string): void {
   draft(repo, slug, '1-brainstorm.md', '# Brainstorm\n\n## Pain\n\nfixture\n\n## Questions\n\n- fixture\n');
 }
 
-test('parity live: the declared verbs are gone — rung words forward verbatim', () => {
+test('parity live: a rung word forwards verbatim — nothing gate-owned answers it', () => {
   const repo = shippedRepo();
   try {
     specChange(repo, 'fx');
@@ -656,13 +645,13 @@ test('parity live: the declared verbs are gone — rung words forward verbatim',
   }
 });
 
-test('parity live: named stamps forward now — nothing stamps without go', () => {
+test('parity live: named stamps forward — nothing stamps without approve', () => {
   const repo = shippedRepo();
   try {
     specChange(repo, 'fx');
     const g = run(repo, ['grant', 'fx', 'brainstorm']);
     assert.equal(g.status, 0, 'openspec (fake) answers');
-    assert.equal(g.called, true, 'the named stamp forwards — it is no longer gate-owned');
+    assert.equal(g.called, true, 'the named stamp forwards — it is not gate-owned');
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
     assert.doesNotMatch(meta, /granted:/);
   } finally {
@@ -670,15 +659,16 @@ test('parity live: named stamps forward now — nothing stamps without go', () =
   }
 });
 
-test('parity live: bare approve refuses on the shipped spec schema — fail-open pinned', () => {
+test('parity live: approve without an aim refuses loudly — and never stamps', () => {
   const repo = shippedRepo();
   try {
     specChange(repo, 'fx');
     const bare = run(repo, ['approve', 'fx']);
-    assert.equal(bare.status, 0, 'openspec (fake) answers — approve forwards');
-    assert.equal(bare.called, true);
+    assert.equal(bare.status, 1, 'approve is gate-owned: without an aim it refuses');
+    assert.match(bare.stdout, /nothing aimed/);
+    assert.equal(bare.called, false, 'approve never forwards');
     const meta = readFileSync(join(repo.dir, 'openspec', 'changes', 'fx', '.openspec.yaml'), 'utf8');
-    assert.doesNotMatch(meta, /granted:/); // the 2026-10-23 fail-open, pinned dead
+    assert.doesNotMatch(meta, /granted:/);
     assert.doesNotMatch(meta, /approved_at:/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });

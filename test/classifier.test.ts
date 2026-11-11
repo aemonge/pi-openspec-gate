@@ -312,19 +312,19 @@ test('conjunction: env-prefix stripped for anchoring, verbs still checked', () =
 
 // ——— wrapper normalization (pios-gate-cli) ——————————————————————————————
 
-test('wrapper: pios-gate classifies like bare openspec forms', () => {
+test('wrapper: the gate bins classify like bare openspec forms', () => {
   const cases: Array<[string, boolean]> = [
-    ['pios-gate list --json', false],
     ['pios-gate show my-change', false],
-    ['pios-gate validate my-change', false], // forwards: openspec structure lint
-    ['./bin/pios-gate status', false],
+    ['eospec status', false],
+    ['eospec validate my-change', false], // forwards: openspec structure lint
+    ['./bin/eospec status', false],
     ['pi-openspec-gate list', false],
-    ['pios-gate new change my-slice --schema ramona-plan', false], // creation
-    ['pios-gate archive my-change', true], // forwards, but mutating verb
-    ['pios-gate update', true],
-    ['pios-gate frobnicate --x', true], // unknown subcommand fails safe
-    ['pios-gate list && pios-gate show x', false], // per-segment normalization
-    ['which pios-gate', false], // wrapper as an ARGUMENT, not the verb
+    ['eospec new change my-slice --schema ramona-plan', false], // creation
+    ['eospec archive my-change', true], // forwards, but mutating verb
+    ['eospec update', true],
+    ['eospec frobnicate --x', true], // unknown subcommand fails safe
+    ['eospec status && eospec show x', false], // per-segment normalization
+    ['which eospec', false], // wrapper as an ARGUMENT, not the verb
   ];
   for (const [command, mutating] of cases) {
     const verdict = classifyMutation('bash', { command });
@@ -337,11 +337,14 @@ test('wrapper: pios-gate classifies like bare openspec forms', () => {
 // gate cockpit verbs: read-only through wrapper normalization (live-caught
 // 2026-10-20 — inspect blocked as unknown-mutating in an unfocused session)
 test('gate cockpit verbs classify read-only, unfocused and bare', () => {
-  for (const command of ['pios-gate pending', 'pios-gate inspect first-walk', 'pios-gate focus', 'pi-openspec-gate pending']) {
+  for (const command of ['pios-gate focus', 'eospec focus', './bin/eospec focus', 'eospec help']) {
     const verdict = classifyMutation('bash', { command });
     assert.equal(verdict.mutating, false, command);
   }
-  // grants stay touch-guarded (not read-only) — approve never lands here
-  const grant = classifyMutation('bash', { command: 'pios-gate propose first-walk' });
-  assert.equal(grant.mutating, true, 'grant verbs must never classify read-only');
+  // an argumented focus AIMS the room — it writes .focus, never read-only
+  const aim = classifyMutation('bash', { command: 'eospec focus first-walk' });
+  assert.equal(aim.mutating, true, 'aiming mutates the room file');
+  // the human verbs stay touch-guarded (not read-only) — approve/close never land here
+  const grant = classifyMutation('bash', { command: 'eospec approve first-walk' });
+  assert.equal(grant.mutating, true, 'human verbs must never classify read-only');
 });

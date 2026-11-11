@@ -345,10 +345,9 @@ test('touch-guard: the grant surface is human-terminal only — reserved words +
   createGate(fake.pi as never, { enabled: true, exempt: [], approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false } });
   const ctx = { cwd: '/tmp', sessionManager: { getEntries: () => [] } };
   for (const invocation of [
-    'pios-gate approve demo',
-    'pios-gate confirm demo',
-    'pios-gate grant demo some/one',
-    'pios-gate next demo',
+    'eospec approve demo',
+    'eospec close',
+    'eospec pause 5m',
     'node bin/pios-gate.js approve demo',
     'pi-openspec-gate validate demo',
   ]) {
@@ -370,7 +369,7 @@ test('touch-guard: the grant surface is human-terminal only — reserved words +
       'utf8',
     );
     const verbCtx = { cwd: verbRepo, sessionManager: { getEntries: () => [] } };
-    const blocked = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate go demo' } }, verbCtx);
+    const blocked = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'eospec approve demo' } }, verbCtx);
     assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'the walk advance is blocked from tools');
     const pass = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate someotherword demo' } }, verbCtx);
     // non-gate words are not approval-touch — the touch guard passes

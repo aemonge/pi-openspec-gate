@@ -151,12 +151,12 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       writeFileSync(join(changeDir, '2-build.md'), '# Build\n\n## alpha\n\n## beta\n', 'utf8');
       writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [ ] Owner acceptance — reply VALID\n', 'utf8');
 
-      // aim, then go grants artifact 1 — the engine never knew a verb
+      // aim, then approve stamps artifact 1 — the engine never knew a verb
       assert.equal(run(dir, ['m2']).status, 0);
-      assert.match(run(dir, ['go']).stdout, /granted m2 · dream/);
+      assert.match(run(dir, ['approve']).stdout, /approved m2 · dream/);
 
       // the walk's advance stamps whole artifacts — sections are structure
-      assert.match(run(dir, ['go']).stdout, /granted m2 · build/);
+      assert.match(run(dir, ['approve']).stdout, /approved m2 · build/);
 
       // early unlock: source may begin though grants are incomplete
       const meta = readFileSync(join(changeDir, '.openspec.yaml'), 'utf8');
@@ -171,12 +171,12 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
       assert.equal(writesUnlocked(schema, new Set(approvedList)), true);
 
-      // completion: the last go stamps the declared verdict state
-      assert.match(run(dir, ['go']).stdout, /all artifacts granted — status: approved/);
+      // completion: the last approve stamps the declared verdict state
+      assert.match(run(dir, ['approve']).stdout, /all steps approved — status: approved/);
       assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /status: approved/);
 
-      // the cockpit names the declared verdict, never a hardcoded one
-      assert.match(run(dir, ['list']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending → pios-gate done/u);
+      // the room view names the declared verdict, never a hardcoded one
+      assert.match(run(dir, ['focus']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending[\s\S]*eospec close/u);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

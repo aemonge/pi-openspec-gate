@@ -24,17 +24,17 @@ const EXPECTED = {
   ].join('\n'),
   humangate: [
     '⛔ human-validation flip requires a human act',
-    '   confirm: pios-gate confirm <slug>   ← your terminal',
-    '   or reply literally: VALID',
+    '   tick it yourself — your hand, your file — or reply literally: VALID',
+    '   then: eospec close',
   ].join('\n'),
   archive: [
     '⛔ archive requires an approved change',
-    '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+    '   the human closes it: eospec close   ← your terminal',
     '   or pass --i-am-the-human',
   ].join('\n'),
   unapproved: [
     '⛔ focused change is not approved — attribution is not approval',
-    '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+    '   advance: eospec approve   ← your terminal',
     '   docs:    openspec/** stays exempt — drafting is never blocked',
   ].join('\n'),
 };
@@ -142,15 +142,16 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal((fact!.data as { kind: string }).kind, 'approval-touch');
   });
 
-  test('approval-touch guard: pios-gate approve|confirm blocked; validate forwards freely', async () => {
+  test('approval-touch guard: approve|close blocked; validate forwards freely', async () => {
     const { fire, ctx } = freshGate();
     focusOn('c1');
     writeChangeMeta(root, 'c1', { status: 'approved' });
     for (const command of [
-      'pios-gate approve c1',
-      'pios-gate confirm c1',
-      './bin/pios-gate approve c1',
-      'node bin/pios-gate.ts confirm c1 | tail -1',
+      'eospec approve c1',
+      'eospec close',
+      './bin/eospec close',
+      'node bin/pios-gate.js approve c1 | tail -1',
+      'pi-openspec-gate approve c1',
     ]) {
       const blocked = await fire('tool_call', { toolName: 'bash', input: { command } }, ctx);
       assert.deepEqual(blocked, { block: true, reason: BLOCK_APPROVAL_TOUCH }, command);
@@ -158,10 +159,10 @@ describe('approval teeth: attribution is not approval', () => {
     // validate under the new name is openspec's structure lint — read-only passthrough
     const lint = await fire(
       'tool_call',
-      { toolName: 'bash', input: { command: 'pios-gate validate c1' } },
+      { toolName: 'bash', input: { command: 'eospec validate c1' } },
       ctx,
     );
-    assert.equal(lint, undefined, 'pios-gate validate forwards to openspec lint — not a human act');
+    assert.equal(lint, undefined, 'eospec validate forwards to openspec lint — not a human act');
   });
 
   test('enforce: focused-but-unapproved change blocks source mutations', async () => {
@@ -407,10 +408,10 @@ describe('pause: a human reply arms the yield — teeth rest, the fence stays', 
       const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.pause.v1');
       assert.equal((fact!.data as { kind: string }).kind, 'armed');
       // the fence stays: grant surfaces block even while paused
-      const fenced = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate next c9' } }, focusCtx);
+      const fenced = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'eospec approve c9' } }, focusCtx);
       assert.deepEqual(fenced, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'pause never reaches the approval surface');
       // arming via tool call is itself fenced
-      const selfServe = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'pios-gate pause 5m' } }, focusCtx);
+      const selfServe = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'eospec pause 5m' } }, focusCtx);
       assert.deepEqual(selfServe, { block: true, reason: BLOCK_APPROVAL_TOUCH }, 'an assistant cannot pause the gate');
       // shape A: unaccounted stays refused while paused — no landing place, no pause
       const unaccounted = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, plainCtx);
@@ -496,14 +497,13 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     return { cwd: repo, sessionManager: { getEntries: () => entries } };
   }
 
-  test('teeth: verb-less first rung advances by next, never approve', async () => {
+  test('teeth: the first rung advances by the gate\'s own word', async () => {
     const { fire } = freshGate();
     writeChangeMeta(root, 'g1', { schema: 'runway', status: 'proposed' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g1'));
     const reason = (result as { reason: string }).reason;
     assert.match(reason, /⛔ focused change is not approved/u);
-    assert.match(reason, /advance: pios-gate go/u);
-    assert.doesNotMatch(reason, /approve:/u);
+    assert.match(reason, /advance: eospec approve/u);
   });
 
   test('teeth: a declared artifact advances by its verb', async () => {
@@ -512,8 +512,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     writeChangeMeta(root, 'g2', { schema: 'runway', status: 'proposed', granted: 'brief' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g2'));
     const reason = (result as { reason: string }).reason;
-    assert.match(reason, /advance: pios-gate go/u);
-    assert.doesNotMatch(reason, /approve:/u);
+    assert.match(reason, /advance: eospec approve/u);
   });
 
   test('archive guard: gated change advances, legacy stays byte-identical', async () => {
@@ -526,8 +525,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
       { cwd: repo, sessionManager: { getEntries: () => [] } },
     );
     const gatedReason = (gated as { reason: string }).reason;
-    assert.match(gatedReason, /advance: pios-gate go/u);
-    assert.doesNotMatch(gatedReason, /approve:/u);
+    assert.match(gatedReason, /advance: eospec approve/u);
     // the legacy change (no schema) keeps the byte-matched copy
     writeChangeMeta(root, 'l1', { status: 'proposed' });
     const legacy = await fire(
@@ -557,12 +555,12 @@ describe('state-aware blocks: gated changes never hear approve', () => {
       { toolName: 'bash', input: { command: 'git add openspec/learnings/debt.md' } },
       focusOn('g1'),
     );
-    assert.match((blocked as { reason: string }).reason, /advance: pios-gate go/u);
+    assert.match((blocked as { reason: string }).reason, /advance: eospec approve/u);
     const blocked2 = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'git add src/a.ts' } },
       focusOn('g1'),
     );
-    assert.match((blocked2 as { reason: string }).reason, /advance: pios-gate go/u, 'non-openspec bash mutates and blocks the same way');
+    assert.match((blocked2 as { reason: string }).reason, /advance: eospec approve/u, 'non-openspec bash mutates and blocks the same way');
   });
 });

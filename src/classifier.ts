@@ -107,15 +107,13 @@ const GIT_READ_ONLY_ANCHORED = /^git\s+(?:status|diff|log|show|blame|ls-files|ls
 
 const OPENSPEC_READ_ONLY_ANCHORED = /^openspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
 
-// The gate's cockpit verbs surface through wrapper normalization as
-// `openspec pending|inspect|focus …` — read-only state views any session
-// may run unfocused (they are how the assistant relays state to the human;
-// live-caught 2026-10-20: inspect blocked as unknown-mutating). Help flags
-// read the manual — never a mutation (live-caught 2026-10-21: `pios-gate
-// --help` blocked as unaccounted). Bare `openspec <verb>` harmlessly
-// errors at runtime; approve/confirm/grants never reach here (touch guard
+// The gate's cockpit surface through wrapper normalization: help flags
+// read the manual — never a mutation (live-caught 2026-10-21) — and BARE
+// `focus` is the room view, read-only state any session may relay. An
+// ARGUMENTED `focus <change>` aims the room: it writes `.focus`, so it
+// stays mutating/attributed. approve/close never reach here (touch guard
 // preempts all).
-const GATE_COCKPIT_READ_ONLY_ANCHORED = /^openspec\s+(?:pending|inspect|focus|help|--help|-h)\b/u;
+const GATE_COCKPIT_READ_ONLY_ANCHORED = /^(?:openspec\s+(?:help|--help|-h)\b|openspec\s+focus\s*$)/u;
 
 // graphify reads: the knowledge-graph CLI's query surface, anchored like
 // every other verb. Mutating verbs (update, add, watch, merge-graphs,
@@ -247,12 +245,13 @@ export function splitSegments(command: string): SplitResult {
   return { segments, grammarUnsafe };
 }
 
-// Wrapper normalization — `pios-gate …` / `pi-openspec-gate …` (optionally
-// behind a path like `./bin/`) is the gate's feature-extension surface: the
-// wrapper forwards to openspec, so its subcommands classify exactly like
-// the bare forms. Per segment, so compounds work too. The approval verbs
-// never get this far in a gated session (touch guard blocks them first).
-const WRAPPER_TOKEN = /^(?:[^\s]*\/)?(?:pios-gate|pi-openspec-gate)(?:\.\w+)?\s+/u;
+// Wrapper normalization — `eospec …` / `pios-gate …` / `pi-openspec-gate …`
+// (optionally behind a path like `./bin/`) is the gate's feature-extension
+// surface: the wrapper forwards to openspec, so its subcommands classify
+// exactly like the bare forms. Per segment, so compounds work too. The
+// approval verbs never get this far in a gated session (touch guard blocks
+// them first).
+const WRAPPER_TOKEN = /^(?:[^\s]*\/)?(?:eospec|pios-gate|pi-openspec-gate)(?:\.\w+)?\s+/u;
 
 function stripWrapper(segment: string): string {
   return WRAPPER_TOKEN.test(segment) ? segment.replace(WRAPPER_TOKEN, 'openspec ') : segment;

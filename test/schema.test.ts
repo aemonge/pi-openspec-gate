@@ -116,11 +116,10 @@ describe('schema reader: parsing', () => {
     }
   });
 
-  test('actHint: focused rooms say go, everything else names next (bin)', () => {
+  test('actHint: unaimed rooms name the aim, aimed rooms say approve (bin)', () => {
     const yaml = 'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n';
     parseSchemaYamlBin(yaml, 'fixture');
-    assert.equal(actHintBin('/no/such/root', 'c1'), 'pios-gate next c1');
-    assert.ok(!actHintBin('/no/such/root', 'c1').includes('approve'), 'a step suggestion never says approve');
+    assert.equal(actHintBin('/no/such/root', 'c1'), 'eospec focus c1');
   });
 
   test('unknown x-requires-approval reference fails loudly', () => {

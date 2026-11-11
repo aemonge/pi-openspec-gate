@@ -119,24 +119,24 @@ export const BLOCK_APPROVAL_TOUCH = [
 
 export const BLOCK_HUMANGATE = [
   '⛔ human-validation flip requires a human act',
-  '   confirm: pios-gate confirm <slug>   ← your terminal',
-  '   or reply literally: VALID',
+  '   tick it yourself — your hand, your file — or reply literally: VALID',
+  '   then: eospec close',
 ].join('\n');
 
 export const BLOCK_ARCHIVE = [
   '⛔ archive requires an approved change',
-  '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+  '   the human closes it: eospec close   ← your terminal',
   '   or pass --i-am-the-human',
 ].join('\n');
 
 export const BLOCK_UNAPPROVED = [
   '⛔ focused change is not approved — attribution is not approval',
-  '   approve: pi-openspec-gate approve <slug>   ← your terminal',
+  '   advance: eospec approve   ← your terminal',
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
 export function blockArtifactApproval(slug: string, missing: string[]): string {
-  const grant = `pios-gate go`;
+  const grant = `eospec approve`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
     `   grant:   ${grant}   ← your terminal`,
@@ -144,12 +144,11 @@ export function blockArtifactApproval(slug: string, missing: string[]): string {
   ].join('\n');
 }
 
-/** The advance command for a gated change: the walk's own word — approve
- *  is never named for a step (it is the legacy whole-change stamp). */
+/** The advance command for a gated change: the human verb itself. */
 export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
   const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
   if (!nextRung) return undefined;
-  return `pios-gate go`;
+  return `eospec approve`;
 }
 
 /** State-aware archive block: a gated change is advanced by its own act,
@@ -250,19 +249,21 @@ const VALID_MAX_LENGTH = 200;
  *  grammar X{h,m,s} is MANDATORY — the word is the law: pause, never
  *  stop ("pause 999h" clamps to the configured ceiling). The latch is
  *  human-reply only, exactly like the VALID latch above it. */
-const PAUSE_PATTERN = /\b(?:pios-gate\s+)?pause\s+(\d+)\s*(h|m|s)\b/i;
-const RESUME_PATTERN = /\b(?:pios-gate\s+)?resume\b/i;
+const PAUSE_PATTERN = /\b(?:eospec\s+|pios-gate\s+)?pause\s+(\d+)\s*(h|m|s)\b/i;
+const RESUME_PATTERN = /\b(?:eospec\s+|pios-gate\s+)?resume\b/i;
 const PAUSE_CEILING_DEFAULT = 4 * 3_600_000;
 
 /** Any tool-call attempt to reach the approval surface — blocked before
- *  all else. Reserved surface: pi-openspec-gate approve|validate (old),
- *  pios-gate approve|confirm|grant|next|go (new) — the walk's verbs are
- *  the gate's own, so the guard is static; the declared-verb scan died
- *  with the verbs (human ruling 2026-11-10).
- *  `pios-gate validate` forwards to openspec's structure lint and is NOT
+ *  all else. Reserved surface: eospec approve|close — the gate's own
+ *  human verbs — plus pause|resume (arming a yield is a human act too).
+ *  The migration-window bin name pios-gate stays guarded for the same
+ *  verbs until the package cut kills it, as does the old package bin's
+ *  approve|validate. The declared-verb scan died with the verb zoo
+ *  (human ruling 2026-11-10).
+ *  `eospec -- validate` forwards to openspec's structure lint and is NOT
  *  touch-guarded. */
 const APPROVAL_TOUCH_RESERVED =
-  /(?:pi-openspec-gate(?:\.\w+)?\s+(?:approve|validate)|pios-gate(?:\.\w+)?\s+(?:approve|confirm|grant|next|go|done|pause|resume))\b/u;
+  /(?:\b(?:eospec|pios-gate)(?:\.\w+)?\s+(?:approve|close|pause|resume)|\bpi-openspec-gate(?:\.\w+)?\s+(?:approve|validate))\b/u;
 const ARCHIVE_PATTERN = /\bopenspec\s+archive\b/u;
 const ARCHIVE_FLAG = /--i-am-the-human\b/u;
 const HUMAN_GATE_FLIP_PATTERN = /^\s*[-*]\s*\[[xX]\][^\n]*$/mu;
@@ -486,7 +487,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // proposed + audited. The stamp itself lands on message_end, after the
     // call ran — pre-creating the dir broke openspec's scaffolder.
     if (verdict.creation && approval.stampCreations) {
-      const slug = /\b(?:pios-gate|pi-openspec-gate|openspec)\s+new\s+change\s+([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
+      const slug = /\b(?:eospec|pios-gate|pi-openspec-gate|openspec)\s+new\s+change\s+([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
       const root = openspecRootOf(cwd);
       if (slug && root) {
         state.pendingCreation = { slug, root, tool: toolName, at: utcNow() };
@@ -514,7 +515,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             !capabilityUnlocked(res.schema, grantedSet(meta), 'research')
           ) {
             const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
-            const grant = `pios-gate go`;
+            const grant = `eospec approve`;
             appendFact(FACT.phasegate, {
               kind: 'research-window',
               tool: toolName,

@@ -1,7 +1,7 @@
 /**
  * The shipped example — a strong starting point, kept honest.
  *
- * The example carries the v4 `spec` schema: four steps (brainstorm →
+ * The example carries the v5 `spec` schema: four steps (brainstorm →
  * investigate → plan → execute), strictness at the two boundaries humans
  * own — commit at plan (x-unlocks: [writes]), the verdict at execute —
  * and the research window opening at investigate (x-unlocks: [research]).
@@ -18,7 +18,7 @@ import { parseSchemaYaml as parseSchemaYamlBin } from '../bin/gate-lib.js';
 const REPO_ROOT = join(import.meta.dirname, '..');
 const EXAMPLE_ROOT = join(REPO_ROOT, 'example', 'openspec');
 
-describe('the example schema (spec v4)', () => {
+describe('the example schema (spec)', () => {
   test('parses on both sides, is gated, and declares the four grants + unlocks', () => {
     const file = findSchemaFile(EXAMPLE_ROOT, 'spec');
     assert.ok(file, 'example spec schema found');
@@ -60,10 +60,10 @@ describe('the example schema (spec v4)', () => {
     for (const marker of [
       'not drafted yet',
       'missing declared structure: Workflow',
-      'all artifacts granted — status: approved',
-      '→ pios-gate done',
-      'not done — tick',
-      'done hello-gate · validated · archiving',
+      'all steps approved — status: approved',
+      '— eospec close',
+      'not closed — tick',
+      'closed hello-gate · validated · archiving',
       'passed: 12',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);

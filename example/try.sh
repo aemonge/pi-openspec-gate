@@ -2,10 +2,10 @@
 # try.sh — the example walkthrough on the v5 spec schema.
 #
 # Builds a scratch repo from this example, runs the negatives first, then
-# walks the four-grant lifecycle — focus once, four go presses — and the
-# verdict lifecycle to ready-to-archive. This directory is never modified.
-# Every grant below is what a HUMAN types in their terminal — that is the
-# point of the gate.
+# walks the four-step lifecycle — aim once, four approve presses — and the
+# verdict lifecycle to close. This directory is never modified.
+# Every approve below is what a HUMAN types in their terminal — that is
+# the point of the gate.
 #
 #   ./example/try.sh          (or: just try)
 #   GATE=/path/to/pios-gate ./example/try.sh    # override the binary
@@ -34,15 +34,15 @@ bad() { echo "  ✗ $1"; fail=$((fail + 1)); }
 expect() {
   want=$1; shift
   out=$("$GATE" "$@" 2>&1); status=$?
-  printf '$ pios-gate %s\n%s\n\n' "$*" "$out"
+  printf '$ eospec %s\n%s\n\n' "$*" "$out"
   if [ "$status" -ne 0 ]; then bad "exit $status, expected success ('$want')"; return; fi
-  case $out in *"$want"*) ok "$want" ;; *) bad "success but no '$want' in output" ;; esac
+  case $out in *"$want"*) ok "$want" ;; *) bad "success but without '$want'" ;; esac
 }
 
 expect_fail() {
   want=$1; shift
   out=$("$GATE" "$@" 2>&1); status=$?
-  printf '$ pios-gate %s   ← refusal expected\n%s\n\n' "$*" "$out"
+  printf '$ eospec %s   ← refusal expected\n%s\n\n' "$*" "$out"
   if [ "$status" -eq 0 ]; then bad "exit 0, expected refusal ('$want')"; return; fi
   case $out in *"$want"*) ok "refused: $want" ;; *) bad "refused but without '$want'" ;; esac
 }
@@ -57,39 +57,39 @@ md() {
 
 echo "1 ── aim, and the walk refuses what isn't there"
 expect 'focused hello-gate · next: awaiting draft of 1-brainstorm.md' hello-gate
-expect_fail 'not drafted yet' go
-expect_fail 'not done' done hello-gate
+expect_fail 'not drafted yet' approve
+expect_fail 'not closed' close hello-gate
 md 1-brainstorm.md Brainstorm Pain Questions
-expect 'granted hello-gate · brainstorm' go
+expect 'approved hello-gate · brainstorm' approve
 
 echo '2 ── the journal is free: investigate needs no shape, only substance'
 printf '# Investigate\n\nFindings: the gate reads only x- tags.\nNo alternatives needed — direct route.\n' > "$C/2-investigate.md"
-expect 'granted hello-gate · investigate' go
+expect 'approved hello-gate · investigate' approve
 
 echo '3 ── the contract is hard: every declared section at stamp time'
 md 3-plan.md Plan Estimate Skills
-expect_fail 'missing declared structure: Workflow' go
+expect_fail 'missing declared structure: Workflow' approve
 md 3-plan.md Plan Estimate Skills Workflow Slices Verification History
-expect 'granted hello-gate · plan' go
+expect 'approved hello-gate · plan' approve
 
-echo '4 ── the cockpit names the next human act'
+echo '4 ── the room view names the next human act'
 printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
-expect '→ pios-gate go' list hello-gate
+expect '→ eospec approve' focus
 
-echo '5 ── completion: the walk stamps the change approved'
-expect 'all artifacts granted — status: approved' go
+echo '5 ── completion: the last approve stamps the change approved'
+expect 'all steps approved — status: approved' approve
 
-echo '6 ── the close: tick the verdict, then done'
-expect '→ pios-gate done' list hello-gate
-expect_fail 'not done — tick' done hello-gate
+echo '6 ── the close: tick the verdict, then close'
+expect '— eospec close' focus
+expect_fail 'not closed — tick' close
 printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
-expect 'done hello-gate · validated · archiving' done hello-gate
+expect 'closed hello-gate · validated · archiving' close
 
 echo '8 ── the final state on disk'
 echo '── .openspec.yaml:'
 cat "$C/.openspec.yaml"
-echo '── inspect:'
-"$GATE" inspect hello-gate
+echo '── room:'
+"$GATE" focus
 
 echo
 echo "passed: $pass   failed: $fail"
