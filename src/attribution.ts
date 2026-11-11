@@ -10,7 +10,7 @@
  * Writes are serialized through a single-flight queue; failures never break
  * the gate's verdict (the fact store still holds the event).
  */
-import { appendFileSync, existsSync, mkdirSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 let queue: Promise<void> = Promise.resolve();
@@ -27,11 +27,24 @@ function appendLine(file: string, line: string): void {
   appendFileSync(file, `${prefix}${line}\n`, 'utf8');
 }
 
+/** The file's last non-empty line, or undefined. */
+function lastNonEmptyLine(file: string): string | undefined {
+  if (!existsSync(file)) return undefined;
+  const lines = readFileSync(file, 'utf8').split('\n');
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (lines[i]!.trim().length > 0) return lines[i];
+  }
+  return undefined;
+}
+
 /** One visible debt line for a declared (bare) mutation. Exactly one line per call. */
 export function appendDebtLine(openspecRoot: string | undefined, words: string, at: string): Promise<void> {
   return serialized(() => {
     if (!openspecRoot) return; // no openspec root on disk: the fact store still records it
-    appendLine(join(openspecRoot, 'bare-work.md'), `bare — ${words} · at ${at}`);
+    const file = join(openspecRoot, 'bare-work.md');
+    const line = `bare — ${words} · at ${at}`;
+    if (lastNonEmptyLine(file) === line) return; // double-loaded gate: the same declaration lands once
+    appendLine(file, line);
   });
 }
 
@@ -44,9 +57,16 @@ export function appendAttributionReceipt(
 ): Promise<void> {
   return serialized(() => {
     if (!openspecRoot || !targetFile) return; // no declared target: the fact store still records
-    appendLine(
-      join(openspecRoot, 'changes', change, targetFile),
-      `  gate-attributed · tool: ${receipt.tool} · paths: ${receipt.paths.join(', ') || '—'} · at ${receipt.at}`,
-    );
+    const file = join(openspecRoot, 'changes', change, targetFile);
+    const line = `  gate-attributed · tool: ${receipt.tool} · paths: ${receipt.paths.join(', ') || '—'} · at ${receipt.at}`;
+    // the gate can be loaded twice (dev machine: the published copy AND
+    // this repo as a project package) — the same call lands once
+    const last = lastNonEmptyLine(file);
+    if (last === line) return;
+    // a tight block: one separating blank line before the block, never
+    // between receipts
+    const needsBlank = last !== undefined && !last.startsWith('  gate-attributed');
+    mkdirSync(dirname(file), { recursive: true });
+    appendFileSync(file, `${needsBlank ? '\n' : ''}${line}\n`, 'utf8');
   });
 }

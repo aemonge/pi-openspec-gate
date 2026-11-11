@@ -48,11 +48,34 @@
 - [x] focus.test.ts + gate.test.ts: room snapshots per stage
       started_at: 2026-11-11T16:22:00Z · ended_at: 2026-11-11T16:25:53Z · total: 4m · check: ✓ wrapper tests re-pinned — draft rule gone, empty task line gone, full-walk room asserts name-follows-walk + close-only + no tick reminder · paths: test/pios-wrapper.test.ts
 
-- [ ] feat(gate): room file names the human verb only
-      hash:
+- [x] feat(gate): room file names the human verb only
+      hash: 6876795
       validation: human runs `bin/eospec focus post-delivery`, reads the room file — four lines, one verb
 
-## Slice 3 — debt graduates
+## Slice 3 — receipts land once; the room refreshes on touches
+
+amendment 2026-11-11: two findings surfaced while delivering — (a) the
+receipt ledger doubles every mutation (the dev machine loads the gate
+twice: the published global copy AND this repo as a project package —
+the rebuild's own archive carries the same doubles) and the appends
+inflate blank lines; (b) the room file only re-rendered on CLI verbs,
+but the 1.0 contract promises re-render on every gate-side touch —
+the human read a stale room mid-walk (task "", draft 4/4).
+
+- [x] attribution: dedupe identical last-line receipts and debt lines (double-load defense); receipts append as a tight block — one separating blank line, no per-line inflation
+      started_at: 2026-11-11T16:26:10Z · ended_at: 2026-11-11T16:28:00Z · total: 2m · check: ✓ lastNonEmptyLine guard in appendAttributionReceipt + appendDebtLine; tight-block append (one blank before the block, none between) · paths: src/attribution.ts
+- [x] watcher: the aimed change's room file re-renders on attributed mutations and on exempt touches inside changes/<aimed>/ (the 1.0 contract: every gate-side touch)
+      started_at: 2026-11-11T16:28:00Z · ended_at: 2026-11-11T16:31:00Z · total: 3m · check: ✓ renderRoom/writeFocusSnapshot twins in src/focus.ts (human-verb law mirrored); attributed branch + exempt-within-aimed branch refresh — refresh, never create: an absent room is the birth law's to aim · paths: src/focus.ts, src/gate.ts
+- [x] gate.test.ts: same receipt twice → one line; different at → two; watcher touch refreshes the room (task count climbs)
+      started_at: 2026-11-11T16:31:00Z · ended_at: 2026-11-11T16:35:00Z · total: 4m · check: ✓ receipt dedupe + tight block, debt dedupe, room-refresh on attributed + exempt touches (caught twice: swallowed throw — missing twins imports; asserted the future — the gate fires pre-call) · paths: test/gate.test.ts
+- [x] this ledger's receipt spam deduped by hand when the fix lands
+      started_at: 2026-11-11T16:35:00Z · ended_at: 2026-11-11T16:36:00Z · total: 1m · check: ✓ 108 doubles + blank inflation collapsed; receipts landing during the fix's own commit (the session still runs the old copy until reload) dedupe again at close · paths: openspec/changes/post-delivery/4-execute.md
+
+- [ ] fix(gate): receipts land once; the room refreshes on touches
+      hash:
+      validation: human runs a bash mutation mid-walk, reads the ledger — one tight receipt block, no doubles; reads .focus after a ledger tick — task climbs without a verb (session reload or global-copy removal arms the fix live)
+
+## Slice 4 — debt graduates
 
 - [ ] four orphans become parked proposed changes (openspec new change + stub brainstorms): spanned-agent riding · post-archive commit gap · external pause arming · stardeck eospec.focus facts
 - [ ] openspec/learnings/debt.md deleted
@@ -64,7 +87,7 @@
       hash:
       validation: human runs `bin/eospec focus` — the four parked changes list; learnings/ holds no ledger
 
-## Slice 4 — the walk learns five steps
+## Slice 5 — the walk learns five steps
 
 - [ ] try.sh: the fifth-step states — findings-free close, then a findings-drafted walk, new approve press, verdict, close
 - [ ] README: room example block, schema description paragraph, the room-law sentences, the binary routing grammar
@@ -80,141 +103,118 @@
 - [ ] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-11T16:11:57Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-11T16:11:57Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:11:57Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:11:57Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:12:08Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:12:08Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-11T16:12:24Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-11T16:12:24Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:12:24Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:12:24Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:12:48Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:12:48Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:12:48Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:12:48Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:13:02Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:13:02Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:14:07Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:14:07Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:07Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:07Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:16Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:16Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T16:14:20Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T16:14:20Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:20Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:20Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:34Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:34Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:14:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:21Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:21Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:15:41Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:15:41Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:58Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:15:58Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:17:20Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:17:20Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:17:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:17:46Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:01Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:01Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:22Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:23Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:26Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:26Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:31Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:31Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:18:35Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T16:18:35Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:38Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:18:38Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:08Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:08Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:14Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:14Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:21:24Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:21:24Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:23Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:24Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:53Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:53Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T16:25:25Z
-
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T16:25:25Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:25:28Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:25:28Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:26:08Z
-
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:26:08Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-11T16:26:51Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-11T16:26:52Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-11T16:26:59Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-11T16:27:00Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:27:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:27:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:27:43Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:27:43Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:27:54Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:27:55Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:27:59Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:27:59Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:29:20Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:29:20Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:29:28Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:29:28Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:29:31Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:29:31Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:29:45Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:29:45Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:30:32Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:30:32Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:30:43Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T16:30:43Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:30:49Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:30:49Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:31:02Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:31:02Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:32:28Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T16:32:28Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:32:32Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:32:32Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:32:45Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:32:45Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:33:17Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T16:33:17Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:33:20Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:33:20Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:33:50Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:33:50Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:00Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:00Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:43Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:43Z

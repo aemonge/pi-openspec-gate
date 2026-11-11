@@ -19,8 +19,10 @@
  * Fallback: none needed beyond disk validation; the CLI (`eospec focus`)
  * is a human remedy, not a gate input.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { grantedSet, readChangeMeta } from './approval.ts';
+import { receiptArtifactFor, resolveChangeSchema, schemaIsGated } from './schema.ts';
 
 export const OPENSPEC_FOCUS_ENTRY_TYPE = 'eospec.focus';
 
@@ -195,4 +197,69 @@ export function findOpenspecRoot(cwd: string): string | undefined {
     dir = parent;
   }
   return undefined;
+}
+
+// ── the room writer — the snapshot re-renders on every gate-side touch ──
+// the CLI verbs re-render (bin/gate-lib.js twins); the watcher refreshes
+// on attributed mutations and exempt touches inside the aimed change, so
+// a human reading the room mid-walk never sees a stale count.
+
+function taskProgress(root: string, slug: string, file: string): string {
+  const path = join(root, 'changes', slug, file);
+  if (!existsSync(path)) return '';
+  const text = readFileSync(path, 'utf8');
+  const total = (text.match(/^\s*[-*]\s*\[[xX ]\]/gmu) ?? []).length;
+  if (total === 0) return '';
+  const done = (text.match(/^\s*[-*]\s*\[[xX]\]/gmu) ?? []).length;
+  return `${done}/${total}`;
+}
+
+/** Render the room snapshot — the src twin of bin/gate-lib.js renderRoom:
+ *  the room names the human verb only, the task line exists only when
+ *  the artifact has checkboxes, and the all-granted name follows the
+ *  walk while the counter follows the receipts. */
+export function renderRoom(root: string, slug: string): Record<string, string> {
+  const meta = readChangeMeta(root, slug);
+  const resolution = resolveChangeSchema(root, meta.raw.schema);
+  const fields: Record<string, string> = { change: slug };
+  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
+    fields['artifact-name'] = '';
+    fields['artifact-idx'] = '';
+    fields.task = '';
+    fields['next-step'] = 'eospec close';
+    return fields;
+  }
+  const schema = resolution.schema;
+  const approved = grantedSet(meta);
+  const fileOnDisk = (g: string) => existsSync(join(root, 'changes', slug, g));
+  const idx = schema.artifacts.findIndex((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
+  const finalStep = schema.artifacts[schema.artifacts.length - 1]!;
+  const bearer = receiptArtifactFor(schema) ?? finalStep;
+  if (idx === -1) {
+    fields['artifact-name'] = finalStep.generates;
+    fields['artifact-idx'] = `${schema.artifacts.length}/${schema.artifacts.length}`;
+    fields.task = taskProgress(root, slug, bearer.generates);
+    fields['next-step'] = 'eospec close';
+  } else {
+    const step = schema.artifacts[idx]!;
+    fields['artifact-name'] = step.generates;
+    fields['artifact-idx'] = `${idx + 1}/${schema.artifacts.length}`;
+    fields.task = taskProgress(root, slug, step.generates);
+    fields['next-step'] = 'eospec approve';
+  }
+  return fields;
+}
+
+/** Write the room snapshot (the src twin of bin/gate-lib.js writeFocus). */
+export function writeFocusSnapshot(openspecRoot: string, slug: string): void {
+  const fields = renderRoom(openspecRoot, slug);
+  const lines = [
+    '# one active change per room — eospec writes, verbs refresh',
+    `change: ${fields.change}`,
+    `artifact-name: ${fields['artifact-name'] || '""'}`,
+    `artifact-idx: ${fields['artifact-idx'] || '""'}`,
+  ];
+  if (fields.task) lines.push(`task: ${fields.task}`);
+  lines.push(`next-step: ${fields['next-step']}`);
+  writeFileSync(join(openspecRoot, '.focus'), `${lines.join('\n')}\n`, 'utf8');
 }

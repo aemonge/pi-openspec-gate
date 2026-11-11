@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 
 import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH, blockUnaccounted } from '../src/gate.ts';
+import { appendAttributionReceipt, appendDebtLine } from '../src/attribution.ts';
 import type { GateConfig } from '../src/config.ts';
 import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 
@@ -408,4 +409,96 @@ test('touch-guard: the grant surface is human-terminal only — reserved words +
   } finally {
     rmSync(verbRepo, { recursive: true, force: true });
   }
+});
+
+describe('receipts land once; the room refreshes on touches', () => {
+  test('appendAttributionReceipt: the same call lands once, different at lands tight', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'receipt-lab-'));
+    try {
+      const target = join(root, 'changes', 'c1', '4-tasks.md');
+      mkdirSync(join(root, 'changes', 'c1'), { recursive: true });
+      writeFileSync(target, '# Tasks\n', 'utf8');
+      const receipt = { tool: 'bash', paths: [] as string[], at: '2026-11-11T16:00:00Z' };
+      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
+      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
+      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
+      let text = readFileSync(target, 'utf8');
+      assert.equal((text.match(/gate-attributed/gu) ?? []).length, 1, 'identical receipts dedupe');
+      assert.doesNotMatch(text, /\n\n\n/u, 'no blank-line inflation');
+      await appendAttributionReceipt(root, 'c1', { ...receipt, at: '2026-11-11T16:00:05Z' }, '4-tasks.md');
+      text = readFileSync(target, 'utf8');
+      assert.equal((text.match(/gate-attributed/gu) ?? []).length, 2, 'a different call lands');
+      assert.match(text, /# Tasks\n\n  gate-attributed/u, 'one blank line separates content from the block');
+      assert.doesNotMatch(text, /gate-attributed[^\n]*\n\n  gate-attributed/u, 'receipt lines stay tight');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('appendDebtLine: the same declaration lands once', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'debt-lab-'));
+    try {
+      await appendDebtLine(root, 'action the job', '2026-11-11T16:00:00Z');
+      await appendDebtLine(root, 'action the job', '2026-11-11T16:00:00Z');
+      const text = readFileSync(join(root, 'bare-work.md'), 'utf8');
+      assert.equal((text.match(/^bare —/gmu) ?? []).length, 1, 'the double-loaded gate lands one line');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test('the room re-renders on attributed mutations and exempt touches inside the aim', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'room-refresh-'));
+    try {
+      const openspec = join(root, 'openspec');
+      mkdirSync(join(openspec, 'schemas', 'gate5'), { recursive: true });
+      writeFileSync(
+        join(openspec, 'schemas', 'gate5', 'schema.yaml'),
+        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-receives-receipts: true\n',
+        'utf8',
+      );
+      mkdirSync(join(openspec, 'changes', 'c2'), { recursive: true });
+      writeFileSync(join(openspec, 'changes', 'c2', '.openspec.yaml'), 'schema: gate5\n', 'utf8');
+      writeFileSync(join(openspec, 'changes', 'c2', '1-a.md'), '# A\n\n- [x] done thing\n- [ ] open thing\n', 'utf8');
+      writeFileSync(join(openspec, '.focus'), '# one active change per room — eospec writes, verbs refresh\nchange: c2\n', 'utf8');
+
+      const fake = makeFakePi();
+      createGate(fake.pi as never, {
+        enabled: true,
+        approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false },
+        exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
+      } as never);
+      const ctx = {
+        cwd: root,
+        sessionManager: {
+          getEntries: () => [
+            { type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c2', taskId: '1' } },
+          ],
+        },
+      };
+
+      // attributed mutation → room refreshes with the honest counter
+      const pass = await fake.fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts' } }, ctx);
+      assert.equal(pass, undefined);
+      let room = readFileSync(join(openspec, '.focus'), 'utf8');
+      assert.match(room, /artifact-name: 1-a\.md/);
+      assert.match(room, /task: 1\/2/, 'the counter is live — no verb ran');
+      assert.match(room, /next-step: eospec approve/);
+
+      // exempt touch inside the aimed change → room refreshes again. The
+      // gate fires before the tool runs, so the disk already holds the
+      // ticks the refresh will count.
+      const ledger = '# A\n\n- [x] done thing\n- [x] open thing\n';
+      writeFileSync(join(openspec, 'changes', 'c2', '1-a.md'), ledger, 'utf8');
+      await fake.fire(
+        'tool_call',
+        { toolName: 'write', input: { path: join(openspec, 'changes', 'c2', '1-a.md'), content: ledger } },
+        ctx,
+      );
+      room = readFileSync(join(openspec, '.focus'), 'utf8');
+      assert.match(room, /task: 2\/2/, 'an exempt drafting touch keeps the room live');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

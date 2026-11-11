@@ -34,6 +34,7 @@ import {
   readFocusFromSessionFile,
   readRoomFocus,
   readSessionFocus,
+  writeFocusSnapshot,
   type ActiveFocus,
 } from './focus.ts';
 import { extractPaths } from './paths.ts';
@@ -749,6 +750,23 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         paths,
         at: utcNow(),
       });
+      // a touch inside the aimed change's files refreshes the room too —
+      // drafting is exempt, but the snapshot stays live (1.0 contract).
+      // Refresh, never create: an absent room is the birth law's to aim.
+      if (openspecRoot && exists(join(openspecRoot, '.focus'))) {
+        const roomFocus = activeFocus(ctx.sessionManager, cwd);
+        if (
+          roomFocus &&
+          focusIsActive(roomFocus, openspecRoot) &&
+          paths.some((p) => p.includes(`/changes/${roomFocus.change}/`))
+        ) {
+          try {
+            writeFocusSnapshot(openspecRoot, roomFocus.change);
+          } catch {
+            /* a stale snapshot never blocks the work */
+          }
+        }
+      }
       return undefined;
     }
 
@@ -796,6 +814,17 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const receiptResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
       const receiptTarget = receiptResolution.ok ? receiptArtifactFor(receiptResolution.schema)?.generates : undefined;
       void appendAttributionReceipt(openspecRoot, focus.change, { tool: toolName, paths, at }, receiptTarget);
+      // the room snapshot re-renders on every gate-side touch — the 1.0
+      // contract; a stale count never blocks the work (next verb self-heals).
+      // Refresh, never create: an absent room is the birth law's to aim
+      // (creation stamping), not the touch's.
+      if (exists(join(openspecRoot!, '.focus'))) {
+        try {
+          writeFocusSnapshot(openspecRoot!, focus.change);
+        } catch {
+          /* a stale snapshot never blocks the work */
+        }
+      }
       return undefined;
     }
 
