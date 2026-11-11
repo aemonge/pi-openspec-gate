@@ -444,3 +444,27 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:54:38Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:54:38Z
+
+  gate-attributed · tool: write · paths: /home/aemonge/projects/pi-openspec-gate/tools/parity-lint.mjs · at 2026-11-11T09:55:41Z
+
+  gate-attributed · tool: write · paths: /home/aemonge/projects/pi-openspec-gate/tools/parity-lint.mjs · at 2026-11-11T09:55:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/justfile · at 2026-11-11T09:55:41Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/justfile · at 2026-11-11T09:55:41Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:56:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:56:01Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/tools/parity-lint.mjs · at 2026-11-11T09:56:54Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/tools/parity-lint.mjs · at 2026-11-11T09:56:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:56:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:56:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:57:21Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:57:21Z

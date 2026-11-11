@@ -1,6 +1,6 @@
 {
   "name": "@aemonge-dev/eospec",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "eospec — openspec, extended. Three human verbs (focus, approve, close) over openspec's new/archive, plus a Pi extension that accounts every mutating tool call: allowed by path, attributed to the aimed change, declared by the human, or refused with instructions.",
   "type": "module",
   "license": "MIT",
