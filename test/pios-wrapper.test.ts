@@ -672,6 +672,29 @@ test('parity live: approve without an aim refuses loudly — and never stamps', 
   }
 });
 
+test('room file: next-step never sends the agent past a human gate', () => {
+  const repo = gatedRepo();
+  try {
+    // only the free step is drafted: proposition requires idea's approval,
+    // so the truthful next act is the human's approve — not a doomed draft
+    draft(repo, 'm1', '1-idea.md', 'why');
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
+    let text = readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
+    // idea is drafted but ungranted: the current step IS idea, and the
+    // next act is the human's approve — never a doomed draft of proposition
+    assert.match(text, /artifact-name: 1-idea\.md/);
+    assert.match(text, /next-step: eospec approve/);
+    assert.doesNotMatch(text, /draft 2-proposition/);
+
+    // once idea is granted, drafting proposition becomes the next act
+    assert.equal(run(repo, ['approve']).status, 0);
+    text = readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
+    assert.match(text, /next-step: draft 2-proposition\.md/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('room file: the flat-yaml snapshot renders and refreshes with every verb', () => {
   const repo = gatedRepo();
   try {

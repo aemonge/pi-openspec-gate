@@ -187,6 +187,22 @@
 - [x] fix(gate): the room follows a birth; fix(schema): yaml-safe doors
       hash: 03a8946
 
+## Slice 15 — the room tells the truth; locals shadow globals (lab run #5)
+
+- [x] the room snapshot's next-step is predecessor-aware: an artifact
+      whose required approvals are ungranted can never be the "draft me"
+      next act — the room can only send the agent to the human's approve
+      (defensive truth: the sequence law makes normal flow safe already;
+      exotic orders can no longer make the room lie)
+      started_at: 2026-11-11T12:52:00Z · ended_at: 2026-11-11T12:56:00Z · total: 4m · check: ✓ renderRoom + wrapper tests (gated truth ×2 blocks) · paths: bin/gate-lib.js, test/pios-wrapper.test.ts
+- [x] scanDeclares respects shadowing: a project-local schema replaces a
+      global one by name — the lab's remedy listing three phrases (two
+      dead words from a stale global v5 spec) dies
+      started_at: 2026-11-11T12:56:00Z · ended_at: 2026-11-11T12:59:00Z · total: 3m · check: ✓ precedence test via fake XDG global · paths: src/schema.ts, test/schema.test.ts
+- [x] fix(room): next-step is approval-aware; fix(scan): locals shadow
+      globals
+      hash:
+
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
 - [ ] Human validation — response: · outcome: · surfaced:
@@ -830,3 +846,47 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:49:35Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:49:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T14:50:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T14:50:15Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-11T14:50:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-11T14:50:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T14:51:30Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T14:51:30Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T14:51:30Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T14:51:30Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:51:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:51:39Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T14:51:46Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-11T14:51:46Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:51:46Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:51:46Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:52:01Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:52:01Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T14:52:54Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T14:52:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:52:54Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:52:55Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:53:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:53:24Z

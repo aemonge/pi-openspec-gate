@@ -134,9 +134,13 @@ function renderRoom(root, slug) {
     fields['artifact-name'] = step.generates;
     fields['artifact-idx'] = `${idx + 1}/${schema.artifacts.length}`;
     fields.task = taskProgress(root, slug, step.generates);
-    fields['next-step'] = existsSync(join(root, 'changes', slug, step.generates))
-      ? 'eospec approve'
-      : `draft ${step.generates}`;
+    // drafting legality is approval legality: an artifact whose required
+    // approvals are not yet granted may not be drafted — the next act is
+    // the human's approve, never a doomed draft attempt
+    const canDraft = (step.requiresApproval ?? []).every((id) => approved.has(id));
+    fields['next-step'] = canDraft && !existsSync(join(root, 'changes', slug, step.generates))
+      ? `draft ${step.generates}`
+      : 'eospec approve';
   }
   return fields;
 }

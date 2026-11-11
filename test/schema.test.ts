@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import {
   artifactForFilename,
@@ -9,6 +10,7 @@ import {
   findSchemaFile,
   parseSchemaYaml,
   resolveChangeSchema,
+  scanDeclares,
   schemaIsGated,
   sectionTitles,
 } from '../src/schema.ts';
@@ -307,4 +309,34 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
       assert.deepEqual(project(binSchema), project(srcSchema), `parity broken on ${name}`);
     }
   });
+});
+
+test('scanDeclares: a project-local schema shadows a global one by name', () => {
+  const lab = mkdtempSync(join(tmpdir(), 'scan-lab-'));
+  const fakeGlobal = mkdtempSync(join(tmpdir(), 'scan-global-'));
+  const prevData = process.env.XDG_DATA_HOME;
+  process.env.XDG_DATA_HOME = join(fakeGlobal, 'data');
+  try {
+    mkdirSync(join(lab, 'openspec', 'schemas', 'dup'), { recursive: true });
+    writeFileSync(
+      join(lab, 'openspec', 'schemas', 'dup', 'schema.yaml'),
+      'name: dup\nx-declares: [local phrase]\nartifacts:\n  - id: a\n    generates: 1-a.md\n',
+      'utf8',
+    );
+    const globalDir = join(process.env.XDG_DATA_HOME!, 'openspec', 'schemas', 'dup');
+    mkdirSync(globalDir, { recursive: true });
+    writeFileSync(
+      join(globalDir, 'schema.yaml'),
+      'name: dup\nx-declares: [global phrase]\nartifacts:\n  - id: a\n    generates: 1-a.md\n',
+      'utf8',
+    );
+    const phrases = scanDeclares(join(lab, 'openspec'));
+    assert.ok(phrases.has('local phrase'), 'the live (local) phrases are remedies');
+    assert.ok(!phrases.has('global phrase'), 'the shadowed (global) phrases are not');
+  } finally {
+    if (prevData === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = prevData;
+    rmSync(lab, { recursive: true, force: true });
+    rmSync(fakeGlobal, { recursive: true, force: true });
+  }
 });

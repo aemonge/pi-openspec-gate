@@ -493,10 +493,16 @@ export function scanDeclares(openspecRoot: string): Set<string> {
   const cached = declareScanCache.get(openspecRoot);
   if (cached) return cached;
   const phrases = new Set<string>();
+  // resolution order is shadowing: a project-local schema replaces a
+  // global one of the same name — only the phrases that would actually
+  // resolve are remedies (live-caught: the retired phrases of a stale
+  // global v5 spec leaked into blocks beside the live ones)
+  const seen = new Set<string>();
   for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
     if (!existsSync(dir)) continue;
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory() || seen.has(entry.name)) continue;
+      seen.add(entry.name);
       const file = join(dir, entry.name, 'schema.yaml');
       if (!existsSync(file)) continue;
       try {
