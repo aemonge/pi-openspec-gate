@@ -166,6 +166,25 @@
       started_at: 2026-11-11T12:34:00Z · ended_at: 2026-11-11T12:37:00Z · total: 3m · check: ✓ blockUnapprovedState + fixture test · paths: src/gate.ts, test/approval.test.ts
 - [x] fix(classifier): version probes read; fix(gate): the writes gate
       names itself
+      hash: 9c5546c
+
+## Slice 14 — the room follows a birth; yaml-safe doors (live-caught, lab run #4)
+
+- [x] yaml repair: the v8 doors sentence carried unescaped double quotes
+      inside the double-quoted description — invalid YAML; our custom
+      parser stayed green while openspec's real parser refused
+      `openspec new change --schema spec` (the ceremony could not start;
+      the lab agent repaired the file itself to proceed)
+      started_at: 2026-11-11T12:40:00Z · ended_at: 2026-11-11T12:42:00Z · total: 2m · check: ✓ both copies repaired; openspec schemas exit 0 · paths: openspec/schemas/spec/schema.yaml, example/openspec/schemas/spec/schema.yaml
+- [x] the real-parser smoke test: example.test runs `openspec schemas`
+      against the shipped schema — the class of bug our parser cannot
+      see is now a red test
+      started_at: 2026-11-11T12:42:00Z · ended_at: 2026-11-11T12:43:00Z · total: 1m · check: ✓ · paths: test/example.test.ts
+- [x] the room follows a birth: an unaimed room aims its first created
+      change (minimal keyed snapshot, self-heals on the next verb) — the
+      command tip is no longer lossable, because the tip is now a fact
+      started_at: 2026-11-11T12:43:00Z · ended_at: 2026-11-11T12:45:00Z · total: 2m · check: ✓ stamp-time auto-aim + test · paths: src/gate.ts, test/approval.test.ts
+- [x] fix(gate): the room follows a birth; fix(schema): yaml-safe doors
       hash:
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
@@ -787,3 +806,23 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:04:11Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:04:11Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T14:35:20Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T14:35:20Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T14:35:20Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T14:35:20Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T14:35:35Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T14:35:35Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:35:35Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:35:36Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:36:13Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T14:36:14Z

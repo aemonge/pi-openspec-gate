@@ -21,8 +21,8 @@ description: "Coding runs in one of two modes — human-coder assisted
   change that learned something. x- tags declare the human gates that
   eospec enforces; openspec itself strips them silently, so
   the gate validates its own tags. The declared phrases are two doors:
-  "skip the spec" lands the next mutation as declared work; "start the
-  spec" tells the agent to run the ceremony — create, aim, draft — which
+  skip the spec lands the next mutation as declared work; start the
+  spec tells the agent to run the ceremony — create, aim, draft — which
   needs no declaration; approvals stay human-terminal either way."
 artifacts:
   - id: brainstorm

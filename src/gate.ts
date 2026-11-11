@@ -405,6 +405,13 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       state.pendingCreation = undefined;
       if (exists(join(root, 'changes', slug))) {
         writeChangeMeta(root, slug, { 'x-status': 'proposed', 'x-created_by': 'assistant' }, { onlyIfAbsent: true });
+        // the room follows a birth: an unaimed room aims its first change —
+        // the walk's next act is never left to the agent's memory. The
+        // minimal keyed snapshot self-heals on the next verb touch.
+        const roomFile = join(root, '.focus');
+        if (!exists(roomFile)) {
+          writeFileSync(roomFile, `# one active change per room — eospec writes, verbs refresh\nchange: ${slug}\n`, 'utf8');
+        }
         // the room's name goes in the room's files: template copies carry
         // `<!-- slug -->` — the stamp fills it (the plan's make-real ruling)
         const changeDir = join(root, 'changes', slug);

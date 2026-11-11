@@ -340,6 +340,8 @@ describe('approval teeth: attribution is not approval', () => {
       '> Spec: fresh-one\n',
       'the stamp fills <!-- slug --> in template copies',
     );
+    const room = readFileSync(join(repo, 'openspec', '.focus'), 'utf8');
+    assert.match(room, /change: fresh-one/, 'the room follows a birth: an unaimed room aims its first change');
   });
 
   test('creation stamping: wrapper form witnessed too; no dir → no stamp', async () => {

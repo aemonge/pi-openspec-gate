@@ -54,6 +54,15 @@ describe('the example schema (spec)', () => {
     );
   });
 
+  test('the schema parses under real yaml — openspec itself reads it', () => {
+    // our line-parser tolerates things real YAML does not (live-caught:
+    // unescaped quotes inside the double-quoted description broke
+    // `openspec new change --schema spec` while our tests stayed green)
+    const result = spawnSync('openspec', ['schemas'], { cwd: REPO_ROOT, encoding: 'utf8' });
+    assert.equal(result.status, 0, `openspec cannot parse the shipped schema:\n${result.stdout}\n${result.stderr}`);
+    assert.match(result.stdout, /spec/, 'the shipped schema is listed');
+  });
+
   test('the walkthrough passes end to end with every key marker', () => {
     const result = spawnSync('sh', [join(REPO_ROOT, 'example', 'try.sh')], { encoding: 'utf8' });
     assert.equal(result.status, 0, `walkthrough failed:\n${result.stdout}\n${result.stderr}`);
