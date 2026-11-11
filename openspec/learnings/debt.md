@@ -41,3 +41,6 @@ focus-lifecycle gaps below.
   then `pios-gate pause` teaches and the in-session reply arms
   (2026-11-04, polishment Slice 1). Same channel would let a cockpit
   show the countdown.
+## debt
+
+- [ ] stardeck (status package) must write `eospec.focus` session facts — the gate reads the unbranded type since the rebuild; until then its entries fall back to fallback-only and the room file (.focus) is the primary aim. (surfaced: rebuild, 2026-11-11)
