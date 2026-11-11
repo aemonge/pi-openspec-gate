@@ -44,7 +44,7 @@ every step. Exit 0 = the gate works.
 ```sh
 cp -r example/openspec/schemas/spec  your-repo/openspec/schemas/spec
 mkdir -p your-repo/openspec/changes
-printf 'schema: spec\nstatus: proposed\n' > your-repo/openspec/changes/my-change/.openspec.yaml
+printf 'schema: spec\nx-status: proposed\n' > your-repo/openspec/changes/my-change/.openspec.yaml
 ```
 
 Schemas resolve project-local first (`<repo>/openspec/schemas/`), then

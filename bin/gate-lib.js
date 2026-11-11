@@ -38,7 +38,7 @@ export function readChangeMeta(root, change) {
   const file = changeMetaPath(root, change);
   if (!existsSync(file)) return raw;
   for (const line of readFileSync(file, 'utf8').split('\n')) {
-    const m = /^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/u.exec(line);
+    const m = /^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/u.exec(line);
     if (m) raw[m[1]] = m[2].trim();
   }
   return raw;
@@ -52,7 +52,7 @@ export function writeChangeMeta(root, change, values, options = {}) {
   const pending = new Map(Object.entries(values));
   const out = [];
   for (const line of lines) {
-    const m = /^([A-Za-z_][A-Za-z0-9_]*):/u.exec(line);
+    const m = /^([A-Za-z_][A-Za-z0-9_-]*):/u.exec(line);
     if (m && pending.has(m[1])) {
       if (!(options.onlyIfAbsent && rawHas(line))) out.push(`${m[1]}: ${pending.get(m[1])}`);
       else out.push(line);
@@ -67,7 +67,7 @@ export function writeChangeMeta(root, change, values, options = {}) {
 }
 
 function rawHas(line) {
-  return /^([A-Za-z_][A-Za-z0-9_]*):\s*\S+/u.test(line);
+  return /^([A-Za-z_][A-Za-z0-9_-]*):\s*\S+/u.test(line);
 }
 
 export function utcNowStamp() {
@@ -128,7 +128,7 @@ function renderRoom(root, slug) {
     fields['artifact-idx'] = `${schema.artifacts.length}/${schema.artifacts.length}`;
     fields.task = taskProgress(root, slug, last.generates);
     const verdict = schemaVerdictLine(schema);
-    fields['next-step'] = meta.validated ? 'eospec close' : verdict ? `tick '${verdict}' — eospec close` : 'eospec close';
+    fields['next-step'] = meta['x-validated'] ? 'eospec close' : verdict ? `tick '${verdict}' — eospec close` : 'eospec close';
   } else {
     const step = schema.artifacts[idx];
     fields['artifact-name'] = step.generates;
@@ -200,7 +200,7 @@ function buildSections(chunks, source, artifactId) {
     } else spec.id = chunk.head.trim();
     for (const { key, value } of chunk.keys) {
       if (key === 'x-requires-approval') {
-        throw new Error(`${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — retired: the walk stamps whole artifacts`);
+        throw new Error(`${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — gone: approve stamps whole artifacts`);
       }
       if (!SECTION_KEYS.has(key)) {
         throw new Error(`${source}: artifact '${artifactId}' section '${spec.id}' carries unknown key '${key}' (one level only)`);
@@ -546,7 +546,7 @@ export function pendingAct(root, slug, schema, approved) {
  *  artifact is granted: validation state, or the declared verdict. */
 export function completionLine(schema, meta) {
   const verdictLine = schemaVerdictLine(schema);
-  return `all artifacts granted — ${meta.validated ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`;
+  return `all artifacts granted — ${meta['x-validated'] ? 'validated' : verdictLine ? `${verdictLine} pending` : 'no verdict declared'}`;
 }
 
 // ── structure checkers ─────────────────────────────────────────────────
@@ -562,7 +562,7 @@ export function lineKeyPresent(text, key) {
 }
 
 export function grantedSet(meta) {
-  const raw = meta.granted ?? '';
+  const raw = meta['x-granted'] ?? '';
   return new Set(
     raw
       .split(',')
@@ -608,11 +608,11 @@ export function grantArtifact(root, slug, artifactRef) {
   }
   const at = utcNowStamp();
   approved.add(artifactRef);
-  const values = { granted: [...approved].join(','), [`granted_${artifactRef}`]: at };
+  const values = { 'x-granted': [...approved].join(','), [`x-granted_${artifactRef}`]: at };
   const completed = allArtifactsGranted(schema, approved);
   if (completed) {
     const completing = schema.artifacts.find((a) => a.completes);
-    Object.assign(values, { status: completing?.completes ?? 'approved', approved_at: at });
+    Object.assign(values, { 'x-status': completing?.completes ?? 'approved', 'x-approved_at': at });
   }
   writeChangeMeta(root, slug, values);
   return {
@@ -632,7 +632,7 @@ export function pendingReport(root) {
   for (const dir of readdirSync(changesDir, { withFileTypes: true })) {
     if (!dir.isDirectory() || dir.name === 'archive') continue;
     const meta = readChangeMeta(root, dir.name);
-    const status = meta.status ?? 'no-meta';
+    const status = meta['x-status'] ?? 'no-meta';
     const resolution = resolveChangeSchema(root, meta.schema);
     const gated = resolution.ok && schemaIsGated(resolution.schema);
 
@@ -677,16 +677,16 @@ export function pendingReport(root) {
       const approved = grantedSet(meta);
       const marks = schema.artifacts.map((a) => (approved.has(a.id) ? '✓' : existsSync(join(changesDir, dir.name, a.generates)) ? '◻' : '·')).join('');
       const act = pendingAct(root, dir.name, schema, approved);
-      const state = meta.validated
-        ? `validated ${meta.validated_at ?? ''}`.trim()
-        : meta.approved_at
-          ? `approved ${meta.approved_at}`
-          : (meta.status ?? 'proposed');
+      const state = meta['x-validated']
+        ? `validated ${meta['x-validated_at'] ?? ''}`.trim()
+        : meta['x-approved_at']
+          ? `approved ${meta['x-approved_at']}`
+          : (meta['x-status'] ?? 'proposed');
       const next = act
         ? `next: ${act}`
         : unhashed > 0
           ? `${unhashed} unhashed commits — eospec close closes after the hash`
-          : meta.validated
+          : meta['x-validated']
             ? 'ready to close'
             : `next: ${completionLine(schema, meta)} — eospec close`;
       rows.push(`${dir.name.padEnd(28)}${marks} ${state} · ${next}`);
@@ -694,7 +694,7 @@ export function pendingReport(root) {
       const need =
         status !== 'approved'
           ? 'aim first — eospec close closes ungated rooms'
-          : humanWait && !meta.validated
+          : humanWait && !meta['x-validated']
             ? 'tick the verdict — eospec close closes it'
             : open > 0
               ? `${open} open tasks`

@@ -160,12 +160,12 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
 
       // early unlock: source may begin though grants are incomplete
       const meta = readFileSync(join(changeDir, '.openspec.yaml'), 'utf8');
-      assert.match(meta, /granted: dream,build/);
-      assert.doesNotMatch(meta, /status: approved/); // ship still ungranted
+      assert.match(meta, /x-granted: dream,build/);
+      assert.doesNotMatch(meta, /x-status: approved/); // ship still ungranted
       const approvedList = meta
         .split('\n')
-        .find((l) => l.startsWith('granted:'))!
-        .slice('granted:'.length)
+        .find((l) => l.startsWith('x-granted:'))!
+        .slice('x-granted:'.length)
         .trim()
         .split(',');
       const schema = parseSchemaYaml(RICH_SCHEMA, 'fixture');
@@ -173,7 +173,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
 
       // completion: the last approve stamps the declared verdict state
       assert.match(run(dir, ['approve']).stdout, /all steps approved — status: approved/);
-      assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /status: approved/);
+      assert.match(readFileSync(join(changeDir, '.openspec.yaml'), 'utf8'), /x-status: approved/);
 
       // the room view names the declared verdict, never a hardcoded one
       assert.match(run(dir, ['focus']).stdout, /m2\b[\s\S]*approved[\s\S]*Owner acceptance pending[\s\S]*eospec close/u);

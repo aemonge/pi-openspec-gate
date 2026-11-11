@@ -23,7 +23,7 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT INT TERM
 mkdir -p "$WORK/openspec/changes/hello-gate"
 cp -r "$HERE/openspec/schemas" "$WORK/openspec/schemas"
-printf 'schema: spec\nstatus: proposed\n' > "$WORK/openspec/changes/hello-gate/.openspec.yaml"
+printf 'schema: spec\nx-status: proposed\n' > "$WORK/openspec/changes/hello-gate/.openspec.yaml"
 cd "$WORK" || exit 2
 
 pass=0

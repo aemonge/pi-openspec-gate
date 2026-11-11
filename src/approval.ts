@@ -3,9 +3,9 @@
  *
  * A change's `.openspec.yaml` carries flat `key: value` lines. The gate READS
  * `status` (proposed|approved|…) and `validated`; it WRITES only the creation
- * stamp (`status: proposed`, `created_by: assistant`) for creations it
+ * stamp (`x-status: proposed`, `x-created_by: assistant`) for creations it
  * witnessed as tool calls. The human terminal (bin/pi-openspec-gate) writes
- * `status: approved` / `validated`. Approval is unreachable from assistant
+ * `x-status: approved` / `x-validated`. Approval is unreachable from assistant
  * tooling because the gate blocks any tool-call invocation of the CLI
  * (approval-touch guard, runs before every other decision).
  */
@@ -21,7 +21,7 @@ export type ChangeMeta = {
 export const APPROVED = 'approved';
 
 /** Cumulative grant key of the change meta (flat, comma-list value). */
-export const GRANTS_KEY = 'granted';
+export const GRANTS_KEY = 'x-granted';
 
 /** Parse the cumulative `granted: a,b` meta value into a set. */
 export function grantedSet(meta: ChangeMeta): Set<string> {
@@ -39,7 +39,7 @@ export function grantValues(meta: ChangeMeta, ids: string[], at: string): Record
   const approved = grantedSet(meta);
   for (const id of ids) approved.add(id);
   const values: Record<string, string> = { [GRANTS_KEY]: [...approved].join(',') };
-  for (const id of ids) values[`granted_${id}`] = at;
+  for (const id of ids) values[`x-granted_${id}`] = at;
   return values;
 }
 
@@ -54,14 +54,14 @@ export function readChangeMeta(openspecRoot: string, change: string): ChangeMeta
   const file = changeMetaPath(openspecRoot, change);
   if (!existsSync(file)) return { raw };
   for (const line of readFileSync(file, 'utf8').split('\n')) {
-    const match = /^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/u.exec(line);
+    const match = /^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/u.exec(line);
     if (match) raw[match[1]] = match[2].trim();
   }
-  return { status: raw.status, validated: raw.validated, raw };
+  return { status: raw['x-status'], validated: raw['x-validated'], raw };
 }
 
 export function changeIsApproved(meta: ChangeMeta): boolean {
-  return meta.status === APPROVED;
+  return meta.raw['x-status'] === APPROVED;
 }
 
 /**
@@ -81,7 +81,7 @@ export function writeChangeMeta(
   const pending = new Map(Object.entries(values));
   const out: string[] = [];
   for (const line of lines) {
-    const match = /^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)$/u.exec(line);
+    const match = /^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/u.exec(line);
     const key = match?.[1];
     if (key && pending.has(key)) {
       if (options.onlyIfAbsent && (match![2].trim().length > 0)) {

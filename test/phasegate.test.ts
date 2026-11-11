@@ -104,7 +104,7 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
   });
 
   test('after the dig grant the window opens; void research blocks with the remedy ladder (walk #2, catch #7)', async () => {
-    const { root } = fixture('window', { granted: 'brief,dig' });
+    const { root } = fixture('window', { 'x-granted': 'brief,dig' });
     const fake = makeFakePi();
     createGate(fake.pi as never, CONFIG as never);
     const open = await fake.fire(
@@ -186,7 +186,7 @@ describe('artifact gates: creating gated change artifacts', () => {
   });
 
   test('granted artifact drafts freely (exempt path, no block)', async () => {
-    const { root, changeDir } = fixture('gated', { granted: 'a' });
+    const { root, changeDir } = fixture('gated', { 'x-granted': 'a' });
     const fake = makeFakePi();
     createGate(fake.pi as never, CONFIG as never);
     const result = await fake.fire(
@@ -210,7 +210,7 @@ describe('artifact gates: creating gated change artifacts', () => {
   });
 
   test('missing declared sections at birth block, naming them', async () => {
-    const { root, changeDir } = fixture('gated', { granted: 'a' });
+    const { root, changeDir } = fixture('gated', { 'x-granted': 'a' });
     const fake = makeFakePi();
     createGate(fake.pi as never, CONFIG as never);
     const result = await fake.fire(
@@ -231,7 +231,7 @@ describe('artifact gates: creating gated change artifacts', () => {
   });
 
   test('sections present but Claim line missing still blocks', async () => {
-    const { root, changeDir } = fixture('gated', { granted: 'a' });
+    const { root, changeDir } = fixture('gated', { 'x-granted': 'a' });
     const fake = makeFakePi();
     createGate(fake.pi as never, CONFIG as never);
     const result = await fake.fire(
@@ -286,12 +286,12 @@ describe('artifact gates: creating gated change artifacts', () => {
     assert.match((none as { reason: string }).reason, /phase gate — a, b not granted yet/u);
 
     // one granted → the other still named
-    writeFileSync(metaFile, 'schema: multi\ngranted: a\n', 'utf8');
+    writeFileSync(metaFile, 'schema: multi\nx-granted: a\n', 'utf8');
     const partial = await fire();
     assert.match((partial as { reason: string }).reason, /phase gate — b not granted yet/u);
 
     // both granted → drafts free
-    writeFileSync(metaFile, 'schema: multi\ngranted: a, b\n', 'utf8');
+    writeFileSync(metaFile, 'schema: multi\nx-granted: a, b\n', 'utf8');
     const both = await fire();
     assert.equal(both, undefined);
     const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');

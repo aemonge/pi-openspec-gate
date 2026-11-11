@@ -125,7 +125,7 @@ describe('approval teeth: attribution is not approval', () => {
   test('approval-touch guard: tool calls cannot run the approver — even piped to a read-only verb', async () => {
     const { fire, ctx, entries } = freshGate();
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'approved' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'approved' });
     const result = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'pi-openspec-gate approve c1 | tail -1' } },
@@ -145,7 +145,7 @@ describe('approval teeth: attribution is not approval', () => {
   test('approval-touch guard: approve|close blocked; validate forwards freely', async () => {
     const { fire, ctx } = freshGate();
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'approved' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'approved' });
     for (const command of [
       'eospec approve c1',
       'eospec close',
@@ -168,7 +168,7 @@ describe('approval teeth: attribution is not approval', () => {
   test('enforce: focused-but-unapproved change blocks source mutations', async () => {
     const { fire, ctx, entries } = freshGate();
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'proposed' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'proposed' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
     assert.deepEqual(result, { block: true, reason: BLOCK_UNAPPROVED });
     const fact = entries.find((e) => e.customType === 'gate.unapproved');
@@ -178,7 +178,7 @@ describe('approval teeth: attribution is not approval', () => {
   test('enforce: docs stay exempt regardless of approval (drafting never blocked)', async () => {
     const { fire, ctx } = freshGate();
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'proposed' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'proposed' });
     const pass = await fire(
       'tool_call',
       { toolName: 'write', input: { path: 'openspec/changes/c1/2-plan.md' } },
@@ -190,7 +190,7 @@ describe('approval teeth: attribution is not approval', () => {
   test('enforce: approved change attributes normally', async () => {
     const { fire, ctx, entries } = freshGate();
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'approved' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'approved' });
     const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
     assert.equal(pass, undefined);
     assert.ok(entries.some((e) => e.customType === 'gate.attributed'));
@@ -220,7 +220,7 @@ describe('approval teeth: attribution is not approval', () => {
 
   test('human-gate: meta `validated` is a standing permit', async () => {
     const { fire, ctx, entries } = freshGate();
-    writeChangeMeta(root, 'c1', { validated: '2026-10-17T12:00:00Z' });
+    writeChangeMeta(root, 'c1', { 'x-validated': '2026-10-17T12:00:00Z' });
     const pass = await fire(
       'tool_call',
       {
@@ -294,7 +294,7 @@ describe('approval teeth: attribution is not approval', () => {
 
   test('archive guard: unapproved change blocks, approved or --i-am-the-human pass', async () => {
     const { fire, ctx } = freshGate({ ...TEETH_ON });
-    writeChangeMeta(root, 'c1', { status: 'proposed' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'proposed' });
     const blocked = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'openspec archive c1 -y --skip-specs' } },
@@ -307,7 +307,7 @@ describe('approval teeth: attribution is not approval', () => {
       ctx,
     );
     assert.notEqual(human, { block: true, reason: BLOCK_ARCHIVE });
-    writeChangeMeta(root, 'c1', { status: 'approved' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'approved' });
     const approved = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'openspec archive c1 -y --skip-specs' } },
@@ -332,7 +332,7 @@ describe('approval teeth: attribution is not approval', () => {
     assert.ok(existsSync(metaFile), 'meta stamped after the call completed');
     const meta = readChangeMeta(root, 'fresh-one');
     assert.equal(meta.status, 'proposed');
-    assert.equal(meta.raw.created_by, 'assistant');
+    assert.equal(meta.raw['x-created_by'], 'assistant');
     assert.ok(entries.some((e) => e.customType === 'gate.creation-stamped'));
   });
 
@@ -355,17 +355,17 @@ describe('approval teeth: attribution is not approval', () => {
   });
 
   test('meta writer: set-only stamps never overwrite; human keys preserved', () => {
-    writeChangeMeta(root, 'c1', { status: 'approved', approved_at: '2026-10-17T12:00:00Z' });
-    writeChangeMeta(root, 'c1', { status: 'proposed' }, { onlyIfAbsent: true });
+    writeChangeMeta(root, 'c1', { 'x-status': 'approved', 'x-approved_at': '2026-10-17T12:00:00Z' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'proposed' }, { onlyIfAbsent: true });
     const meta = readChangeMeta(root, 'c1');
     assert.equal(meta.status, 'approved', 'existing value wins over stamp');
-    assert.equal(meta.raw.approved_at, '2026-10-17T12:00:00Z');
+    assert.equal(meta.raw['x-approved_at'], '2026-10-17T12:00:00Z');
   });
 
   test('teeth off (legacy config): unapproved focus attributes as before', async () => {
     const { fire, ctx } = freshGate({ enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false });
     focusOn('c1');
-    writeChangeMeta(root, 'c1', { status: 'proposed' });
+    writeChangeMeta(root, 'c1', { 'x-status': 'proposed' });
     const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
     assert.equal(pass, undefined);
   });
@@ -384,7 +384,7 @@ describe('pause: a human reply arms the yield — teeth rest, the fence stays', 
     const root2 = join(repo2, 'openspec');
     try {
       mkdirSync(join(root2, 'changes', 'c9'), { recursive: true });
-      writeChangeMeta(root2, 'c9', { status: 'proposed' });
+      writeChangeMeta(root2, 'c9', { 'x-status': 'proposed' });
       const focusCtx = {
         cwd: repo2,
         sessionManager: { getEntries: () => [{ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c9', taskId: '1' } }] },
@@ -434,7 +434,7 @@ describe('pause: a human reply arms the yield — teeth rest, the fence stays', 
     const root2 = join(repo2, 'openspec');
     try {
       mkdirSync(join(root2, 'changes', 'c9'), { recursive: true });
-      writeChangeMeta(root2, 'c9', { status: 'proposed' });
+      writeChangeMeta(root2, 'c9', { 'x-status': 'proposed' });
       const focusCtx = {
         cwd: repo2,
         sessionManager: { getEntries: () => [{ type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c9', taskId: '1' } }] },
@@ -499,7 +499,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
 
   test('teeth: the first rung advances by the gate\'s own word', async () => {
     const { fire } = freshGate();
-    writeChangeMeta(root, 'g1', { schema: 'runway', status: 'proposed' });
+    writeChangeMeta(root, 'g1', { schema: 'runway', 'x-status': 'proposed' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g1'));
     const reason = (result as { reason: string }).reason;
     assert.match(reason, /⛔ focused change is not approved/u);
@@ -509,7 +509,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
   test('teeth: a declared artifact advances by its verb', async () => {
     const { fire } = freshGate();
     mkdirSync(join(root, 'changes', 'g2'), { recursive: true });
-    writeChangeMeta(root, 'g2', { schema: 'runway', status: 'proposed', granted: 'brief' });
+    writeChangeMeta(root, 'g2', { schema: 'runway', 'x-status': 'proposed', 'x-granted': 'brief' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g2'));
     const reason = (result as { reason: string }).reason;
     assert.match(reason, /advance: eospec approve/u);
@@ -518,7 +518,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
   test('archive guard: gated change advances, legacy stays byte-identical', async () => {
     const { fire } = freshGate();
     mkdirSync(join(root, 'changes', 'g3'), { recursive: true });
-    writeChangeMeta(root, 'g3', { schema: 'runway', status: 'proposed' });
+    writeChangeMeta(root, 'g3', { schema: 'runway', 'x-status': 'proposed' });
     const gated = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'openspec archive g3 -y' } },
@@ -527,7 +527,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     const gatedReason = (gated as { reason: string }).reason;
     assert.match(gatedReason, /advance: eospec approve/u);
     // the legacy change (no schema) keeps the byte-matched copy
-    writeChangeMeta(root, 'l1', { status: 'proposed' });
+    writeChangeMeta(root, 'l1', { 'x-status': 'proposed' });
     const legacy = await fire(
       'tool_call',
       { toolName: 'bash', input: { command: 'openspec archive l1 -y' } },
@@ -546,7 +546,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
 
   test('bash is never path-exempt — the matcher law holds for openspec paths too', async () => {
     const { fire } = freshGate();
-    writeChangeMeta(root, 'g1', { schema: 'runway', status: 'proposed' });
+    writeChangeMeta(root, 'g1', { schema: 'runway', 'x-status': 'proposed' });
     // the docs exemption is edit/write drafting; a bash call's path
     // enumeration is never exemption-eligible (exemptions.ts: bash excluded
     // by construction) — so staging under openspec/ still hits the teeth

@@ -390,7 +390,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const { slug, root, tool, at } = state.pendingCreation;
       state.pendingCreation = undefined;
       if (exists(join(root, 'changes', slug))) {
-        writeChangeMeta(root, slug, { status: 'proposed', created_by: 'assistant' }, { onlyIfAbsent: true });
+        writeChangeMeta(root, slug, { 'x-status': 'proposed', 'x-created_by': 'assistant' }, { onlyIfAbsent: true });
         appendFact(FACT.creationStamped, { change: slug, tool, at });
       }
     }

@@ -163,7 +163,7 @@ if (command === 'approve') {
   }
   const pending = pendingAct(root, focused, resolution.schema, grantedSet(meta));
   if (!pending) {
-    if (!meta.validated) {
+    if (!meta['x-validated']) {
       const verdict = schemaVerdictLine(resolution.schema);
       console.error(`all artifacts granted — next: tick '${verdict ?? 'the verdict'}' then: eospec close`);
       process.exit(1);
@@ -193,7 +193,7 @@ if (command === 'close') {
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     // ungated room: nothing to walk — close IS the judgment
     const at = utcNowStamp();
-    writeChangeMeta(root, focused, { status: 'approved', approved_at: at, validated: at, validated_at: at });
+    writeChangeMeta(root, focused, { 'x-status': 'approved', 'x-approved_at': at, 'x-validated': at, 'x-validated_at': at });
     console.log(`closed ${focused} · ungated — approved, validated · archiving`);
     const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
     if (archive.status === 0) {
@@ -207,7 +207,7 @@ if (command === 'close') {
     process.exit(1);
   }
   const verdict = schemaVerdictLine(resolution.schema);
-  if (verdict && !meta.validated) {
+  if (verdict && !meta['x-validated']) {
     const bearer = receiptArtifactFor(resolution.schema);
     const ledger = bearer ? join(root, 'changes', focused, bearer.generates) : undefined;
     const unticked = ledger && existsSync(ledger)
@@ -219,7 +219,7 @@ if (command === 'close') {
     }
   }
   const at = utcNowStamp();
-  writeChangeMeta(root, focused, { validated: at, validated_at: at });
+  writeChangeMeta(root, focused, { 'x-validated': at, 'x-validated_at': at });
   console.log(`closed ${focused} · validated · archiving`);
   const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
   if (archive.status === 0) {
