@@ -8,14 +8,14 @@
 # the point of the gate.
 #
 #   ./example/try.sh          (or: just try)
-#   GATE=/path/to/pios-gate ./example/try.sh    # override the binary
+#   GATE=/path/to/eospec ./example/try.sh    # override the binary
 set -u
 
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$HERE/.." && pwd)
-GATE=${GATE:-"$ROOT/bin/pios-gate"}
+GATE=${GATE:-"$ROOT/bin/eospec"}
 if [ ! -x "$GATE" ]; then
-  echo "gate not found: $GATE  (set GATE=/path/to/pios-gate)" >&2
+  echo "gate not found: $GATE  (set GATE=/path/to/eospec)" >&2
   exit 2
 fi
 

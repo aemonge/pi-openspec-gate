@@ -5,8 +5,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync,
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const WRAPPER = join(import.meta.dirname, '..', 'bin', 'pios-gate');
-const ALIAS = join(import.meta.dirname, '..', 'bin', 'pi-openspec-gate');
+const WRAPPER = join(import.meta.dirname, '..', 'bin', 'eospec');
 
 type Repo = { dir: string; fakeDir: string; log: string };
 
@@ -158,14 +157,13 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
     const fakeDir = join(dir, 'fakebin');
     mkdirSync(fakeDir);
     writeFileSync(join(fakeDir, 'openspec'), '#!/bin/sh\nexit 0\n', { mode: 0o755 });
-    // package copy: the real shims + the real .js companions
+    // package copy: the real shim + the real .js companions
     const repoBin = join(import.meta.dirname, '..', 'bin');
-    for (const f of ['gate-lib.js', 'pi-openspec-gate', 'pi-openspec-gate.js', 'pios-gate', 'pios-gate.js']) {
+    for (const f of ['gate-lib.js', 'eospec', 'eospec.js']) {
       copyFileSync(join(repoBin, f), join(pkgBin, f));
     }
-    // npm-style symlinks
-    symlinkSync(join(pkgBin, 'pios-gate'), join(linkDir, 'pios-gate'));
-    symlinkSync(join(pkgBin, 'pi-openspec-gate'), join(linkDir, 'pi-openspec-gate'));
+    // npm-style symlink
+    symlinkSync(join(pkgBin, 'eospec'), join(linkDir, 'eospec'));
     mkdirSync(join(dir, 'openspec', 'changes'), { recursive: true });
 
     const viaLink = (name: string, args: string[]) =>
@@ -174,12 +172,11 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
         env: { ...process.env, PATH: `${fakeDir}:${process.env.PATH}` },
         encoding: 'utf8',
       });
-    const room = viaLink('pios-gate', ['focus']);
-    assert.equal(room.status, 0, `wrapper through npm link: ${room.stderr}`);
+    const room = viaLink('eospec', ['focus']);
+    assert.equal(room.status, 0, `eospec through npm link: ${room.stderr}`);
     assert.match(room.stdout, /nothing pending/);
-    const usage = viaLink('pi-openspec-gate', ['--help']);
-    assert.notEqual(usage.status, 0); // usage error — but NOT MODULE_NOT_FOUND
-    assert.doesNotMatch(usage.stderr, /Cannot find module/);
+    const passthrough = viaLink('eospec', ['--version']);
+    assert.equal(passthrough.status, 0, 'passthrough works through the link');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

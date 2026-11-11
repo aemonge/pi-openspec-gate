@@ -1,4 +1,4 @@
-# pi-openspec-gate gates and release.
+# eospec gates and release.
 
 # Static gate: the vocabulary law (permission words are forbidden here).
 lint:
@@ -25,5 +25,5 @@ publish VERSION: lint test build
      if [ "$v" = "{{VERSION}}" ]; then echo "already at {{VERSION}}, resuming"; \
      else npm version {{VERSION}} --message 'chore(release): v%s'; fi
     npm publish --access public
-    npm install -g @aemonge-dev/pi-openspec-gate@{{VERSION}}
+    npm install -g @aemonge-dev/eospec@{{VERSION}}
     pi list

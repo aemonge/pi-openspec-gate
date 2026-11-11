@@ -1,14 +1,14 @@
 {
-  "name": "@aemonge-dev/pi-openspec-gate",
+  "name": "@aemonge-dev/eospec",
   "version": "0.9.0",
-  "description": "Declared-work gate for Pi: accounting at the tool-call boundary — every mutation is exempt-recorded, attributed to a focused change, declared by the human, or blocked with remedies. Never permission; never a renderer; never a prompt. The walk is two words — aim, go; the schema carries the stages (x- tags), never the code.",
+  "description": "eospec — openspec, extended. Three human verbs (focus, approve, close) over openspec's new/archive, plus a Pi extension that accounts every mutating tool call: allowed by path, attributed to the aimed change, declared by the human, or refused with instructions.",
   "type": "module",
   "license": "MIT",
   "keywords": [
     "pi-package",
     "pi-extension",
     "openspec",
-    "gate",
+    "eospec",
     "accounting"
   ],
   "engines": {
@@ -26,8 +26,7 @@
     "justfile"
   ],
   "bin": {
-    "pi-openspec-gate": "bin/pi-openspec-gate",
-    "pios-gate": "bin/pios-gate"
+    "eospec": "bin/eospec"
   },
   "scripts": {
     "test": "node --test --experimental-strip-types test/*.test.ts"
@@ -42,10 +41,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aemonge/pi-openspec-gate.git"
+    "url": "git+https://github.com/aemonge/eospec.git"
   },
   "bugs": {
-    "url": "https://github.com/aemonge/pi-openspec-gate/issues"
+    "url": "https://github.com/aemonge/eospec/issues"
   },
-  "homepage": "https://github.com/aemonge/pi-openspec-gate#readme"
+  "homepage": "https://github.com/aemonge/eospec#readme"
 }

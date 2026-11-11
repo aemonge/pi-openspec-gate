@@ -23,7 +23,7 @@ import {
 } from '../src/schema.ts';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
-const WRAPPER = join(REPO_ROOT, 'bin', 'pios-gate');
+const WRAPPER = join(REPO_ROOT, 'bin', 'eospec');
 
 // ── parser: the full vocabulary in one schema ──────────────────────────
 

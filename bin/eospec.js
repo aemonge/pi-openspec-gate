@@ -1,9 +1,6 @@
 /**
  * eospec — openspec, extended: three words, then openspec.
  *
- * (bin file still named pios-gate.js until the package cut; every
- * teaching string below already speaks the final name.)
- *
  *   eospec focus <change>   aim the room at a change
  *   eospec focus            the room + every change, one line each
  *   eospec approve          approve the next pending step of the aim

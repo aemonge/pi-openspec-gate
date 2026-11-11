@@ -4,7 +4,7 @@
  * A change's `.openspec.yaml` carries flat `key: value` lines. The gate READS
  * `status` (proposed|approved|…) and `validated`; it WRITES only the creation
  * stamp (`x-status: proposed`, `x-created_by: assistant`) for creations it
- * witnessed as tool calls. The human terminal (bin/pi-openspec-gate) writes
+ * witnessed as tool calls. The human terminal (eospec close) writes
  * `x-status: approved` / `x-validated`. Approval is unreachable from assistant
  * tooling because the gate blocks any tool-call invocation of the CLI
  * (approval-touch guard, runs before every other decision).

@@ -1,5 +1,5 @@
 /**
- * pi-openspec-gate — declared-work gate for Pi.
+ * eospec — declared-work gate for Pi.
  *
  * Accounting only, never permission: another layer owns permission; this gate
  * owns declaredness. Every mutating tool call must be one of:
