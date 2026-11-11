@@ -1,6 +1,6 @@
 name: spec
 version: 8
-x-declares: [walk the spec, skip the spec]
+x-declares: [start the spec, skip the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
   comes before any spec is started. Hand-off is always the human's
@@ -21,7 +21,7 @@ description: "Coding runs in one of two modes — human-coder assisted
   change that learned something. x- tags declare the human gates that
   eospec enforces; openspec itself strips them silently, so
   the gate validates its own tags. The declared phrases are two doors:
-  "skip the spec" lands the next mutation as declared work; "walk the
+  "skip the spec" lands the next mutation as declared work; "start the
   spec" tells the agent to run the ceremony — create, aim, draft — which
   needs no declaration; approvals stay human-terminal either way."
 artifacts:

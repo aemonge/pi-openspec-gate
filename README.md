@@ -11,7 +11,7 @@ Each call lands in exactly one of four buckets:
   snapshot); the call proceeds and a receipt (tool · paths · UTC) lands in
   that change's ledger
 - **declared** — you say a phrase the schema declares; the shipped `spec`
-  schema declares two doors: **"walk the spec"** — run the ceremony
+  schema declares two doors: **"start the spec"** — run the ceremony
   (create, aim, draft — that part needs no declaration) — and
   **"skip the spec"** — land the next mutation as declared work, one
   debt line in `openspec/bare-work.md`

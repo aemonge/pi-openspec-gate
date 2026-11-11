@@ -13,8 +13,8 @@ words: aim once (`eospec focus lab-run`), `eospec approve` at each step,
 | 3 | `3-plan.md` | requires `investigate` · `x-unlocks: [writes]` — **the docs→code boundary** · six declared sections |
 | 4 | `4-execute.md` | requires `plan` · `x-receives-receipts` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
 
-Plus schema-level `x-declares: [walk the spec, skip the spec]` — two
-doors: "walk the spec" runs the ceremony; "skip the spec" lands one
+Plus schema-level `x-declares: [start the spec, skip the spec]` — two
+doors: "start the spec" runs the ceremony; "skip the spec" lands one
 mutation as declared work.
 
 **The research window**: with a change aimed on this schema, research
@@ -71,7 +71,7 @@ pi                               # start a session
 In-session checklist:
 
 1. `write src/anything.ts` with no aim → refused with all three remedies
-2. Say a phrase the schema `x-declares` — **"walk the spec"** runs the
+2. Say a phrase the schema `x-declares` — **"start the spec"** runs the
    ceremony (create, aim, draft — never gated); **"skip the spec"**
    lands exactly one mutation as declared work (human words only) → one
    debt line in `openspec/bare-work.md`

@@ -255,10 +255,10 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const base = blockUnaccounted();
     assert.equal(base, EXPECTED_BASE_COPY, 'base copy pinned');
     assert.ok(!base.includes('declare:'), 'no declare line without declared phrases');
-    const withPhrases = blockUnaccounted({ declares: ['skip the spec', 'walk the spec'] });
+    const withPhrases = blockUnaccounted({ declares: ['skip the spec', 'start the spec'] });
     assert.ok(
       withPhrases.includes(
-        'declare: relay to the human — their reply says one of "skip the spec" · "walk the spec"; a declared phrase lands the next mutation as declared work — an assistant\'s own message never declares — while opening a change and drafting needs no phrase at all (aim: eospec focus <slug>; the walk is below)',
+        'declare: relay to the human — their reply says one of "skip the spec" · "start the spec"; a declared phrase lands the next mutation as declared work — an assistant\'s own message never declares — while opening a change and drafting needs no phrase at all (aim: eospec focus <slug>; the walk is below)',
       ),
       'exact phrases, sorted, SPEAKER named, doors taught — relay, never self-declare',
     );
