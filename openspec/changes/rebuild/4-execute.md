@@ -201,7 +201,7 @@
       started_at: 2026-11-11T12:56:00Z · ended_at: 2026-11-11T12:59:00Z · total: 3m · check: ✓ precedence test via fake XDG global · paths: src/schema.ts, test/schema.test.ts
 - [x] fix(room): next-step is approval-aware; fix(scan): locals shadow
       globals
-      hash:
+      hash: 3473038
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 

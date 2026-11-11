@@ -298,13 +298,13 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const { fire, ctx } = freshGate();
     const result = (await fire(
       'tool_call',
-      { toolName: 'bash', input: { command: 'pwd && ls -la && python3 --version && which python3' } },
+      { toolName: 'bash', input: { command: 'pwd && ls -la && python3 script.py --data x && which python3' } },
       ctx,
     )) as { block?: boolean; reason?: string };
     assert.equal(result?.block, true);
     assert.match(
       result!.reason!,
-      /why:     segment 'python3 --version' is not classified read-only — read-only commands still pass/u,
+      /why:     segment 'python3 script.py --data x' is not classified read-only — read-only commands still pass/u,
     );
   });
 
