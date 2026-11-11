@@ -75,31 +75,31 @@
 
 ## Slice 6 — docs
 
-- [ ] README rewritten: current truth only
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] CHANGELOG compressed: one pre-history paragraph + the 1.0 entry
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] example/README rewritten; schema.yaml v6; `<!-- slug -->` filled
+- [x] README rewritten: current truth only
+      started_at: 2026-11-11T11:10:00Z · ended_at: 2026-11-11T11:16:00Z · total: 6m · check: ✓ two halves, three words, room file + authority law, real spec schema, plain facts, current config · paths: README.md
+- [x] CHANGELOG compressed: one pre-history paragraph + the 1.0 entry
+      started_at: 2026-11-11T11:16:00Z · ended_at: 2026-11-11T11:17:00Z · total: 1m · check: ✓ three vocabulary generations named honestly, archive cited as source of truth · paths: CHANGELOG.md
+- [x] example/README rewritten; schema.yaml v6; `<!-- slug -->` filled
       at creation stamp; try.sh on eospec
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] docs!: current truth only
-      hash:
+      started_at: 2026-11-11T11:17:00Z · ended_at: 2026-11-11T11:26:00Z · total: 9m · check: ✓ mission-era checklist item died; v6 approval wording + eospec branding; slug fill implemented + tested (174/174) · paths: example/README.md, openspec/schemas/spec/schema.yaml, src/gate.ts, test/approval.test.ts
+- [x] docs!: current truth only
+      hash: 445bc2f
 
 ## Slice 7 — the parity lint
 
-- [ ] `just lint` parses docs fence + assertions + teaching strings,
+- [x] `just lint` parses docs fence + assertions + teaching strings,
       diffs against bin verbs + declared facts, fails on drift both
       directions; all green
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] feat(lint): doc↔cli parity law
-      hash:
+      started_at: 2026-11-11T11:28:00Z · ended_at: 2026-11-11T11:34:00Z · total: 6m · check: ✓ parity holds — 6 verbs, 12 facts, docs and source agree; one documented prose exemption (the human's room-file comment) · paths: tools/parity-lint.mjs, justfile
+- [x] feat(lint): doc↔cli parity law
+      hash: e32c746
 
 ## Slice 8 — release
 
-- [ ] version 1.0.0, tag, `just publish`
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] chore(release): 1.0.0
-      hash:
+- [x] version 1.0.0, tag, `just publish`
+      started_at: 2026-11-11T11:34:00Z · ended_at: 2026-11-11T11:35:00Z · total: 1m · check: ✓ version set + committed; the tag and publish are the human's hand (credentials + terminal) · paths: package.json
+- [x] chore(release): 1.0.0
+      hash: a2eafa3
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
@@ -468,3 +468,27 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:57:21Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:57:21Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T09:58:25Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T09:58:25Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T09:58:46Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T09:58:46Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T09:58:46Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T09:58:46Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:58:53Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:58:53Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:26Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:39Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:39Z
