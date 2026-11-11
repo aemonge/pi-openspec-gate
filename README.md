@@ -1,182 +1,73 @@
-# pi-openspec-gate
+# eospec
 
-Declared-work gate for Pi: accounting at the tool-call boundary. Every mutating
-tool call is exactly one of:
+openspec, extended. Two halves, one package:
 
-- **exempt** — path-scoped (`openspec/**`, docs, skills), always recorded
-- **attributed** — the session's openspec focus names an active change; a
-  receipt (tool · paths · UTC) lands in that change's `5-execution.md`
-- **declared** — the human says a phrase a schema declares (`x-declares`,
-  e.g. the shipped `mission` schema declares "action the mission" /
-  "execute the mission"); one visible debt line in
-  `openspec/bare-work.md`, then it proceeds (one-shot latch)
-- **blocked** — visible, byte-stable, state-aware: a stop directive, then
-  only remedies that are real in this state
+**The watcher** — a Pi extension that accounts every mutating tool call.
+Each call lands in exactly one of four buckets:
 
-```text
-⛔ unaccounted mutation — no active change
-   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human
-   why:     segment 'python3 --version' is not classified read-only — read-only commands still pass
-   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)
-   create:  openspec new change <slug> --schema spec
-   declare: relay to the human — their reply says one of "action the spec" · "execute the spec" (an assistant's own message never declares); recorded as declared work, proceeds
+- **allowed by path** — `openspec/**`, `docs/**`, `skills/**` are drafting
+  ground: they pass, recorded
+- **attributed** — the room is aimed at a change (the `openspec/.focus`
+  snapshot); the call proceeds and a receipt (tool · paths · UTC) lands in
+  that change's ledger
+- **declared** — you say a phrase the schema declares (the shipped `spec`
+  schema declares **"action the spec"** / **"execute the spec"**); one
+  visible debt line in `openspec/bare-work.md`, then one mutation proceeds
+- **refused** — with a stop directive and the exact remedy for this state:
+  aim a change, create one, or wait for your phrase
+
+It never judges quality — only that nothing happens silently. Read-only
+commands pass; memory writes are bookkeeping, not work; research tools
+open only when the schema's approval window says so.
+
+**The CLI** — three words over openspec's `new`/`archive`:
+
+```sh
+eospec focus <change>   # aim the room at a change
+eospec focus            # the room + every change, one line each
+eospec approve          # approve the next pending step of the aim
+eospec close            # tick-checked close: validate, archive, release
+eospec -- <args>        # everything after -- is openspec, verbatim
 ```
 
-Never permission, never a renderer, never a prompt: another layer owns
-trust; this gate owns declaredness. `unknown = mutating` is a fail-safe,
-not a judgment. Change entry (`openspec new` / `init`) is never gated.
-Subagents inherit the parent's focus — federated accounting. Memory tools
-are instruments: ungated, recorded, never blocked. Blocks are state-aware:
-the stop directive opens every one, each remedy names its exact instrument,
-the focus line disappears when no change exists to focus, the create line
-names the resolvable schemas instead of a placeholder, a refused bash
-compound names its offending segment (read-only commands still pass), the
-declare line names the SPEAKER — relay to the human, whose reply says one
-of the exact `x-declares` phrases (an assistant's own message never
-declares; a phrase in assistant text is noticed and the next block carries
-the correction — the built-in "do it" alias is retired) — and subagent
-sessions get a relay-upward line.
+Anything else — `new`, `archive`, `validate`, typos — runs openspec
+verbatim, exit code intact. `approve` and `close` are human-terminal:
+the watcher refuses any assistant tool call that names them.
 
-## The shipped `mission` schema
+## The room file
 
-One human-validatable value slice as a five-step flow — **idea →
-proposition → proposal → plan → execution**. Approvals flow down step by
-step; evidence flows up inside each; the claim born at step 2 (`Claim:`
-one testable, falsifiable sentence) is judged by step 5's final
-Human-validation checkbox.
-
-The schema declares the gates; the gate enforces them:
+`openspec/.focus` — one active change per room, flat yaml:
 
 ```yaml
-name: mission
-version: 1
-x-declares: [action the mission, execute the mission, action the job, execute the job]
-artifacts:
-  - id: proposition
-    generates: 2-proposition.md
-    x-requires-approval: [idea]
-    x-lines: [Claim]
-  - id: execution
-    generates: 5-execution.md
-    x-requires-approval: [plan]
-    x-verdict-line: Human validation
-    x-receives-receipts: true
-    x-completes: approved
-    x-unlocks-source: true
+# one active change per room — eospec writes, verbs refresh
+change: rebuild
+artifact-name: 4-execute.md
+artifact-idx: 4/4
+task: 4/12
+next-step: eospec approve
 ```
 
-openspec strips unknown `x-` fields silently (non-strict schema); the gate
-is their only consumer and validates them loudly. Schemas without tags get
-no phase gates — legacy single-approve behavior. The vocabulary in full —
-`x-declares` (the human's declaration phrases), `x-requires-approval` (grants), `x-requires-written` (evidence: the listed
-artifacts' files must be on disk before this one drafts — existence, not
-approval), `x-unlocks` (capability classes this grant opens: `research`,
-`writes`; `x-unlocks-source: true` is the legacy alias for `[writes]`),
-`x-sections` (bare or rich, gating an artifact’s own sections
-with `x-requires-written` / `x-requires-approval`), `x-verdict-line`,
-`x-receives-receipts`, `x-completes` — is data; the
-engine hardcodes none of it. Schemas resolve project-local first
-(`<repo>/openspec/schemas/`), then openspec's global home
-(`~/.local/share/openspec/schemas/`), then `~/.config/openspec/schemas/`.
-Dependencies point to earlier artifacts only (declaration sequence is
-grant sequence); self- or forward-references fail loudly at parse. Verbs,
-filenames, verdicts, unlock points, and declaration phrases are schema
-data.
+A snapshot, never the truth — the change's meta, the schema, and the
+artifact files decide. Every verb re-renders it; `close` deletes it.
 
-## Phase gates
+## Schemas
 
-Creating artifact N+1 blocks until artifact N bears a human grant, and
-declared sections/lines must exist at birth. Evidence dependencies
-(`x-requires-written`) gate creation on file existence — no grant needed,
-only the listed artifacts on disk — and a grant refuses to stamp if
-declared evidence vanished after its own grant. The first artifact
-drafts free; existing files stay editable (receipts flow). `status:
-approved` is written only when every artifact is granted — attribution
-is still not approval.
-
-```sh
-pios-gate <slug>                      # aim — focus a change
-pios-gate go                          # advance — stamp the next step (archive after confirm)
-pios-gate list                        # the cockpit — every change, next acts
-pios-gate act                         # the aim's act in one line (what renderers relay)
-pios-gate confirm                     # the verdict — after you tick it
-
-# more:
-pios-gate act <slug>                  # a change's act in one line
-pios-gate inspect <slug>              # one change, verbose (artifacts, stamps, structure)
-pios-gate grant <slug> <artifact-id>  # stamp by name: id, row#, file, or artifact/section path
-pios-gate next <slug>                 # the advance without aiming
-pios-gate confirm <slug>              # the verdict, named
-pios-gate focus [slug]                # show or set the aim
-pios-gate approve <slug> [artifact-id] # legacy whole-change stamp (ungated schemas only)
-```
-
-Stamps are strictly next-step-only — you approve what you read
-(undrafted steps refuse), and `go` refuses to stamp steps missing
-declared structure. Every suggestion speaks the walk: `go` when the
-room is aimed, `done` to close after the verdict is ticked. Any
-tool-call attempt on the stamp surface — go or done — is itself
-blocked: approval is a human act. **The aim is per room, single-writer**
-(`openspec/.focus`): two terminals aiming different changes = last aim
-wins, and every echo tells you which room is armed. **The pause**: say
-`pause 30m` (grammar `X{h,m,s}`, ceiling `approval.pauseCeiling`, default
-4h) in the session and the work fences rest — approval teeth, phase
-gates, research window, archive guard —
-while the touch guard, attribution, and receipts stay absolute, and the
-unaccounted block still refuses (no landing place, no pause). `resume`
-ends it early; the permit dies with the session; only a human reply can
-arm it. **The research window**: when a focused change's schema declares
-`x-unlocks: [research]` on an artifact, research instruments block until
-that artifact is granted — the schema declares *when*, the config declares
-*what* (tools + bash command verbs; web/docs tools by default, `graphify`
-here). Research without a focused change is also gated inside any repo
-with a local `openspec/` — void research is unaccounted work, and it
-blocks with the same state-aware remedies (focus → create → declare);
-outside an openspec repo research stays free (the gate is inert there).
-
-```json
-"approval": { "enforce": true, "humanGateSteps": true,
-              "archiveGuard": true, "stampCreations": true,
-              "phaseGates": true },
-"unlocks": {
-  "research": {
-    "tools": ["web_explore", "web_search", "web_fetch", "resolve-library-id", "query-docs"],
-    "commands": ["graphify"]
-  }
-}
-```
-
-## No prompts
-
-The extension injects nothing into LLM context: no `context` handler, no
-protocol block, no shipped skills. Every remedy the gate needs rides its
-own block reasons; every flow word it acts on comes from schema `x-` tags
-in data. Enforce first, explain in the README — the teaching can never
-drift from the teeth because the teeth are all there is.
-
-## Try it — the shipped example
-
-```sh
-./example/try.sh        # or: just try
-```
-
-A self-verifying walkthrough in a scratch repo: the negatives first
-(grant sequence, approve-what-you-read, structure refusal), then the
-four-grant lifecycle of the v5 `spec` schema — focus once, four `go`
-presses — to `status: approved`, the verdict tick, and `done` —
-asserting every step. Copy `example/openspec/schemas/spec` into your
-repo as the starting point. See `example/README.md`.
+Changes declare a schema; the schema declares the human gates as data
+(`x-` tags), and the gate enforces them: approve step N before step N+1
+drafts, sections present at stamp time, receipts flowing into the
+declared ledger, one human-verdict line closing the walk. The shipped
+example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
+— four steps (brainstorm → investigate → plan → execute), strict at the
+two boundaries humans own: spend at plan, judge at the verdict. Copy it
+as your starting point and edit the yaml; the engine hardcodes nothing.
 
 ## Install
 
 ```bash
-pi install npm:@aemonge-dev/pi-openspec-gate            # personal
-pi install -l npm:@aemonge-dev/pi-openspec-gate         # project-scoped
-npm install -g @aemonge-dev/pi-openspec-gate             # pios-gate + alias
+pi install npm:@aemonge-dev/eospec        # the watcher (personal)
+pi install -l npm:@aemonge-dev/eospec     # …or project-scoped
+npm install -g @aemonge-dev/eospec        # the eospec bin
 ```
-
-The extension (session gate) and the terminal CLI are one package, two
-installs — run both and you're fully installed.
 
 ## Config (`config.json` beside `index.ts`)
 
@@ -192,47 +83,62 @@ installs — run both and you're fully installed.
                       "mem_save", "mem_update", "mem_delete",
                       "mem_save_prompt", "mem_session_summary",
                       "mem_session_end", "mem_capture_passive"],
-  "readOnlyTools": []
+  "readOnlyTools": [],
+  "approval": { "enforce": true, "humanGateSteps": true,
+                "archiveGuard": true, "stampCreations": true,
+                "phaseGates": true },
+  "unlocks": {
+    "research": {
+      "tools": ["web_explore", "web_search", "web_fetch", "resolve-library-id", "query-docs"],
+      "commands": ["graphify"]
+    }
+  }
 }
 ```
 
-Exemptions are path-scoped only, never fuzzy. `accountingTools` names
-instruments that pass ungated — the gate never gates its own layer, and
-memory writes are instruments: bookkeeping about the work, never the work.
-`readOnlyTools` merges over the built-in research set — the escape hatch
-for new research tools without a package release.
+Exemptions are path-scoped, never fuzzy. `accountingTools` are
+instruments that pass ungated — bookkeeping about the work, never the
+work. `readOnlyTools` merges over the built-in research set.
 
 ## Facts (session entries; any reader may consume, the gate never renders)
 
 | Fact | Meaning |
 |---|---|
-| `pi-openspec-gate.blocked.v1` | blocked: tool, paths, basis, UTC |
-| `pi-openspec-gate.declared.v1` | a human declaration consumed one mutation |
-| `pi-openspec-gate.attributed.v1` | mutation attributed to the focused change |
-| `pi-openspec-gate.exempt.v1` | path-exempt pass with category + paths |
-| `pi-openspec-gate.inherited.v1` | subagent inherited the parent's focus |
-| `pi-openspec-gate.instrument.v1` | allowlisted instrument passed |
-| `pi-openspec-gate.unapproved.v1` | unapproved change blocked |
-| `pi-openspec-gate.humangate.v1` | human-validation flip checked |
-| `pi-openspec-gate.creation-stamped.v1` | witnessed creation stamped proposed |
-| `pi-openspec-gate.phasegate.v1` | artifact gate: missing-approval / missing-sections |
+| `gate.blocked` | refused: tool, paths, basis, UTC |
+| `gate.declared` | a human phrase consumed one mutation |
+| `gate.attributed` | mutation attributed to the aimed change |
+| `gate.exempt` | path-allowed pass with category + paths |
+| `gate.inherited` | subagent inherited the parent's aim |
+| `gate.instrument` | allowlisted instrument passed |
+| `gate.unapproved` | unapproved-change refusal |
+| `gate.human-gate` | human-validation flip checked |
+| `gate.creation-stamped` | witnessed creation stamped |
+| `gate.phase-gate` | artifact gate: missing approval / sections |
+| `gate.self-declare` | assistant phrase noticed, not latched |
+| `gate.pause` | the pause permit's lifecycle |
+
+## Try it
+
+```sh
+./example/try.sh        # or: just try
+```
+
+A self-verifying walkthrough in a scratch repo: the refusals first, then
+the full four-step lifecycle to `status: approved`, the verdict tick,
+and the close — asserting every step.
 
 ## Development
 
 ```bash
-just lint      # vocabulary law: permission + flow words stay out of the gate
+just lint      # vocabulary law + doc↔CLI parity
 just test      # full suite (node:test, no deps)
-just build     # loader smoke + packed-artifact gates
+just build     # loader smoke + pack contents
 just publish <version>   # gates → bump+commit+tag → npm publish → global install
 ```
 
-The shipped `mission` example in one sentence: a mission is born free (idea), commits to a
-falsifiable claim (proposition), is signed as a deal (proposal), exposes
-its method and knowledge (plan), and earns its debrief (execution) — where
-the human's verdict upholds or refutes the claim it opened with. Write your own schema the same way: declare it. The full
-ledger — every change ever built, with receipts — lives in
+The full ledger — every change ever built, with receipts — lives in
 `openspec/changes/archive/`, and [CHANGELOG.md](CHANGELOG.md) is its
-human-readable front door.
+front door.
 
 ## License
 

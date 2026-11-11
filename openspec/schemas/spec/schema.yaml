@@ -1,5 +1,5 @@
 name: spec
-version: 5
+version: 6
 x-declares: [action the spec, execute the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -19,7 +19,7 @@ description: "Coding runs in one of two modes — human-coder assisted
   commit at Plan, judge at the verdict. Learnings live outside the
   flow in openspec/learnings/, read by every step, written by any
   change that learned something. x- tags declare the human gates that
-  pi-openspec-gate enforces; openspec itself strips them silently, so
+  eospec enforces; openspec itself strips them silently, so
   the gate validates its own tags."
 artifacts:
   - id: brainstorm
@@ -46,7 +46,7 @@ artifacts:
       the trade-off · pick-when — ONLY when genuine; manufacturing one is
       lying, not research). No recommendation, no ranking: the committed
       choice happens at Plan''s Workflow. Research instruments (web, docs,
-      graphify) are gated to this step — the grant that opens them is the
+      graphify) are gated to this step — the approval that opens them is the
       human''s.'
     requires:
       - brainstorm
@@ -70,7 +70,7 @@ artifacts:
       each Slice, checkbox Tasks as quick checkpoints, no per-Task
       commit) · Verification (deterministic checks, then the one
       human-only act, named) · History (commit subject, or
-      evidence-as-of-date). Depth scales with risk. This grant is the
+      evidence-as-of-date). Depth scales with risk. This approval is the
       docs→code boundary: writes unlock here.'
     requires:
       - investigate

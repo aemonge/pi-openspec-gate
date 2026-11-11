@@ -1,31 +1,32 @@
 # The example — a strong starting point for testing the gate
 
-A self-contained, self-verifying walkthrough of `pi-openspec-gate`, built
-on the **v5 `spec` schema** — four steps, strictness at the two
-boundaries humans own (spend at Plan, judge at the verdict). The walk is
-two words: aim once (`pios-gate lab-run`), then `pios-gate go` at each
-step:
+A self-contained, self-verifying walkthrough of eospec, built on the
+**v5 `spec` schema** — four steps, strictness at the two boundaries
+humans own (spend at plan, judge at the verdict). The walk is three
+words: aim once (`eospec focus lab-run`), `eospec approve` at each step,
+`eospec close` after your verdict:
 
 | # | artifact | gates declared |
 |---|---|---|
-| 1 | `1-brainstorm.md` | `x-sections: [Pain, Questions]` — drafts free, first grant |
+| 1 | `1-brainstorm.md` | `x-sections: [Pain, Questions]` — drafts free, first approval |
 | 2 | `2-investigate.md` | requires `brainstorm` · `x-unlocks: [research]` — **no structure: the journal is free** |
 | 3 | `3-plan.md` | requires `investigate` · `x-unlocks: [writes]` — **the docs→code boundary** · six declared sections |
 | 4 | `4-execute.md` | requires `plan` · `x-receives-receipts` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
 
 Plus schema-level `x-declares: [action the spec, execute the spec]`.
 
-**The research window**: with a change focused on this schema, research
+**The research window**: with a change aimed on this schema, research
 instruments (web/docs tools, and bash verbs named in config — `graphify`
-by default here) block until the investigate step is granted; research with no focused
-change blocks too inside any repo with a local `openspec/` — the same
-state-aware remedies (focus → create → declare) — because void research
-is unaccounted work. **The ledger anatomy** (in the templates, ungated):
-per-Slice checkpoint checkboxes with timing slots → a Commit checkbox
-whose `hash:` slot is the receipt (a tick without a hash is not done) →
-one final, flip-guarded Human validation carrying `surfaced:` routing
-to `openspec/learnings/debt.md`. Learnings live OUTSIDE the flow —
-topic-keyed files every step reads, any change may append.
+by default here) block until the investigate step is approved; research
+with no aimed change blocks too inside any repo with a local
+`openspec/` — the same state-aware remedies (focus → create → declare) —
+because void research is unaccounted work. **The ledger anatomy** (in
+the templates, ungated): per-Slice checkpoint checkboxes with timing
+slots → a Commit checkbox whose `hash:` slot is the receipt (a tick
+without a hash is not done) → one final, flip-guarded Human validation
+carrying `surfaced:` routing to `openspec/learnings/debt.md`. Learnings
+live OUTSIDE the flow — topic-keyed files every step reads, any change
+may append.
 
 ## Run it (nothing in this directory is modified)
 
@@ -33,10 +34,10 @@ topic-keyed files every step reads, any change may append.
 ./example/try.sh          # from the repo/package root — or: just try
 ```
 
-The script builds a scratch repo, runs the **negatives first** (an
-undrafted stamp refusal, a structure refusal, the verdict wall), then
-walks the full lifecycle — focus once, four `go` presses — to
-`status: approved`, and `done` to validated + archived — asserting
+The script builds a scratch repo, runs the **refusals first** (an
+undrafted-approval refusal, a structure refusal, the verdict wall), then
+walks the full lifecycle — aim once, four `approve` presses — to
+`status: approved`, and the close to validated + archived — asserting
 every step. Exit 0 = the gate works.
 
 ## Use it in your own repo
@@ -51,33 +52,30 @@ Schemas resolve project-local first (`<repo>/openspec/schemas/`), then
 openspec's global home (`~/.local/share/openspec/schemas/`), then
 `~/.config/openspec/schemas/` — so if the schema already lives in your
 global home, the copy step is optional. Dependencies must point to
-earlier artifacts (declaration sequence is grant sequence); self- or
+earlier artifacts (declaration sequence is approval sequence); self- or
 forward-references fail loudly at parse.
 
-## Test the extension side live (the tool-call gate)
+## Test the watcher live (the tool-call gate)
 
 The walkthrough above exercises the terminal CLI. The session gate is
 the other half:
 
 ```sh
 cd your-repo
-pi install -l /path/to/pi-openspec-gate    # local, unreleased tree
-pi                                        # start a session
+pi install -l /path/to/eospec    # local, unreleased tree
+pi                               # start a session
 ```
 
 In-session checklist:
 
-1. `write src/anything.ts` with no focus → blocked with all three remedies
+1. `write src/anything.ts` with no aim → refused with all three remedies
 2. Say a phrase the schema `x-declares` (the example schema: **"action the
    spec"** / **"execute the spec"** — human words only) → exactly one
    mutation proceeds, one debt line in `openspec/bare-work.md`
-3. Set the focus (`openspec_focus`) on your change → mutations attributed;
-   receipts land in the `x-receives-receipts` artifact when declared
-4. Try `bash: pios-gate go my-change` → **approval-touch blocked** — the
-   walk's advance is human-terminal, stamps are yours
-5. Create `2-drafted-requirements.md` while `idea` is ungranted →
-   phase-gate block naming the exact terminal command; grant it in your
+3. Aim your change (`eospec focus my-change`) → mutations attributed;
+   receipts land in the `x-receives-receipts` artifact while work runs
+4. Try `bash: eospec approve` → **refused** — approval is human-terminal,
+   stamps are yours
+5. Create `2-investigate.md` while `brainstorm` is unapproved →
+   phase-gate block naming the exact terminal command; approve it in your
    terminal, watch the same call pass
-
-The full harness proof is `npm test` — it drives the real gate handler
-against this schema, the shipped schemas, and the CLI end to end.
