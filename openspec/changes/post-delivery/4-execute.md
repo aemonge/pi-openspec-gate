@@ -88,16 +88,20 @@ the human read a stale room mid-walk (task "", draft 4/4).
 - [x] test/approval.test.ts:579 fixture path swaps off debt.md
       started_at: 2026-11-11T16:38:00Z · ended_at: 2026-11-11T16:38:10Z · total: <1m · check: ✓ skills.md carries the teeth assertion — path shape unchanged · paths: test/approval.test.ts
 
-- [ ] feat(schema): findings graduate — debt.md dies
-      hash:
+- [x] feat(schema): findings graduate — debt.md dies
+      hash: 2e7f980
       validation: human runs `bin/eospec focus` — the four parked changes list; learnings/ holds no ledger
 
 ## Slice 5 — the walk learns five steps
 
-- [ ] try.sh: the fifth-step states — findings-free close, then a findings-drafted walk, new approve press, verdict, close
-- [ ] README: room example block, schema description paragraph, the room-law sentences, the binary routing grammar
-- [ ] example README / narrated comments: "four approve presses" grows honestly
-- [ ] `just lint` green (vocabulary + parity), `npm test` green
+- [x] try.sh: the fifth-step states — findings-free close, then a findings-drafted walk, new approve press, verdict, close
+      started_at: 2026-11-11T16:39:00Z · ended_at: 2026-11-11T16:41:00Z · total: 2m · check: ✓ section 7 — hello-two: verdict routes F1 → post-delivery, ticked then drafted then approved then closed; 21 assertions pass · paths: example/try.sh
+- [x] README: room example block, schema description paragraph, the room-law sentences, the binary routing grammar
+      started_at: 2026-11-11T16:41:00Z · ended_at: 2026-11-11T16:41:20Z · total: <1m · check: ✓ room example now 4/5 with the law spelled out; five-step description with the conditional fifth · paths: README.md
+- [x] example README / narrated comments: "four approve presses" grows honestly
+      started_at: 2026-11-11T16:41:20Z · ended_at: 2026-11-11T16:41:30Z · total: <1m · check: ✓ v9, five steps (the fifth conditional); the findings-free four-press walk named as such · paths: example/README.md
+- [x] `just lint` green (vocabulary + parity), `npm test` green
+      started_at: 2026-11-11T16:41:30Z · ended_at: 2026-11-11T16:41:41Z · total: <1m · check: ✓ 190/190 · walkthrough 21/21 · parity holds · paths: —
 
 - [ ] docs(walk): the walk line learns five steps
       hash:
@@ -231,3 +235,15 @@ the human read a stale room mid-walk (task "", draft 4/4).
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T16:38:05Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:38:09Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:38:50Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T16:39:33Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T16:39:33Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-11T16:40:03Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-11T16:40:22Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:40:25Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:40:30Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:02Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-11T16:41:16Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:19Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T16:41:31Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:31Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:56Z

@@ -1,9 +1,11 @@
 #!/bin/sh
-# try.sh — the example walkthrough on the v5 spec schema.
+# try.sh — the example walkthrough on the v9 spec schema.
 #
 # Builds a scratch repo from this example, runs the negatives first, then
-# walks the four-step lifecycle — aim once, four approve presses — and the
-# verdict lifecycle to close. This directory is never modified.
+# walks a findings-free lifecycle — aim once, four approve presses, the
+# fifth never exists, the close skips it — and then a second delivery
+# whose verdict routes a finding to the fifth artifact: ticked, drafted,
+# approved, closed. This directory is never modified.
 # Every approve below is what a HUMAN types in their terminal — that is
 # the point of the gate.
 #
@@ -84,6 +86,26 @@ expect '— eospec close' focus
 expect_fail 'not closed — tick' close
 printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
 expect 'closed hello-gate · validated · archiving' close
+
+echo '7 ── a second delivery: findings route to the fifth artifact'
+C2=openspec/changes/hello-two
+mkdir -p "$WORK/openspec/changes/hello-two"
+printf 'schema: spec\nx-status: proposed\n' > "$C2/.openspec.yaml"
+printf '# Brainstorm\n\n## Pain\n\n## Questions\n' > "$C2/1-brainstorm.md"
+printf '# Investigate\n' > "$C2/2-investigate.md"
+printf '# Plan\n\n## Estimate\n\n## Skills\n\n## Workflow\n\n## Slices\n\n## Verification\n\n## History\n' > "$C2/3-plan.md"
+printf '# Execute\n\n- [ ] feat(walk): the finding surfaces\n      hash: abc1234\n- [ ] Human validation — response: · outcome: · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
+expect 'focused hello-two' hello-two
+expect 'approved hello-two · brainstorm' approve
+expect 'approved hello-two · investigate' approve
+expect 'approved hello-two · plan' approve
+expect 'all steps approved — status: approved' approve
+expect_fail 'not closed — tick' close
+printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
+printf '# Post-delivery\n\n## F1 — the walk needs a fifth step\n\n- from: slice 4 review\n- why here: the routing law needs its own risk pass\n- route: the fifth artifact designs it\n- risk: the walk grows ceremony\n\n- [x] design the fifth artifact\n- [x] feat(walk): post-delivery — the conditional fifth\n      hash: def5678\n\n- [x] Human validation — response: yes · outcome: pass\n' > "$C2/5-post-delivery.md"
+expect '→ eospec approve' focus
+expect 'approved hello-two · post-delivery · all steps approved — status: approved' approve
+expect 'closed hello-two · validated · archiving' close
 
 echo '8 ── the final state on disk'
 echo '── .openspec.yaml:'

@@ -44,13 +44,20 @@ the watcher refuses any assistant tool call that names them.
 # one active change per room — eospec writes, verbs refresh
 change: rebuild
 artifact-name: 4-execute.md
-artifact-idx: 4/4
+artifact-idx: 4/5
 task: 4/12
 next-step: eospec approve
 ```
 
-A snapshot, never the truth — the change's meta, the schema, and the
-artifact files decide. Every verb re-renders it; `close` deletes it.
+The law: `next-step` names the human's verb, always — `eospec approve`
+while anything pends, `eospec close` once all are granted; the draft
+rhythm and the verdict reminder live in the CLI echo and close's
+refusal. The `task:` line exists only when the artifact has checkboxes
+(no empty counters). The all-granted name follows the walk (the final
+artifact) while the counter follows the receipts (the ledger). The
+watcher re-renders on every gate-side touch; verbs re-render; `close`
+deletes it. A snapshot, never the truth — the change's meta, the
+schema, and the artifact files decide.
 
 ## Schemas
 
@@ -59,7 +66,9 @@ Changes declare a schema; the schema declares the human gates as data
 drafts, sections present at stamp time, receipts flowing into the
 declared ledger, one human-verdict line closing the walk. The shipped
 example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
-— four steps (brainstorm → investigate → plan → execute), strict at the
+— five steps (brainstorm → investigate → plan → execute →
+post-delivery — the fifth conditional: it exists only when the
+verdict's `surfaced:` line routes findings to it), strict at the
 two boundaries humans own: spend at plan, judge at the verdict. Copy it
 as your starting point and edit the yaml; the engine hardcodes nothing.
 Findings surfaced while delivering become appended slices in the same

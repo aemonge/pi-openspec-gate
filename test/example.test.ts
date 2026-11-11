@@ -86,7 +86,9 @@ describe('the example schema (spec)', () => {
       '— eospec close',
       'not closed — tick',
       'closed hello-gate · validated · archiving',
-      'passed: 12',
+      'approved hello-two · post-delivery · all steps approved — status: approved',
+      'closed hello-two · validated · archiving',
+      'passed: 21',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);
     }

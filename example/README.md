@@ -1,7 +1,8 @@
 # The example — a strong starting point for testing the gate
 
 A self-contained, self-verifying walkthrough of eospec, built on the
-**v5 `spec` schema** — four steps, strictness at the two boundaries
+**v9 `spec` schema** — five steps (the fifth conditional), strictness at
+the two boundaries
 humans own (spend at plan, judge at the verdict). The walk is three
 words: aim once (`eospec focus lab-run`), `eospec approve` at each step,
 `eospec close` after your verdict:
@@ -40,7 +41,8 @@ may append.
 
 The script builds a scratch repo, runs the **refusals first** (an
 undrafted-approval refusal, a structure refusal, the verdict wall), then
-walks the full lifecycle — aim once, four `approve` presses — to
+walks the full lifecycle — aim once, four `approve` presses on a
+findings-free change (the fifth never exists, the close skips it) — to
 `status: approved`, and the close to validated + archived — asserting
 every step. Exit 0 = the gate works.
 
