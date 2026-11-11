@@ -172,6 +172,32 @@ in a scratch repo) · `bin/eospec focus post-delivery` snapshot reads
 four lines and one verb. Then the ONE human-only act: tick
 `Human validation` in 4-execute.md — only a human reply ticks it.
 
+### Slice 6 — the /tmp/test findings
+
+amendment 2026-11-11: the human walked the live guide at /tmp/test and
+came back with three — the room tug-of-war (the npm global eospec
+1.1.0 survived the pi remove; terminal presses ran the old engine over
+the watcher's renders), the flip guard evaded by a tiny-anchor bracket
+flip (the agent ticked the verdict with a fabricated response and the
+fifth walked legally), and the exempt-touch room refresh guarded by a
+path match that could silently miss.
+
+- [ ] flip guard: the check runs on the edit's post-state — disk with
+      oldText replaced (split flips included)
+- [ ] grantArtifact: x-requires-verdict enforced at the stamp — the
+      grant refuses while the bearer's verdict is unticked
+- [ ] exempt-touch room refresh: the path-match condition removed
+- [ ] gate.test.ts: split-flip caught by post-state · grant refuses
+      unticked verdict, grants ticked
+- [ ] VALIDATION.md: P14 stale-bin symptom · P15 prose is never truth
+
+commit: fix(gate): the /tmp/test findings — post-state flip guard,
+      stamp-time verdict, unconditioned refresh
+      hash:
+post-commit human validation: re-run the guide tail at /tmp/test (npm
+      rm -g the stale copy first) — the room stays one law, the split
+      flip refuses, the fabricated verdict dies at the grant
+
 ## History
 
 evidence 2026-11-11 — investigation receipts in 2-investigate.md; engine

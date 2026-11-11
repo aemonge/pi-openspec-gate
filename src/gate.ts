@@ -302,6 +302,16 @@ export function flipsVerdictLine(text: string, verdictLine: string): boolean {
   return false;
 }
 
+/** The edit's post-state: the file on disk with oldText replaced by
+ *  newText. A split flip — brackets in one edit, prose in another —
+ *  never carries the ticked line in a single payload, but the file it
+ *  lands on tells the truth. Falls back to newText when the anchor
+ *  is not on disk (the edit will fail anyway). */
+export function editPostState(disk: string, oldText: string, newText: string): string {
+  if (oldText && disk.includes(oldText)) return disk.replace(oldText, newText);
+  return disk + '\n' + newText;
+}
+
 /** A declared H2 section heading, present anywhere in the text. Headings
  *  are prose, not identifiers — the match is case-insensitive. */
 export function sectionHeadingPresent(text: string, section: string): boolean {
@@ -595,10 +605,13 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
 
     // 0.7 human-gate flip guard — a [x] flip on the schema-declared
     // verdict line needs a human act; runs before exempt (change files
-    // are openspec/**)
+    // are openspec/**). The check runs on the edit's POST-STATE — disk
+    // with oldText replaced — because a split flip (brackets in one
+    // edit, prose in another) never carries the ticked line whole.
     if (approval.humanGateSteps && (toolName === 'edit' || toolName === 'write')) {
       const record = input as Record<string, unknown> | null;
       const newText = typeof record?.newText === 'string' ? record.newText : '';
+      const oldText = typeof record?.oldText === 'string' ? record.oldText : '';
       const content = typeof record?.content === 'string' ? record.content : '';
       const flipSlug =
         paths.map((p) => CHANGE_FROM_PATH_PATTERN.exec(p)?.[1]).find(Boolean) ??
@@ -606,19 +619,27 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const flipMeta = flipSlug && openspecRoot ? readChangeMeta(openspecRoot, flipSlug) : undefined;
       const flipResolution = flipMeta && openspecRoot ? resolveChangeSchema(openspecRoot, flipMeta.raw.schema) : undefined;
       const verdictLine = flipResolution?.ok ? schemaVerdictLine(flipResolution.schema) : undefined;
-      if (
-        verdictLine &&
-        ((newText && flipsVerdictLine(newText, verdictLine)) || (content && flipsVerdictLine(content, verdictLine)))
-      ) {
-        const meta = flipMeta;
-        if (meta?.validated) {
-          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'meta', at: utcNow() });
-        } else if (state.validationPermit) {
-          state.validationPermit = false; // latch consumed: exactly one flip
-          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'valid-latch', at: utcNow() });
-        } else {
-          appendFact(FACT.humangate, { tool: toolName, paths, permit: 'none', at: utcNow() });
-          return { block: true, reason: BLOCK_HUMANGATE };
+      if (verdictLine) {
+        let post = content || newText;
+        const target = paths[0];
+        if (toolName === 'edit' && target && exists(target)) {
+          try {
+            post = editPostState(readFileSync(target, 'utf8'), oldText, newText);
+          } catch {
+            post = newText; // unreadable disk: the payload check still applies
+          }
+        }
+        if (flipsVerdictLine(post, verdictLine)) {
+          const meta = flipMeta;
+          if (meta?.validated) {
+            appendFact(FACT.humangate, { tool: toolName, paths, permit: 'meta', at: utcNow() });
+          } else if (state.validationPermit) {
+            state.validationPermit = false; // latch consumed: exactly one flip
+            appendFact(FACT.humangate, { tool: toolName, paths, permit: 'valid-latch', at: utcNow() });
+          } else {
+            appendFact(FACT.humangate, { tool: toolName, paths, permit: 'none', at: utcNow() });
+            return { block: true, reason: BLOCK_HUMANGATE };
+          }
         }
       }
     }
@@ -750,16 +771,13 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         paths,
         at: utcNow(),
       });
-      // a touch inside the aimed change's files refreshes the room too —
-      // drafting is exempt, but the snapshot stays live (1.0 contract).
-      // Refresh, never create: an absent room is the birth law's to aim.
+      // any exempt touch refreshes the aimed room — the snapshot is the
+      // aim's truth, whatever file the touch was on (1.0 contract:
+      // re-rendered by every gate-side touch). Refresh, never create:
+      // an absent room is the birth law's to aim.
       if (openspecRoot && exists(join(openspecRoot, '.focus'))) {
         const roomFocus = activeFocus(ctx.sessionManager, cwd);
-        if (
-          roomFocus &&
-          focusIsActive(roomFocus, openspecRoot) &&
-          paths.some((p) => p.includes(`/changes/${roomFocus.change}/`))
-        ) {
+        if (roomFocus && focusIsActive(roomFocus, openspecRoot)) {
           try {
             writeFocusSnapshot(openspecRoot, roomFocus.change);
           } catch {

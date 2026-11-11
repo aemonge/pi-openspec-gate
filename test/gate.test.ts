@@ -6,6 +6,7 @@ import { after, before, describe, test } from 'node:test';
 
 import { createGate, BLOCK_MESSAGE, BLOCK_APPROVAL_TOUCH, blockUnaccounted } from '../src/gate.ts';
 import { appendAttributionReceipt, appendDebtLine } from '../src/attribution.ts';
+import { grantArtifact as grantArtifactBin } from '../bin/gate-lib.js';
 import type { GateConfig } from '../src/config.ts';
 import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 
@@ -497,6 +498,93 @@ describe('receipts land once; the room refreshes on touches', () => {
       );
       room = readFileSync(join(openspec, '.focus'), 'utf8');
       assert.match(room, /task: 2\/2/, 'an exempt drafting touch keeps the room live');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+function verdictFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'verdict-fix-'));
+  const openspec = join(root, 'openspec');
+  mkdirSync(join(openspec, 'schemas', 'verdict'), { recursive: true });
+  writeFileSync(
+    join(openspec, 'schemas', 'verdict', 'schema.yaml'),
+    'name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n',
+    'utf8',
+  );
+  mkdirSync(join(openspec, 'changes', 'c1'), { recursive: true });
+  writeFileSync(join(openspec, 'changes', 'c1', '.openspec.yaml'), 'schema: verdict\nx-granted: ledger\n', 'utf8');
+  return { root, changeDir: join(openspec, 'changes', 'c1') };
+}
+
+const VERDICT_GATE_CONFIG = {
+  enabled: true,
+  approval: { enforce: false, humanGateSteps: true, archiveGuard: false, stampCreations: false, phaseGates: true },
+  exempt: [{ prefix: '**/openspec/**', category: 'openspec-artifacts' }],
+};
+
+describe('the /tmp/test findings', () => {
+  test('flip guard: a tiny-anchor bracket flip is caught by the post-state', async () => {
+    const { root, changeDir } = verdictFixture();
+    const ledger = '# Execute\n\n- [ ] Human validation — response: · outcome: · surfaced:\n';
+    writeFileSync(join(changeDir, '4-ledger.md'), ledger, 'utf8');
+    const fake = makeFakePi();
+    createGate(fake.pi as never, VERDICT_GATE_CONFIG as never);
+    const ctx = {
+      cwd: root,
+      sessionManager: {
+        getEntries: () => [
+          { type: 'custom', customType: OPENSPEC_FOCUS_ENTRY_TYPE, data: { mode: 'task', change: 'c1', taskId: '1' } },
+        ],
+      },
+    };
+    // the anchor carries only the bracket + a fragment — the declared
+    // verdict text never appears whole in the payload; the post-state
+    // (disk with the replacement) is what flips
+    const blocked = await fake.fire(
+      'tool_call',
+      {
+        toolName: 'edit',
+        input: { path: join(changeDir, '4-ledger.md'), oldText: '- [ ] Human valid', newText: '- [x] Human valid' },
+      },
+      ctx,
+    );
+    assert.equal((blocked as { block?: boolean }).block, true, 'the split flip is refused');
+    assert.match((blocked as { reason: string }).reason, /human-validation flip requires a human act/u);
+    assert.equal(
+      readFileSync(join(changeDir, '4-ledger.md'), 'utf8'),
+      ledger,
+      'nothing landed — the disk keeps the human verdict unticked',
+    );
+  });
+
+  test('grantArtifact: x-requires-verdict refuses the stamp while the verdict is unticked', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'grant-verdict-'));
+    try {
+      const openspec = join(root, 'openspec');
+      mkdirSync(join(openspec, 'schemas', 'gate5'), { recursive: true });
+      writeFileSync(
+        join(openspec, 'schemas', 'gate5', 'schema.yaml'),
+        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: post\n    generates: 5-post.md\n    x-requires-approval: [b]\n    x-optional: true\n    x-requires-verdict: true\n',
+        'utf8',
+      );
+      mkdirSync(join(openspec, 'changes', 'c9'), { recursive: true });
+      writeFileSync(join(openspec, 'changes', 'c9', '.openspec.yaml'), 'schema: gate5\nx-granted: a,b\nx-status: approved\n', 'utf8');
+      writeFileSync(join(openspec, 'changes', 'c9', '1-a.md'), '# A\n');
+      writeFileSync(join(openspec, 'changes', 'c9', '2-b.md'), '# B\n\n- [ ] Human validation — response: · outcome: · surfaced:\n', 'utf8');
+      writeFileSync(join(openspec, 'changes', 'c9', '5-post.md'), '# Post\n');
+      const result = await grantArtifactBin(openspec, 'c9', 'post');
+      assert.equal(result.ok, false, 'unticked verdict refuses the stamp');
+      assert.match(result.error!, /awaits the verdict: tick 'Human validation' in 2-b\.md/u);
+      // the honest tick opens the grant
+      writeFileSync(
+        join(openspec, 'changes', 'c9', '2-b.md'),
+        '# B\n\n- [x] Human validation — response: real · outcome: pass\n',
+        'utf8',
+      );
+      const ok = await grantArtifactBin(openspec, 'c9', 'post');
+      assert.equal(ok.ok, true, 'ticked verdict grants');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

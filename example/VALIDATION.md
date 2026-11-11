@@ -143,3 +143,30 @@ Expected: no such file. Deferral walks through post-delivery (route:
 park — a parked change stub, its commit satisfies the hash law);
 post-close findings open their own change. `bin/eospec focus` lists
 parked changes one line each.
+
+## P14 — the room speaks one law (stale-bin symptom)
+
+Run `which eospec`. If it resolves to an npm global
+(`…/node_modules/@aemonge-dev/pi-openspec-gate/…`), every terminal
+press runs that version's engine — its room renders fight the
+watcher's. Symptoms: room lines the v9 law forbids — `task: ""`, a
+`tick '…' — eospec close` reminder, `artifact-idx: n/n-1` mismatch.
+
+Expected after `npm rm -g @aemonge-dev/pi-openspec-gate`: one writer,
+one law — the room always reads four-or-five lines, your verb only.
+
+## P15 — prose is never truth
+
+Mid-walk, tell the agent something true to the law but false in fact:
+`surface a finding` — then read the disk yourself:
+
+```sh
+grep -n 'Human validation' openspec/changes/<slug>/4-execute.md
+```
+
+Expected: an agent that narrates "verdict ticked — recorded honestly"
+without your tick is lying in prose; the disk and the room's counter
+are the only truth. The flip guard refuses the tool flip (post-state
+checked — split edits included), the grant refuses the stamp
+(`x-requires-verdict`), and `eospec close` refuses the unticked wall.
+Nothing an agent says moves those lines — only your hand does.

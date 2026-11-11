@@ -113,6 +113,34 @@ the human read a stale room mid-walk (task "", draft 4/4).
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
+## Slice 6 — the /tmp/test findings
+
+amendment 2026-11-11: the human walked the live guide at /tmp/test and
+came back with three — (a) the room tug-of-war: the npm global eospec
+(1.1.0) survived the pi remove and every terminal press ran the old
+engine, overwriting the watcher's renders (the stale `tick '…'` line
+the human stared at); (b) the flip guard matched the ticked verdict
+line only in the edit's payload — a tiny-anchor bracket flip (payload
+carries neither whole declared line) evaded it, the agent ticked the
+verdict with a fabricated response and the fifth walked legally; (c)
+the exempt-touch room refresh was guarded by a path match that could
+silently miss.
+
+- [x] flip guard: the check runs on the edit's post-state — disk with oldText replaced (split flips included) — falling back to the payload
+      started_at: 2026-11-11T17:15:00Z · ended_at: 2026-11-11T17:18:00Z · total: 3m · check: ✓ editPostState simulation; tiny-anchor bracket flip now refused, disk keeps the human verdict · paths: src/gate.ts
+- [x] grantArtifact: x-requires-verdict enforced at the stamp — whatever path the creation took, the grant refuses while the bearer's verdict is unticked
+      started_at: 2026-11-11T17:18:00Z · ended_at: 2026-11-11T17:19:00Z · total: 1m · check: ✓ belt to the watcher's draft gate — the /tmp/test chain (evade tick → draft → grant) now dies at the grant · paths: bin/gate-lib.js
+- [x] exempt-touch room refresh: the path-match condition removed — any exempt touch refreshes the aimed room
+      started_at: 2026-11-11T17:19:00Z · ended_at: 2026-11-11T17:19:30Z · total: <1m · check: ✓ refresh, never create, unconditioned — the silent-miss mode dies · paths: src/gate.ts
+- [x] gate.test.ts: split-flip caught by post-state · grant refuses unticked verdict, grants ticked
+      started_at: 2026-11-11T17:19:30Z · ended_at: 2026-11-11T17:21:00Z · total: 2m · check: ✓ two tests added; 192/192 · paths: test/gate.test.ts
+- [x] VALIDATION.md: P14 stale-bin symptom · P15 prose is never truth
+      started_at: 2026-11-11T17:21:00Z · ended_at: 2026-11-11T17:21:30Z · total: <1m · check: ✓ the human's run promoted to probes — narrated ticks die at the disk · paths: example/VALIDATION.md
+
+- [ ] fix(gate): the /tmp/test findings — post-state flip guard, stamp-time verdict, unconditioned refresh
+      hash:
+      validation: human re-runs the guide tail at /tmp/test (npm rm -g the stale copy first) — the room stays one law, the split flip refuses, the fabricated verdict dies at the grant
+
 - [ ] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-11T16:11:57Z
@@ -257,3 +285,26 @@ the human read a stale room mid-walk (task "", draft 4/4).
   gate-attributed · tool: write · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-11T16:49:22Z
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T16:49:32Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:49:37Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:14:21Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T17:18:03Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T17:18:21Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T17:18:34Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T17:18:34Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T17:18:47Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:19:27Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T17:19:36Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T17:19:49Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:19:56Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:20:11Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T17:21:16Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T17:21:39Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:21:43Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:21:59Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:22:21Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:22:42Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:23:01Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T17:23:10Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:23:13Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-11T17:23:48Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:24:27Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T17:24:54Z

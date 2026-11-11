@@ -616,6 +616,24 @@ export function grantArtifact(root, slug, artifactRef) {
   if (unwrittenDeps.length > 0) {
     return { ok: false, error: `${artifact.generates} awaits declared evidence: ${unwrittenDeps.join(' · ')} not on disk (x-requires-written)` };
   }
+  // x-requires-verdict — the artifact reads the bearer's verdict line, so
+  // the stamp refuses while it is unticked, whatever path the creation
+  // took (belt to the watcher's draft gate)
+  if (artifact.requiresVerdict) {
+    const bearer = receiptArtifactFor(schema);
+    const verdict = schemaVerdictLine(schema);
+    const ledger = bearer ? join(root, 'changes', slug, bearer.generates) : undefined;
+    if (verdict && ledger && existsSync(ledger)) {
+      const escaped = verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+      const unticked = new RegExp(`^- \\[ \\][^\\n]*${escaped}`, 'mu').test(readFileSync(ledger, 'utf8'));
+      if (unticked) {
+        return {
+          ok: false,
+          error: `${artifact.generates} awaits the verdict: tick '${verdict}' in ${bearer.generates} first (x-requires-verdict) — the tick is a data dependency`,
+        };
+      }
+    }
+  }
   const text = readFileSync(file, 'utf8');
   const missing = [
     ...sectionTitles(artifact).filter((s) => !sectionHeadingPresent(text, s)),
