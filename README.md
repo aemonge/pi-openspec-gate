@@ -69,9 +69,9 @@ through `openspec/learnings/debt.md`.
 ## Install
 
 ```bash
-pi install npm:@aemonge-dev/eospec        # the watcher (personal)
-pi install -l npm:@aemonge-dev/eospec     # …or project-scoped
-npm install -g @aemonge-dev/eospec        # the eospec bin
+pi install npm:@aemonge-dev/pi-openspec-gate        # the watcher (personal)
+pi install -l npm:@aemonge-dev/pi-openspec-gate     # …or project-scoped
+npm install -g @aemonge-dev/pi-openspec-gate        # the eospec bin
 ```
 
 ## Config (`config.json` beside `index.ts`)

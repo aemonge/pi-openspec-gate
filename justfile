@@ -27,5 +27,5 @@ publish VERSION: lint test build
      if [ "$v" = "{{VERSION}}" ]; then echo "already at {{VERSION}}, resuming"; \
      else npm version {{VERSION}} --message 'chore(release): v%s'; fi
     npm publish --access public
-    npm install -g @aemonge-dev/eospec@{{VERSION}}
+    npm install -g @aemonge-dev/pi-openspec-gate@{{VERSION}}
     pi list

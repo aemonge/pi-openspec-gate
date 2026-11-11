@@ -1,7 +1,7 @@
 {
-  "name": "@aemonge-dev/eospec",
-  "version": "1.0.0",
-  "description": "eospec — openspec, extended. Three human verbs (focus, approve, close) over openspec's new/archive, plus a Pi extension that accounts every mutating tool call: allowed by path, attributed to the aimed change, declared by the human, or refused with instructions.",
+  "name": "@aemonge-dev/pi-openspec-gate",
+  "version": "1.1.0",
+  "description": "pi-openspec-gate — openspec, extended. Three human verbs (focus, approve, close) over openspec's new/archive via the eospec CLI, plus a Pi extension that accounts every mutating tool call: allowed by path, attributed to the aimed change, declared by the human, or refused with instructions.",
   "type": "module",
   "license": "MIT",
   "keywords": [

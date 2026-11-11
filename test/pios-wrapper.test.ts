@@ -150,7 +150,7 @@ test('wrapper: survives npm global-bin symlinks (link farm layout)', () => {
   // points at the link farm — the .js companion is in the package copy.
   const dir = mkdtempSync(join(tmpdir(), 'eospec-npm-layout-'));
   try {
-    const pkgBin = join(dir, 'lib', 'node_modules', '@aemonge-dev', 'eospec', 'bin');
+    const pkgBin = join(dir, 'lib', 'node_modules', '@aemonge-dev', 'pi-openspec-gate', 'bin');
     const linkDir = join(dir, 'bin');
     mkdirSync(pkgBin, { recursive: true });
     mkdirSync(linkDir, { recursive: true });

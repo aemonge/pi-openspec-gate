@@ -3,19 +3,27 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
+## 1.1.0 — 2026-11-11
+
+- **the package name is restored**: `@aemonge-dev/pi-openspec-gate`
+  ships the eospec CLI — the tool is eospec, the package keeps its name
+  (1.0.0 shipped briefly as `@aemonge-dev/eospec`; that name is retired).
+  Nothing else changes: same three verbs, same room file, same facts.
+
 ## 1.0.0 — 2026-11-11
 
 The rebuild. Everything below arrived in one change
 ([rebuild](openspec/changes/archive/)):
 
-- **eospec** — the package renames from `@aemonge-dev/pi-openspec-gate`
-  to `@aemonge-dev/eospec`; one bin: `eospec`. The verb zoo
+- **eospec** — the CLI: one bin, `eospec`. The verb zoo
   (`go`/`done`/`list`/`grant`/`next`/`confirm`/`inspect`/`act`/`approve`
   as a stamp) is gone; three words answer: `focus` (aim the room; bare
   form prints every change, one line each), `approve` (the next pending
   step, one press one step), `close` (tick-checked validate + archive +
   aim release). Everything else — and anything after `--` — execs
-  openspec verbatim, exit code intact.
+  openspec verbatim, exit code intact. (1.0.0 briefly shipped under the
+  package name `@aemonge-dev/eospec`; 1.1.0 restored
+  `@aemonge-dev/pi-openspec-gate`.)
 - **the room file** — `openspec/.focus` is the single focus store: one
   flat-yaml snapshot (change, artifact-name, artifact-idx, task,
   next-step), re-rendered by every gate-side touch, deleted by close,
