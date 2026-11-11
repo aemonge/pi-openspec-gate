@@ -341,10 +341,26 @@ test('gate cockpit verbs classify read-only, unfocused and bare', () => {
     const verdict = classifyMutation('bash', { command });
     assert.equal(verdict.mutating, false, command);
   }
-  // an argumented focus AIMS the room — it writes .focus, never read-only
+  // an argumented focus AIMS the room — the room-aim basis, never read-only:
+  // an agent may aim (it writes the .focus snapshot, bookkeeping not work)
   const aim = classifyMutation('bash', { command: 'eospec focus first-walk' });
-  assert.equal(aim.mutating, true, 'aiming mutates the room file');
+  assert.equal(aim.mutating, false, 'aiming is assistant-runnable');
+  assert.equal(aim.basis, 'bash.room-aim');
   // the human verbs stay touch-guarded (not read-only) — approve/close never land here
   const grant = classifyMutation('bash', { command: 'eospec approve first-walk' });
   assert.equal(grant.mutating, true, 'human verbs must never classify read-only');
+});
+
+test('cd prefixes are navigation, not work — stripped before classification', () => {
+  const cases: Array<[string, boolean]> = [
+    ['cd /tmp && eospec focus lab', false],
+    ['cd /tmp/test && ls -la', false],
+    ['cd /tmp/test', false], // bare cd: a no-op in a subshell
+    ['cd /tmp/test && rm -rf x', true],
+    ['cat notes && cd /tmp && rg pattern', false],
+  ];
+  for (const [command, mutating] of cases) {
+    const verdict = classifyMutation('bash', { command });
+    assert.equal(verdict.mutating, mutating, command);
+  }
 });

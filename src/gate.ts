@@ -28,12 +28,12 @@ import { FACT, utcNow, type FactAppender } from './facts.ts';
 import {
   findOpenspecRoot,
   findSessionFile,
+  firstActiveChange,
   focusIsActive,
   parseDelegationEnv,
   readFocusFromSessionFile,
   readRoomFocus,
   readSessionFocus,
-  hasActiveChanges,
   type ActiveFocus,
 } from './focus.ts';
 import { extractPaths } from './paths.ts';
@@ -73,6 +73,9 @@ export function blockUnaccounted(options?: {
   headline?: string;
   lead?: string;
   subagent?: boolean;
+  /** a live change exists on disk — the assistant may aim it itself */
+  aim?: string;
+  /** the session actually has an openspec_focus instrument */
   focusable?: boolean;
   schemas?: string[];
   declares?: string[];
@@ -90,8 +93,10 @@ export function blockUnaccounted(options?: {
   if (options?.offender) {
     lines.push(`   why:     segment '${options.offender}' is not classified read-only — read-only commands still pass`);
   }
-  if (options?.focusable !== false) {
-    lines.push('   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)');
+  if (options?.aim) {
+    lines.push(`   aim:     eospec focus ${options.aim}   ← you may run this — the room file is bookkeeping, not work`);
+  } else if (options?.focusable) {
+    lines.push('   focus:   openspec_focus → action: set, change: <slug>   (only when this session has that instrument — otherwise, in your terminal: eospec focus <slug>)');
   }
   if (options?.dangling) {
     lines.push(`   dangling: focused change '${options.dangling}' was archived or removed — re-aim focus at a live change`);
@@ -108,6 +113,7 @@ export function blockUnaccounted(options?: {
   if (options?.subagent) {
     lines.push('   subagent: focus is inherited from your parent session — relay this block upward, do not self-serve');
   }
+  lines.push('   the walk: create → aim → draft → approve → draft → … → tick the verdict → eospec close');
   return lines.join('\n');
 }
 
@@ -549,7 +555,8 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
                 headline: '⛔ research window closed — no active change',
                 lead: 'research instruments are work — they open at a schema-declared step, or the human declares',
                 subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
-                focusable: hasActiveChanges(openspecRoot),
+                focusable: (pi.getAllTools?.() ?? []).some((tool) => tool.name === 'openspec_focus'),
+                aim: openspecRoot ? firstActiveChange(openspecRoot) : undefined,
                 schemas: scanSchemaNames(openspecRoot),
                 declares: [...scanDeclares(openspecRoot)],
               }),
@@ -769,7 +776,8 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         blockUnaccounted({
           dangling,
           subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
-          focusable: openspecRoot ? hasActiveChanges(openspecRoot) : false,
+          focusable: (pi.getAllTools?.() ?? []).some((tool) => tool.name === 'openspec_focus'),
+          aim: openspecRoot ? firstActiveChange(openspecRoot) : undefined,
           schemas: openspecRoot ? scanSchemaNames(openspecRoot) : undefined,
           declares: openspecRoot ? [...scanDeclares(openspecRoot)] : [],
           offender: verdict.offender,

@@ -122,6 +122,10 @@ const GRAPHIFY_READ_ONLY_ANCHORED = /^graphify\s+(?:query|path|explain|hook\s+st
 
 const OPENSPEC_CREATION_ANCHORED = /^openspec\s+(?:new|init)\b/u;
 
+// the room aim: `eospec focus <change>` (wrapper-normalized to the same
+// shape) — the one mutating-looking call an agent may make freely
+const GATE_ROOM_AIM_ANCHORED = /^openspec\s+focus\s+\S+/u;
+
 // Leading VAR=value tokens are stripped before the verb anchors —
 // ergonomics only (LC_ALL=C sort): the verb after them is still fully
 // checked.
@@ -260,10 +264,21 @@ function stripWrapper(segment: string): string {
 const offenderOf = (segment: string): string =>
   segment.length > 60 ? `${segment.slice(0, 57)}…` : segment;
 
+// `cd <dir>` segments anywhere in a chain are navigation, not work: a
+// subshell cd mutates nothing on disk — drop them and classify the rest,
+// so agents don't burn a refusal on navigation
+function stripCdSegments(segments: string[]): string[] {
+  return segments.filter((s) => !/^cd(\s|$)/.test(s.trim()));
+}
+
 function bashVerdict(command: string): MutationVerdict {
-  const { segments, grammarUnsafe } = splitSegments(command);
+  let { segments, grammarUnsafe } = splitSegments(command);
   if (grammarUnsafe) {
     return { mutating: true, basis: 'bash.grammar=fail-safe', creation: false };
+  }
+  segments = stripCdSegments(segments);
+  if (segments.length === 0) {
+    return { mutating: false, basis: 'bash.cd-noop', creation: false };
   }
   let creation = false;
   for (const segment of segments) {
@@ -276,6 +291,11 @@ function bashVerdict(command: string): MutationVerdict {
     if (OPENSPEC_CREATION_ANCHORED.test(body)) {
       creation = true;
       continue;
+    }
+    if (GATE_ROOM_AIM_ANCHORED.test(body)) {
+      // aiming the room writes the .focus snapshot — bookkeeping about
+      // the work, like creation: any agent may aim, the human may re-aim
+      return { mutating: false, basis: 'bash.room-aim', creation: false };
     }
     const readVerbed =
       READ_ONLY_VERB_ANCHORED.test(body) ||

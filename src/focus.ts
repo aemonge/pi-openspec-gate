@@ -19,7 +19,7 @@
  * Fallback: none needed beyond disk validation; the CLI (`eospec focus`)
  * is a human remedy, not a gate input.
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 export const OPENSPEC_FOCUS_ENTRY_TYPE = 'eospec.focus';
@@ -161,6 +161,20 @@ export function focusIsActive(focus: ActiveFocus | undefined, openspecRoot: stri
 /** True when at least one change directory exists under <root>/changes
  *  (archive excluded) — the focus remedy is only real when something can
  *  actually be focused; otherwise the block leads with create/declare. */
+/** The room's most recently touched live change — the aim remedy names
+ *  it, so a cold agent never has to guess what to aim at. */
+export function firstActiveChange(root: string): string | undefined {
+  try {
+    const dir = join(root, 'changes');
+    return readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && d.name !== 'archive')
+      .map((d) => ({ name: d.name, m: statSync(join(dir, d.name)).mtimeMs }))
+      .sort((a, b) => b.m - a.m)[0]?.name;
+  } catch {
+    return undefined;
+  }
+}
+
 export function hasActiveChanges(root: string): boolean {
   try {
     return readdirSync(join(root, 'changes'), { withFileTypes: true }).some(

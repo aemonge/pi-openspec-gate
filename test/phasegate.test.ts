@@ -121,7 +121,8 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
     const reason = (idle as { reason: string }).reason;
     assert.match(reason, /research window closed — no active change/u, 'void research blocks');
     assert.match(reason, /stop:/u, 'same stop directive as the mutation block');
-    assert.match(reason, /openspec_focus/u, 'changes exist on disk → focus remedy');
+    assert.match(reason, /aim:\s+eospec focus \S+/u, 'changes exist on disk → aim remedy names the newest live change');
+    assert.ok(!reason.includes('openspec_focus'), 'no phantom instruments');
     assert.match(reason, /create:/u, 'create remedy present');
     assert.ok(!reason.includes('clear the focus'), 'the escape-hatch line is retired');
     const fact = fake.entries.find((e) => (e.data as { kind?: string } | undefined)?.kind === 'research-void');

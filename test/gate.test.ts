@@ -15,8 +15,8 @@ import { OPENSPEC_FOCUS_ENTRY_TYPE } from '../src/focus.ts';
 const EXPECTED_BASE_COPY = [
   '⛔ unaccounted mutation — no active change',
   '   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human',
-  '   focus:   openspec_focus → action: set, change: <slug>   (a change that exists in openspec/changes/)',
   '   create:  openspec new change <slug> --schema <schema-name>',
+  '   the walk: create → aim → draft → approve → draft → … → tick the verdict → eospec close',
 ].join('\n');
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -103,14 +103,43 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.equal(result?.block, true);
     assert.equal(BLOCK_MESSAGE, EXPECTED_BASE_COPY);
     assert.ok(result.reason!.includes('stop:'), 'stop directive');
-    assert.ok(result.reason!.includes('openspec_focus'), 'exact focus instrument');
+    assert.match(result.reason!, /aim:\s+eospec focus c1/, 'the aim remedy names the live change');
+    assert.match(result.reason!, /you may run this/, 'aiming is assistant-runnable — no catch-22');
+    assert.ok(!result.reason!.includes('openspec_focus'), 'no phantom instruments — this session has none');
     assert.ok(result.reason!.includes('create:'), 'create remedy');
+    assert.match(result.reason!, /the walk: create → aim → draft → approve/, 'the loop order is taught');
     assert.ok(result.reason!.includes('declare:'), 'declare remedy — the fixture schema declares');
     assert.ok(result.reason!.includes('"action the job"'), 'declare names the exact phrases');
     assert.ok(!result.reason!.includes('"do it"'), 'the retired alias appears nowhere');
     const blocked = entries.find((e) => e.customType === 'gate.blocked');
     assert.ok(blocked, 'blocked fact recorded');
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
+  });
+
+  test('block: the openspec_focus remedy appears only when the session has it', async () => {
+    const fake = makeFakePi();
+    (fake.pi.getAllTools as unknown as () => { name: string }[]) = () => [
+      { name: 'edit' }, { name: 'write' }, { name: 'bash' }, { name: 'openspec_focus' },
+    ];
+    createGate(fake.pi as never, {
+      enabled: true,
+      approval: { enforce: false, humanGateSteps: false, archiveGuard: false, stampCreations: false },
+      exempt: [],
+    });
+    // a room with NO live change: no aim remedy — the tool line may speak
+    const lab = mkdtempSync(join(tmpdir(), 'gate-lab-'));
+    try {
+      mkdirSync(join(lab, 'openspec', 'changes'), { recursive: true });
+      const ctx = { cwd: lab, sessionManager: { getEntries: () => [] } };
+      const result = (await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx)) as {
+        reason?: string;
+      };
+      assert.match(result.reason!, /focus:\s+openspec_focus/, 'the session has the instrument → its remedy may speak');
+      assert.ok(!result.reason!.includes('aim:'), 'no live change → nothing to name');
+      assert.match(result.reason!, /the walk: create → aim → draft → approve/, 'the loop order is taught here too');
+    } finally {
+      rmSync(lab, { recursive: true, force: true });
+    }
   });
 
   test('declare: schema-declared phrase "action the job" → one debt line, mutation proceeds', async () => {

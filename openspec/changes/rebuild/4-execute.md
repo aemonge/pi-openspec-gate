@@ -101,6 +101,27 @@
 - [x] chore(release): 1.0.0
       hash: a2eafa3
 
+## Slice 9 — robustness: remedies teach the loop (human-directed, live-caught in the lab)
+
+- [x] the catch-22 dies: `eospec focus <change>` is assistant-runnable
+      (room-aim basis in the classifier — bookkeeping, not work)
+      started_at: 2026-11-11T11:48:00Z · ended_at: 2026-11-11T11:52:00Z · total: 4m · check: ✓ live-caught: a cold agent created a change then couldn't aim it — refused twice, aborted · paths: src/classifier.ts
+- [x] remedies teach the walk, in order, state-aware: aim line names the
+      newest live change (you may run this); the openspec_focus line
+      appears only when the session actually has that instrument; the
+      loop line (create → aim → draft → approve → … → tick → close) is
+      in every unaccounted block
+      started_at: 2026-11-11T11:52:00Z · ended_at: 2026-11-11T11:56:00Z · total: 4m · check: ✓ no phantom instruments — a fresh install never hears openspec_focus again · paths: src/gate.ts
+- [x] `cd <dir>` segments are navigation, not work — stripped before
+      classification (live-caught: `cd x && openspec new …` burned a
+      refusal)
+      started_at: 2026-11-11T11:56:00Z · ended_at: 2026-11-11T11:57:00Z · total: 1m · check: ✓ any position in a chain; bare cd is a no-op · paths: src/classifier.ts
+- [x] tests: room-aim classification, cd stripping, aim-remedy naming,
+      adaptive instrument line — 176/176 + both laws
+      started_at: 2026-11-11T11:57:00Z · ended_at: 2026-11-11T12:01:00Z · total: 4m · check: ✓ · paths: test/classifier.test.ts, test/gate.test.ts, test/phasegate.test.ts
+- [x] fix(gate)!: remedies teach the loop — aim is assistant-runnable
+      hash:
+
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
 - [ ] Human validation — response: · outcome: · surfaced:
@@ -492,3 +513,71 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:39Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:59:39Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:24:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:24:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:24:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:24:49Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:25:00Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:25:00Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T12:25:00Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-11T12:25:00Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:25:16Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:25:16Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:25:32Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-11T12:25:32Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-11T12:25:32Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-11T12:25:32Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T12:26:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T12:26:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T12:26:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T12:26:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T12:27:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-11T12:27:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/classifier.test.ts · at 2026-11-11T12:27:02Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/classifier.test.ts · at 2026-11-11T12:27:03Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:27:06Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:27:06Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:27:21Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:27:21Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-11T12:27:57Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-11T12:27:57Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T12:27:57Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-11T12:27:57Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:28:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:28:45Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:30:09Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T12:30:09Z
