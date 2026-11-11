@@ -105,7 +105,31 @@ commit: feat(gate): room file names the human verb only
 post-commit human validation: run `bin/eospec focus post-delivery`, read
       the room file — four lines, one verb
 
-### Slice 3 — debt graduates
+### Slice 3 — receipts land once; the room refreshes on touches
+
+amendment 2026-11-11: two findings surfaced while delivering — (a) the
+receipt ledger doubles every mutation (the dev machine loads the
+gate twice: the published global copy AND this repo as a project
+package — the rebuild's own archive carries the same doubles) and the
+appends inflate blank lines; (b) the room file only re-renders on CLI
+verbs, but the 1.0 contract promises re-render on every gate-side
+touch — the human read a stale room mid-walk (task "", draft 4/4).
+
+- [ ] attribution: dedupe identical last-line receipts and debt lines
+      (double-load defense); receipts append as a tight block — one
+      separating blank line, no per-line inflation
+- [ ] watcher: the aimed change's room file re-renders on attributed
+      mutations and on exempt touches inside changes/<aimed>/ (the
+      1.0 contract: every gate-side touch)
+- [ ] gate.test.ts: same receipt twice → one line; different at → two;
+      watcher touch refreshes the room (task count climbs)
+- [ ] this ledger's receipt spam deduped by hand when the fix lands
+
+commit: fix(gate): receipts land once; the room refreshes on touches
+      hash:
+post-commit human validation: run a bash mutation mid-walk, read the
+      ledger — one tight receipt block, no doubles; read .focus after a
+      ledger tick — task climbs without a verb
 
 ### Slice 4 — debt graduates
 
@@ -125,7 +149,7 @@ commit: feat(schema): findings graduate — debt.md dies
 post-commit human validation: `bin/eospec focus` lists the four parked
       changes; learnings/ holds no ledger
 
-### Slice 4 — the walk learns five steps
+### Slice 5 — the walk learns five steps
 
 - [ ] try.sh: the fifth-step states — findings-free close, then a
       findings-drafted walk, new approve press, verdict, close

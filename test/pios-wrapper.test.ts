@@ -242,6 +242,16 @@ test('approvals: the full five-step walk approves in order and completes the sch
     assert.match(meta, /x-status: approved/);
     assert.match(meta, /x-granted_execution:/);
     assert.equal(existsSync(repo.log), false, 'approvals never forward to openspec');
+
+    // the all-granted room: name follows the walk, the counter follows
+    // the receipts, and the only verb left is close — no verdict reminder
+    assert.equal(run(repo, ['focus']).status, 0);
+    const room = readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
+    assert.match(room, /artifact-name: 5-execution\.md/);
+    assert.match(room, /artifact-idx: 5\/5/);
+    assert.doesNotMatch(room, /^task:/m, 'execution carries no checkboxes');
+    assert.match(room, /next-step: eospec close/);
+    assert.doesNotMatch(room, /tick '/, 'the reminder lives in close\'s refusal, not the room');
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -686,10 +696,12 @@ test('room file: next-step never sends the agent past a human gate', () => {
     assert.match(text, /next-step: eospec approve/);
     assert.doesNotMatch(text, /draft 2-proposition/);
 
-    // once idea is granted, drafting proposition becomes the next act
+    // once idea is granted, the room still names the human verb —
+    // the draft rhythm lives in the echo, never the room
     assert.equal(run(repo, ['approve']).status, 0);
     text = readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
-    assert.match(text, /next-step: draft 2-proposition\.md/);
+    assert.match(text, /next-step: eospec approve/);
+    assert.doesNotMatch(text, /draft 2-proposition/);
   } finally {
     rmSync(repo.dir, { recursive: true, force: true });
   }
@@ -707,7 +719,7 @@ test('room file: the flat-yaml snapshot renders and refreshes with every verb', 
     assert.match(text, /change: m1/);
     assert.match(text, /artifact-name: 1-idea\.md/);
     assert.match(text, /artifact-idx: 1\/5/);
-    assert.match(text, /task: ""/);
+    assert.doesNotMatch(text, /^task:/m, 'no checkboxes — no task line, no empty counter');
     assert.match(text, /next-step: eospec approve/);
 
     // approve re-renders: the room shows the new step and its progress

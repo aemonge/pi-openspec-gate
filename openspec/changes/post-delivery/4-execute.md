@@ -31,17 +31,22 @@
 - [x] phasegate.test.ts: unticked verdict blocks the fifth's draft; ticked opens it
       started_at: 2026-11-11T16:19:00Z · ended_at: 2026-11-11T16:19:18Z · total: <1m · check: ✓ VERDICT_SCHEMA fixture — unticked blocks naming the tick, fact requires-verdict; ticked passes · paths: test/phasegate.test.ts
 
-- [ ] feat(schema): the post-delivery artifact — conditional fifth step
-      hash:
+- [x] feat(schema): the post-delivery artifact — conditional fifth step
+      hash: e4ac4a9
       validation: human reads the schema diff and the new template; the walk line reads true end to end; npm test green — 187/187 · try.sh 12/12 · lint holds (verified pre-commit)
 
 ## Slice 2 — the room shows only the human verb
 
-- [ ] renderRoom: pending artifact → `eospec approve`, always (the draft rule dies)
-- [ ] renderRoom: all-granted → `eospec close` (the verdict reminder dies; close's refusal keeps teaching)
-- [ ] writeFocus: omit the task: line when the artifact has no checkboxes (no `task ""`)
-- [ ] renderRoom: all-granted artifact-name follows the walk (final artifact), task counter stays on the ledger bearer — the 4-of-5 mismatch dies
-- [ ] focus.test.ts + gate.test.ts: room snapshots per stage
+- [x] renderRoom: pending artifact → `eospec approve`, always (the draft rule dies)
+      started_at: 2026-11-11T16:20:08Z · ended_at: 2026-11-11T16:21:00Z · total: 1m · check: ✓ next-step is the human verb unconditionally; the canDraft comment dies with the rule · paths: bin/gate-lib.js
+- [x] renderRoom: all-granted → `eospec close` (the verdict reminder dies; close's refusal keeps teaching)
+      started_at: 2026-11-11T16:21:00Z · ended_at: 2026-11-11T16:21:20Z · total: <1m · check: ✓ no tick' interpolation — the meta branch is gone · paths: bin/gate-lib.js
+- [x] writeFocus: omit the task: line when the artifact has no checkboxes (no `task ""`)
+      started_at: 2026-11-11T16:21:20Z · ended_at: 2026-11-11T16:21:40Z · total: <1m · check: ✓ task line exists only when taskProgress is non-empty · paths: bin/gate-lib.js
+- [x] renderRoom: all-granted artifact-name follows the walk (final artifact), task counter stays on the ledger bearer — the 4-of-5 mismatch dies
+      started_at: 2026-11-11T16:21:40Z · ended_at: 2026-11-11T16:22:00Z · total: <1m · check: ✓ finalStep names the room, bearer counts the tasks — name and counter decoupled · paths: bin/gate-lib.js
+- [x] focus.test.ts + gate.test.ts: room snapshots per stage
+      started_at: 2026-11-11T16:22:00Z · ended_at: 2026-11-11T16:25:53Z · total: 4m · check: ✓ wrapper tests re-pinned — draft rule gone, empty task line gone, full-walk room asserts name-follows-walk + close-only + no tick reminder · paths: test/pios-wrapper.test.ts
 
 - [ ] feat(gate): room file names the human verb only
       hash:
@@ -185,3 +190,31 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:08Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:14Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:20:14Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:21:24Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-11T16:21:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:23Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:53Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:22:53Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T16:25:25Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T16:25:25Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:25:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:25:28Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:26:08Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:26:08Z

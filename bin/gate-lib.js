@@ -123,25 +123,25 @@ function renderRoom(root, slug) {
   const approved = grantedSet(meta);
   const fileOnDisk = (g) => existsSync(join(root, 'changes', slug, g));
   const idx = schema.artifacts.findIndex((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
-  const last = receiptArtifactFor(schema) ?? schema.artifacts[schema.artifacts.length - 1];
+  const finalStep = schema.artifacts[schema.artifacts.length - 1];
+  const bearer = receiptArtifactFor(schema) ?? finalStep;
   if (idx === -1) {
-    fields['artifact-name'] = last.generates;
+    // the walk's end: the room names the final artifact (the name follows
+    // the walk) and the one human verb left; the counter reads the receipt
+    // bearer's ledger, where the verdict checkbox lives
+    fields['artifact-name'] = finalStep.generates;
     fields['artifact-idx'] = `${schema.artifacts.length}/${schema.artifacts.length}`;
-    fields.task = taskProgress(root, slug, last.generates);
-    const verdict = schemaVerdictLine(schema);
-    fields['next-step'] = meta['x-validated'] ? 'eospec close' : verdict ? `tick '${verdict}' — eospec close` : 'eospec close';
+    fields.task = taskProgress(root, slug, bearer.generates);
+    fields['next-step'] = 'eospec close';
   } else {
     const step = schema.artifacts[idx];
     fields['artifact-name'] = step.generates;
     fields['artifact-idx'] = `${idx + 1}/${schema.artifacts.length}`;
     fields.task = taskProgress(root, slug, step.generates);
-    // drafting legality is approval legality: an artifact whose required
-    // approvals are not yet granted may not be drafted — the next act is
-    // the human's approve, never a doomed draft attempt
-    const canDraft = (step.requiresApproval ?? []).every((id) => approved.has(id));
-    fields['next-step'] = canDraft && !existsSync(join(root, 'changes', slug, step.generates))
-      ? `draft ${step.generates}`
-      : 'eospec approve';
+    // the room names the human verb, always: the draft rhythm lives in
+    // the CLI echo and the assistant's hand — an early press fails
+    // loudly ('you approve what you read') and that refusal teaches
+    fields['next-step'] = 'eospec approve';
   }
   return fields;
 }
@@ -153,9 +153,11 @@ export function writeFocus(openspecRoot, slug) {
     `change: ${fields.change}`,
     `artifact-name: ${fields['artifact-name'] || '""'}`,
     `artifact-idx: ${fields['artifact-idx'] || '""'}`,
-    `task: ${fields.task || '""'}`,
-    `next-step: ${fields['next-step']}`,
   ];
+  // the task line exists only when the artifact has checkboxes — an empty
+  // counter is noise, not truth
+  if (fields.task) lines.push(`task: ${fields.task}`);
+  lines.push(`next-step: ${fields['next-step']}`);
   writeFileSync(focusPath(openspecRoot), `${lines.join('\n')}\n`, 'utf8');
 }
 
