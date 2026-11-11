@@ -120,6 +120,14 @@
       adaptive instrument line — 176/176 + both laws
       started_at: 2026-11-11T11:57:00Z · ended_at: 2026-11-11T12:01:00Z · total: 4m · check: ✓ · paths: test/classifier.test.ts, test/gate.test.ts, test/phasegate.test.ts
 - [x] fix(gate)!: remedies teach the loop — aim is assistant-runnable
+      hash: ea3ff29
+
+## Slice 10 — delivery addings: teach the loop (schema v7)
+
+- [x] execute instruction + template teach the addings loop; goal-line
+      wording fixed (flat top-level `goal:`); README one line
+      started_at: 2026-11-11T12:04:00Z · ended_at: 2026-11-11T12:07:00Z · total: 3m · check: ✓ v7; the loop the human designed, applied to its own change first · paths: openspec/schemas/spec/schema.yaml, openspec/schemas/spec/templates/4-execute.md, README.md, openspec/changes/rebuild/3-plan.md
+- [x] docs(schema): v7 — the delivery-addings loop
       hash:
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
@@ -581,3 +589,23 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T12:30:09Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T12:30:09Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:02:29Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:02:29Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:02:58Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:02:58Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:03:12Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T13:03:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:12Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:29Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T13:03:29Z

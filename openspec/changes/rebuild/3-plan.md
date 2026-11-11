@@ -145,3 +145,15 @@ human-only act: tick 'Human validation' in 4-execute.md, then close
 ## History
 
 Commit subjects land during execute.
+
+## Delivery addings (human-directed at execution time, 2026-11-11)
+
+Slice 9 (robustness: remedies teach the loop — live-caught in the lab)
+and Slice 10 (delivery addings: teach the loop — schema v7) were
+directed by the human at execution time and committed before the
+verdict: the addings loop this slice teaches, eaten by its own change.
+
+### Slice 10 — delivery addings: teach the loop (schema v7)
+
+- [ ] execute instruction + template teach the addings loop; goal-line
+      wording fixed (flat top-level `goal:`); README one line

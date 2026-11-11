@@ -1,5 +1,5 @@
 name: spec
-version: 6
+version: 7
 x-declares: [action the spec, execute the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -31,7 +31,7 @@ artifacts:
       Questions (the open questions — this artifact''s product; Investigate
       aims at them, Plan retires them). Direction (one mutable paragraph
       of hunch) is optional free prose. The one-line Goal lives in
-      .openspec.yaml (meta goal:), not here. Free step — schema entry,
+      .openspec.yaml (top-level `goal:` key), not here. Free step — schema entry,
       never gated.'
     requires: []
     x-sections: [Pain, Questions]
@@ -89,7 +89,13 @@ artifacts:
       message; a hash: slot beneath — a tick without a hash is not done;
       no repo → `hash: n/a — no repo`, visible debt) — the commit IS the
       receipt. Gate-appended receipts (tool · paths · UTC) land while
-      work runs. The final countable checkbox is always the declared
+      work runs. Findings surfaced while delivering — bugs, tech debt,
+      enhancements the plan could not have named — do not open a new
+      spec: append them as new Slices here (same tasks + commit-hash
+      law) and add a one-line amendment to the Plan''s Slices so the
+      mirror holds; the verdict waits until they land. Post-close
+      findings go to openspec/learnings/debt.md and become their own
+      follow-up change. The final countable checkbox is always the declared
       verdict — Human validation, response · outcome · surfaced: (bugs/
       errors/debt routed to openspec/learnings/debt.md) — only a Human
       reply ticks it. Status truth lives in counters, never prose.

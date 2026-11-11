@@ -60,6 +60,9 @@ example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
 — four steps (brainstorm → investigate → plan → execute), strict at the
 two boundaries humans own: spend at plan, judge at the verdict. Copy it
 as your starting point and edit the yaml; the engine hardcodes nothing.
+Findings surfaced while delivering become appended slices in the same
+ledger — the verdict waits for them; a closed change routes follow-ups
+through `openspec/learnings/debt.md`.
 
 ## Install
 
