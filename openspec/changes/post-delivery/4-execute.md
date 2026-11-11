@@ -104,6 +104,8 @@ the human read a stale room mid-walk (task "", draft 4/4).
       started_at: 2026-11-11T16:41:30Z · ended_at: 2026-11-11T16:41:41Z · total: <1m · check: ✓ 190/190 · walkthrough 21/21 · parity holds · paths: —
 - [x] CHANGELOG entry for the change (amendment 2026-11-11: the release aims here — no slice named it)
       started_at: 2026-11-11T16:42:30Z · ended_at: 2026-11-11T16:42:50Z · total: <1m · check: ✓ 1.2.0 entry — the fifth artifact, the room law, receipts land once, debt graduates · paths: CHANGELOG.md
+- [x] example/VALIDATION.md — the prompt-by-prompt live guide (amendment 2026-11-11: the human ran the drill and asked for the new guide; the flip guard refused a ticked example line — the guide shows it unticked, the tick is the reader's act)
+      started_at: 2026-11-11T16:44:00Z · ended_at: 2026-11-11T16:45:30Z · total: 1m · check: ✓ P1–P13 — doors, ceremony, drafting legality, live room, receipts-once, human-terminal verbs, routing, verdict-first, fifth walk, findings-free close, debt gone · paths: example/VALIDATION.md, example/README.md
 
 - [x] docs(walk): the walk line learns five steps
       hash: 3836556
@@ -251,3 +253,7 @@ the human read a stale room mid-walk (task "", draft 4/4).
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:56Z
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T16:42:29Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:42:32Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:42:46Z
+  gate-attributed · tool: write · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-11T16:49:22Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T16:49:32Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:49:37Z

@@ -72,7 +72,9 @@ pi install -l /path/to/eospec    # local, unreleased tree
 pi                               # start a session
 ```
 
-In-session checklist:
+In-session checklist (the full prompt-by-prompt walk — v9 fifth
+artifact, live room, receipts-once, verdict-first — lives in
+[`example/VALIDATION.md`](VALIDATION.md)):
 
 1. `write src/anything.ts` with no aim → refused with all three remedies
 2. Say a phrase the schema `x-declares` — **"start the spec"** runs the
