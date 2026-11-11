@@ -674,3 +674,50 @@ test('parity live: approve without an aim refuses loudly — and never stamps', 
     rmSync(repo.dir, { recursive: true, force: true });
   }
 });
+
+test('room file: the flat-yaml snapshot renders and refreshes with every verb', () => {
+  const repo = gatedRepo();
+  try {
+    draft(repo, 'm1', '1-idea.md', 'why');
+    draft(repo, 'm1', '2-proposition.md', '# Proposition\n\nClaim: x\n- [x] half\n- [ ] rest\n');
+    assert.equal(run(repo, ['focus', 'm1']).status, 0);
+    const room = () => readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
+    let text = room();
+    assert.match(text, /# one active change per room — eospec writes, verbs refresh/);
+    assert.match(text, /change: m1/);
+    assert.match(text, /artifact-name: 1-idea\.md/);
+    assert.match(text, /artifact-idx: 1\/5/);
+    assert.match(text, /task: ""/);
+    assert.match(text, /next-step: eospec approve/);
+
+    // approve re-renders: the room shows the new step and its progress
+    assert.equal(run(repo, ['approve']).status, 0);
+    text = room();
+    assert.match(text, /artifact-name: 2-proposition\.md/);
+    assert.match(text, /artifact-idx: 2\/5/);
+    assert.match(text, /task: 1\/2/);
+
+    // the legacy one-line form still reads — and self-heals on the next touch
+    writeFileSync(join(repo.dir, 'openspec', '.focus'), 'm1\n');
+    assert.equal(run(repo, ['focus']).status, 0);
+    assert.match(room(), /change: m1/);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('room file: ungated rooms render the bare truth, close deletes the file', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'plain', 'status: proposed\n');
+    assert.equal(run(repo, ['focus', 'plain']).status, 0);
+    const text = readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8');
+    assert.match(text, /change: plain/);
+    assert.match(text, /artifact-name: ""/);
+    assert.match(text, /next-step: eospec close/);
+    assert.equal(run(repo, ['close']).status, 0);
+    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), false);
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});

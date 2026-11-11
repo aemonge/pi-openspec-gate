@@ -67,13 +67,15 @@ const aimFocus = (root, target) => {
   process.exit(0);
 };
 
-/** The stamp echo — what was approved, and what the next approve does. */
+/** The stamp echo — what was approved, and what the next approve does.
+ *  The room snapshot re-renders with the stamp: verbs refresh. */
 const doApprove = (root, slug, artifactId) => {
   const result = grantArtifact(root, slug, artifactId);
   if (!result.ok) {
     console.error(result.error);
     process.exit(1);
   }
+  writeFocus(root, slug);
   console.log(
     result.completed
       ? `approved ${slug} · ${result.granted} · all steps approved — status: approved · at ${result.at}${result.verdict ? ` · next: tick '${result.verdict}' then: eospec close` : ''}`
@@ -126,10 +128,14 @@ if (command === 'focus' && rest[0]) {
   aimFocus(root, target);
 }
 
-// the room: bare focus — where the room points, every change's pending state
+// the room: bare focus — where the room points, every change's pending
+// state; the aimed snapshot re-renders on every read (verbs refresh)
 if (command === 'focus') {
   const root = rootOf();
   const focused = readFocus(root);
+  if (focused && existsSync(join(root, 'changes', focused))) {
+    try { writeFocus(root, focused); } catch { /* a stale snapshot never blocks the view */ }
+  }
   console.log(focused ? `aim: ${focused}` : 'nothing aimed — eospec focus <change>');
   console.log(pendingReport(root));
   process.exit(0);

@@ -86,12 +86,72 @@ export function focusPath(openspecRoot) {
 export function readFocus(openspecRoot) {
   const file = focusPath(openspecRoot);
   if (!existsSync(file)) return undefined;
-  const name = readFileSync(file, 'utf8').trim();
-  return name.length > 0 ? name : undefined;
+  const text = readFileSync(file, 'utf8');
+  const keyed = /^change:\s*(.+?)\s*$/mu.exec(text);
+  if (keyed) return keyed[1];
+  const bare = text.trim();
+  return bare.length > 0 ? bare : undefined; // legacy one-line form
+}
+
+/** Checkbox progress of one artifact file: ticked/total. Empty when the
+ *  file is absent or declares no checklist — absence is information. */
+function taskProgress(root, slug, file) {
+  const path = join(root, 'changes', slug, file);
+  if (!existsSync(path)) return '';
+  const text = readFileSync(path, 'utf8');
+  const total = (text.match(/^\s*[-*]\s*\[[xX ]\]/gmu) ?? []).length;
+  if (total === 0) return '';
+  const done = (text.match(/^\s*[-*]\s*\[[xX]\]/gmu) ?? []).length;
+  return `${done}/${total}`;
+}
+
+/** Render the room snapshot for a change — computed at write time from
+ *  meta + schema, never stored anywhere else. Fields: change,
+ *  artifact-name, artifact-idx, task, next-step. */
+function renderRoom(root, slug) {
+  const meta = readChangeMeta(root, slug);
+  const resolution = resolveChangeSchema(root, meta.schema);
+  const fields = { change: slug };
+  if (!resolution.ok || !schemaIsGated(resolution.schema)) {
+    fields['artifact-name'] = '';
+    fields['artifact-idx'] = '';
+    fields.task = '';
+    fields['next-step'] = 'eospec close';
+    return fields;
+  }
+  const schema = resolution.schema;
+  const approved = grantedSet(meta);
+  const idx = schema.artifacts.findIndex((a) => !approved.has(a.id));
+  const last = receiptArtifactFor(schema) ?? schema.artifacts[schema.artifacts.length - 1];
+  if (idx === -1) {
+    fields['artifact-name'] = last.generates;
+    fields['artifact-idx'] = `${schema.artifacts.length}/${schema.artifacts.length}`;
+    fields.task = taskProgress(root, slug, last.generates);
+    const verdict = schemaVerdictLine(schema);
+    fields['next-step'] = meta.validated ? 'eospec close' : verdict ? `tick '${verdict}' — eospec close` : 'eospec close';
+  } else {
+    const step = schema.artifacts[idx];
+    fields['artifact-name'] = step.generates;
+    fields['artifact-idx'] = `${idx + 1}/${schema.artifacts.length}`;
+    fields.task = taskProgress(root, slug, step.generates);
+    fields['next-step'] = existsSync(join(root, 'changes', slug, step.generates))
+      ? 'eospec approve'
+      : `draft ${step.generates}`;
+  }
+  return fields;
 }
 
 export function writeFocus(openspecRoot, slug) {
-  writeFileSync(focusPath(openspecRoot), `${slug}\n`, 'utf8');
+  const fields = renderRoom(openspecRoot, slug);
+  const lines = [
+    '# one active change per room — eospec writes, verbs refresh',
+    `change: ${fields.change}`,
+    `artifact-name: ${fields['artifact-name'] || '""'}`,
+    `artifact-idx: ${fields['artifact-idx'] || '""'}`,
+    `task: ${fields.task || '""'}`,
+    `next-step: ${fields['next-step']}`,
+  ];
+  writeFileSync(focusPath(openspecRoot), `${lines.join('\n')}\n`, 'utf8');
 }
 
 /** The act hint for a change: an aimed room says `approve`, everything
