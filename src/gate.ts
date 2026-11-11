@@ -175,8 +175,16 @@ export function blockArchiveState(slug: string, schema: Schema, approved: Set<st
 export function blockUnapprovedState(slug: string, schema: Schema, approved: Set<string>): string {
   const advance = advanceCommand(schema, approved, slug);
   if (!advance) return BLOCK_UNAPPROVED;
+  // name the writes gate: the state a cold agent misreads as "wait for
+  // the verdict" — the truth is one approval away, and it names itself
+  const writes = schema.artifacts.filter((a) => (a.unlocks ?? []).includes('writes'));
+  const writesLine =
+    writes.length > 0 && writes.some((w) => !approved.has(w.id))
+      ? [`   writes:   locked until '${writes.map((w) => w.id).join(', ')}' is approved — source files wait, the walk continues`]
+      : [];
   return [
     '⛔ focused change is not approved — attribution is not approval',
+    ...writesLine,
     `   advance: ${advance}   ← your terminal`,
     '   docs:    openspec/** stays exempt — drafting is never blocked',
   ].join('\n');

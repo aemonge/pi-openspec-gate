@@ -358,6 +358,9 @@ test('cd prefixes are navigation, not work — stripped before classification', 
     ['cd /tmp/test', false], // bare cd: a no-op in a subshell
     ['cd /tmp/test && rm -rf x', true],
     ['cat notes && cd /tmp && rg pattern', false],
+    ['python3 --version', false],
+    ['node --version && python3 --version', false],
+    ['python3 /tmp/test/hello.py Andy', true], // running the script is work — only --version probes read
   ];
   for (const [command, mutating] of cases) {
     const verdict = classifyMutation('bash', { command });

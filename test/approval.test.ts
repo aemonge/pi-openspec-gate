@@ -521,6 +521,22 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     assert.match(reason, /advance: eospec approve/u);
   });
 
+  test('teeth: the writes gate names its artifact — the state a cold agent misreads', async () => {
+    const { fire } = freshGate();
+    mkdirSync(join(root, 'schemas', 'gated-writes'), { recursive: true });
+    writeFileSync(
+      join(root, 'schemas', 'gated-writes', 'schema.yaml'),
+      'name: gated-writes\nartifacts:\n  - id: brainstorm\n    generates: 1-brainstorm.md\n  - id: investigate\n    generates: 2-investigate.md\n    x-requires-approval: [brainstorm]\n  - id: plan\n    generates: 3-plan.md\n    x-requires-approval: [investigate]\n    x-unlocks: [writes]\n  - id: execute\n    generates: 4-execute.md\n    x-requires-approval: [plan]\n',
+      'utf8',
+    );
+    mkdirSync(join(root, 'changes', 'g4'), { recursive: true });
+    writeChangeMeta(root, 'g4', { schema: 'gated-writes', 'x-status': 'proposed', 'x-granted': 'brainstorm,investigate' });
+    const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusOn('g4'));
+    const reason = (result as { reason: string }).reason;
+    assert.match(reason, /writes:\s+locked until 'plan' is approved/u, reason ?? 'no reason');
+    assert.match(reason, /advance: eospec approve/u);
+  });
+
   test('archive guard: gated change advances, legacy stays byte-identical', async () => {
     const { fire } = freshGate();
     mkdirSync(join(root, 'changes', 'g3'), { recursive: true });

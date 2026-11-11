@@ -105,6 +105,11 @@ const READ_ONLY_VERB_ANCHORED =
 
 const GIT_READ_ONLY_ANCHORED = /^git\s+(?:status|diff|log|show|blame|ls-files|ls-remote|rev-parse|describe|reflog|shortlog|whatchanged|annotate)\b/u;
 
+// interpreter/runtime self-descriptions — a version probe reads nothing
+// (live-caught in the lab: `python3 --version` refused mid-investigate)
+const RUNTIME_VERSION_ANCHORED =
+  /^(?:python3?|node|npm|pnpm|yarn|deno|bun|cargo|rustc|go|java|ruby|gem|perl|php)\s+--version\b/u;
+
 const OPENSPEC_READ_ONLY_ANCHORED = /^openspec\s+(?:list|status|show|instructions|schemas|schema|context|validate)\b/u;
 
 // The gate's cockpit surface through wrapper normalization: help flags
@@ -302,6 +307,7 @@ function bashVerdict(command: string): MutationVerdict {
       GIT_READ_ONLY_ANCHORED.test(body) ||
       OPENSPEC_READ_ONLY_ANCHORED.test(body) ||
       GATE_COCKPIT_READ_ONLY_ANCHORED.test(body) ||
+      RUNTIME_VERSION_ANCHORED.test(body) ||
       GRAPHIFY_READ_ONLY_ANCHORED.test(body);
     if (readVerbed) continue; // read verb: arguments are data, not commands
     for (const { pattern, basis } of BASH_COMMAND_PATTERNS) {
