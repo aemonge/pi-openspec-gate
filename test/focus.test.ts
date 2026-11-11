@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { findSessionFile } from '../src/focus.ts';
+import { findSessionFile, readRoomFocus } from '../src/focus.ts';
 
 /** tempdir fixture: sessions root with per-cwd subdirs, pi's real layout. */
 function sessionsRoot(): { root: string; dir: (name: string) => string } {
@@ -56,4 +56,26 @@ test('findSessionFile: wrong sessionId → undefined', () => {
 
 test('findSessionFile: missing sessions root → undefined (fail-open)', () => {
   assert.equal(findSessionFile(join(tmpdir(), 'focus-no-such-root-xyz'), 'any-id'), undefined);
+});
+
+test('readRoomFocus: the keyed snapshot wins, legacy one-line still reads, comments ignored', () => {
+  const { root, dir } = sessionsRoot();
+  try {
+    const repo = dir('repo');
+    mkdirSync(join(repo, 'openspec', 'changes'), { recursive: true });
+    const room = join(repo, 'openspec', '.focus');
+    writeFileSync(
+      room,
+      '# one active change per room — eospec writes, verbs refresh\nchange: m1\nartifact-name: 3-plan.md\nnext-step: eospec approve\n',
+    );
+    
+    assert.equal(readRoomFocus(join(repo, 'openspec'))?.change, 'm1');
+    writeFileSync(room, 'legacy-slug\n');
+    assert.equal(readRoomFocus(join(repo, 'openspec'))?.change, 'legacy-slug');
+    writeFileSync(room, '# keyed snapshot without a change line\nartifact-name: ""\n');
+    assert.equal(readRoomFocus(join(repo, 'openspec')), undefined);
+    assert.equal(readRoomFocus(join(root, 'nowhere')), undefined);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

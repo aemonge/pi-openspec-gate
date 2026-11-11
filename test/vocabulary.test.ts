@@ -92,7 +92,7 @@ describe('vocabulary: parsing and validation', () => {
       ],
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-sections:\n      - id: one\n        x-requires-approval: [one]\n',
-        /retired: the walk stamps whole artifacts/u,
+        /gone: approve stamps whole artifacts/u,
       ],
       [
         'name: s\nartifacts:\n  - id: a\n    generates: 1-a.md\n    x-completes: approved\n  - id: b\n    generates: 2-b.md\n    x-completes: approved\n',

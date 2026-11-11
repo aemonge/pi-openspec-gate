@@ -47,7 +47,7 @@ export type Artifact = {
   /** x-completes — status stamp written when this grant completes the schema */
   completes?: string;
   /** x-unlocks — capability classes this artifact's grant opens (research, writes);
-   *  the legacy x-unlocks-source: true folds into [writes] */
+   *  x-unlocks-source: true folds into [writes] */
   unlocks: string[];
 };
 
@@ -112,7 +112,7 @@ function buildSections(chunks: SectionChunk[], source: string, artifactId: strin
     for (const { key, value } of chunk.keys) {
       if (key === 'x-requires-approval') {
         throw new Error(
-          `${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — retired: the walk stamps whole artifacts`,
+          `${source}: artifact '${artifactId}' section '${spec.id}' carries x-requires-approval — gone: approve stamps whole artifacts`,
         );
       }
       if (!SECTION_KEYS.has(key)) {
@@ -468,8 +468,7 @@ export function schemaVerdictLine(schema: Schema): string | undefined {
 }
 
 /** Writes (source work) may begin when a declared writes-unlock artifact
- *  bears a grant; schemas declaring none unlock at full completion
- *  (legacy behavior). */
+ *  bears a grant; schemas declaring none unlock at full completion. */
 export function writesUnlocked(schema: Schema, approved: ReadonlySet<string>): boolean {
   const unlockers = schema.artifacts.filter((a) => a.unlocks.includes('writes'));
   if (unlockers.length === 0) return allArtifactsGranted(schema, approved);

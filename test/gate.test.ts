@@ -108,7 +108,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.ok(result.reason!.includes('declare:'), 'declare remedy — the fixture schema declares');
     assert.ok(result.reason!.includes('"action the job"'), 'declare names the exact phrases');
     assert.ok(!result.reason!.includes('"do it"'), 'the retired alias appears nowhere');
-    const blocked = entries.find((e) => e.customType === 'pi-openspec-gate.blocked.v1');
+    const blocked = entries.find((e) => e.customType === 'gate.blocked');
     assert.ok(blocked, 'blocked fact recorded');
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
   });
@@ -124,7 +124,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const lines = readFileSync(bare, 'utf8').trim().split('\n');
     assert.equal(lines.length, 1, 'exactly one debt line');
     assert.match(lines[0], /^bare — action the job · at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u);
-    assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'));
+    assert.ok(entries.some((e) => e.customType === 'gate.declared'));
     // latch consumed: a second mutation blocks again
     const second = (await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx)) as {
       reason?: string;
@@ -140,7 +140,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
       block?: boolean;
     };
     assert.equal(blocked?.block, true, 'still blocked — the alias is retired');
-    assert.ok(!entries.some((e) => e.customType === 'pi-openspec-gate.declared.v1'), 'no declared fact');
+    assert.ok(!entries.some((e) => e.customType === 'gate.declared'), 'no declared fact');
     assert.ok(!existsSync(join(repo, 'openspec', 'bare-work.md')), 'no debt line');
   });
 
@@ -153,7 +153,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     });
     const pass = await fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts' } }, ctx);
     assert.equal(pass, undefined);
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.attributed.v1');
+    const fact = entries.find((e) => e.customType === 'gate.attributed');
     assert.ok(fact, 'attributed fact recorded');
     assert.equal((fact!.data as { change: string }).change, 'c1');
     await new Promise((r) => setTimeout(r, 30)); // serialized appends settle
@@ -165,7 +165,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     const { fire, ctx, entries } = freshGate();
     const pass = await fire('tool_call', { toolName: 'write', input: { path: 'openspec/changes/c1/4-tasks.md' } }, ctx);
     assert.equal(pass, undefined);
-    const exempt = entries.find((e) => e.customType === 'pi-openspec-gate.exempt.v1');
+    const exempt = entries.find((e) => e.customType === 'gate.exempt');
     assert.ok(exempt, 'exempt fact recorded');
     const data = exempt!.data as { category: string; paths: string[] };
     assert.equal(data.category, 'openspec-artifacts');
@@ -201,13 +201,13 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
         {},
         { cwd: repo, sessionManager: { getSessionDir: () => childDir } },
       );
-      const inherited = entries.find((e) => e.customType === 'pi-openspec-gate.inherited.v1');
+      const inherited = entries.find((e) => e.customType === 'gate.inherited');
       assert.ok(inherited, 'inherited fact recorded');
       assert.equal((inherited!.data as { parentSessionId: string }).parentSessionId, 'parent-1');
       // child mutation under the parent's focus passes and attributes
       const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/child.ts' } }, ctx);
       assert.equal(pass, undefined);
-      const attributed = entries.find((e) => e.customType === 'pi-openspec-gate.attributed.v1');
+      const attributed = entries.find((e) => e.customType === 'gate.attributed');
       assert.ok(attributed, 'child mutation attributed');
       assert.equal((attributed!.data as { change: string }).change, 'c1');
     } finally {
@@ -291,7 +291,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.match(blocked!.reason!, /note:    a declare phrase appeared in an assistant message/u);
     assert.match(blocked!.reason!, /relay the phrases upward, never say them yourself/u);
     assert.match(blocked!.reason!, /declare: relay to the human/u, 'the declare remedy names the speaker');
-    const noticed = entries.find((e) => e.customType === 'pi-openspec-gate.self-declare.v1');
+    const noticed = entries.find((e) => e.customType === 'gate.self-declare');
     assert.ok(noticed, 'self-declare fact recorded');
     const again = (await fire('tool_call', { toolName: 'write', input: { path: 'src/b.ts' } }, ctx)) as {
       reason?: string;

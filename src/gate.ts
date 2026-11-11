@@ -31,6 +31,7 @@ import {
   focusIsActive,
   parseDelegationEnv,
   readFocusFromSessionFile,
+  readRoomFocus,
   readSessionFocus,
   hasActiveChanges,
   type ActiveFocus,
@@ -151,9 +152,9 @@ export function advanceCommand(schema: Schema, approved: Set<string>, slug: stri
   return `eospec approve`;
 }
 
-/** State-aware archive block: a gated change is advanced by its own act,
- *  never approved. Falls back to the legacy copy when everything is
- *  granted (completion lag). */
+/** State-aware archive block: a gated change is advanced by its own act.
+ *  Falls back to the completion copy once everything is granted
+ *  (completion lag). */
 export function blockArchiveState(slug: string, schema: Schema, approved: Set<string>): string {
   const advance = advanceCommand(schema, approved, slug);
   if (!advance) return BLOCK_ARCHIVE;
@@ -201,10 +202,10 @@ export function blockResearchWindow(slug: string, grantCommand: string): string 
 
 /** A human declaration latches exactly one declared mutation. The
  *  vocabulary is data: only x-declares phrases of resolvable schemas
- *  latch — the built-in alias is retired — and only from user messages;
- *  assistant text never declares, but a phrase in an assistant message is
- *  NOTICED (below) so the next block can correct the attempt instead of
- *  leaving the agent to guess at formatting. */
+ *  latch — and only from user messages; assistant text never declares,
+ *  but a phrase in an assistant message is NOTICED (below) so the next
+ *  block can correct the attempt instead of leaving the agent to guess
+ *  at formatting. */
 const DECLARE_MAX_LENGTH = 200;
 const SELF_DECLARE_MAX_LENGTH = 2000;
 
@@ -341,6 +342,10 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
   const openspecRootOf = (cwd: string): string | undefined => findOpenspecRoot(cwd);
 
   const activeFocus = (sessionManager: unknown, cwd: string): ActiveFocus | undefined => {
+    // 0. the room file — one aim per room, whatever surface wrote it
+    const roomRoot = openspecRootOf(cwd);
+    const room = roomRoot ? readRoomFocus(roomRoot) : undefined;
+    if (room) return room;
     // 1. this session's focus facts
     const own = readSessionFocus(sessionManager as never);
     if (own) return own;
@@ -692,8 +697,8 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const meta = readChangeMeta(openspecRoot!, focus.change);
       if (approval.enforce && !paused) {
         // unlock is data: any granted writes-unlock artifact (x-unlocks:
-        //  [writes], legacy x-unlocks-source), else (no declaration) full
-        // completion — attribution is not approval
+        //  [writes], or the x-unlocks-source alias), else (no declaration)
+        // full completion — attribution is not approval
         const unlockResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
         const unlocked =
           unlockResolution.ok && schemaIsGated(unlockResolution.schema)

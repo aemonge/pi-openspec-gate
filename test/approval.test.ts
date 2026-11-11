@@ -138,7 +138,7 @@ describe('approval teeth: attribution is not approval', () => {
       ctx,
     );
     assert.deepEqual(tsForm, { block: true, reason: BLOCK_APPROVAL_TOUCH });
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.unapproved.v1');
+    const fact = entries.find((e) => e.customType === 'gate.unapproved');
     assert.equal((fact!.data as { kind: string }).kind, 'approval-touch');
   });
 
@@ -171,7 +171,7 @@ describe('approval teeth: attribution is not approval', () => {
     writeChangeMeta(root, 'c1', { status: 'proposed' });
     const result = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
     assert.deepEqual(result, { block: true, reason: BLOCK_UNAPPROVED });
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.unapproved.v1');
+    const fact = entries.find((e) => e.customType === 'gate.unapproved');
     assert.equal((fact!.data as { kind: string }).kind, 'source-mutation');
   });
 
@@ -193,7 +193,7 @@ describe('approval teeth: attribution is not approval', () => {
     writeChangeMeta(root, 'c1', { status: 'approved' });
     const pass = await fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, ctx);
     assert.equal(pass, undefined);
-    assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.attributed.v1'));
+    assert.ok(entries.some((e) => e.customType === 'gate.attributed'));
     await new Promise((r) => setTimeout(r, 30));
     const receipt = readFileSync(join(repo, 'openspec', 'changes', 'c1', '4-tasks.md'), 'utf8');
     assert.match(receipt, /gate-attributed · tool: write/u);
@@ -214,7 +214,7 @@ describe('approval teeth: attribution is not approval', () => {
       ctx,
     );
     assert.deepEqual(result, { block: true, reason: BLOCK_HUMANGATE });
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.humangate.v1');
+    const fact = entries.find((e) => e.customType === 'gate.human-gate');
     assert.equal((fact!.data as { permit: string }).permit, 'none');
   });
 
@@ -234,7 +234,7 @@ describe('approval teeth: attribution is not approval', () => {
       ctx,
     );
     assert.equal(pass, undefined);
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.humangate.v1');
+    const fact = entries.find((e) => e.customType === 'gate.human-gate');
     assert.equal((fact!.data as { permit: string }).permit, 'meta');
   });
 
@@ -254,7 +254,7 @@ describe('approval teeth: attribution is not approval', () => {
       } as never, ctx);
     const first = await flip('[ ]');
     assert.equal(first, undefined, 'permitted flip passes');
-    const fact = entries.find((e) => e.customType === 'pi-openspec-gate.humangate.v1');
+    const fact = entries.find((e) => e.customType === 'gate.human-gate');
     assert.equal((fact!.data as { permit: string }).permit, 'valid-latch');
     // latch consumed: a second flip (new unchecked line) blocks again
     writeFileSync(join(repo, 'openspec', 'changes', 'c1', '4-tasks.md'), '- [ ] Step 10 — Human validation\n', 'utf8');
@@ -333,7 +333,7 @@ describe('approval teeth: attribution is not approval', () => {
     const meta = readChangeMeta(root, 'fresh-one');
     assert.equal(meta.status, 'proposed');
     assert.equal(meta.raw.created_by, 'assistant');
-    assert.ok(entries.some((e) => e.customType === 'pi-openspec-gate.creation-stamped.v1'));
+    assert.ok(entries.some((e) => e.customType === 'gate.creation-stamped'));
   });
 
   test('creation stamping: wrapper form witnessed too; no dir → no stamp', async () => {
@@ -348,7 +348,7 @@ describe('approval teeth: attribution is not approval', () => {
     await fire('message_end', { message: { role: 'assistant', content: 'done' } }, ctx);
     assert.equal(existsSync(join(repo, 'openspec', 'changes', 'wrapped-one')), false);
     assert.equal(
-      entries.some((e) => e.customType === 'pi-openspec-gate.creation-stamped.v1'),
+      entries.some((e) => e.customType === 'gate.creation-stamped'),
       false,
       'nothing stamped for a creation that never landed',
     );
@@ -405,7 +405,7 @@ describe('pause: a human reply arms the yield — teeth rest, the fence stays', 
       await fake.fire('message_end', { message: { role: 'user', content: 'pause 30m' } }, focusCtx);
       const yielded = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
       assert.equal(yielded, undefined, 'teeth rest while armed');
-      const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.pause.v1');
+      const fact = fake.entries.find((e) => e.customType === 'gate.pause');
       assert.equal((fact!.data as { kind: string }).kind, 'armed');
       // the fence stays: grant surfaces block even while paused
       const fenced = await fake.fire('tool_call', { toolName: 'bash', input: { command: 'eospec approve c9' } }, focusCtx);
@@ -446,7 +446,7 @@ describe('pause: a human reply arms the yield — teeth rest, the fence stays', 
       await new Promise((resolve) => setTimeout(resolve, 90));
       const after = await fake.fire('tool_call', { toolName: 'write', input: { path: 'src/a.ts' } }, focusCtx);
       assert.deepEqual(after, { block: true, reason: BLOCK_UNAPPROVED }, 'expiry restores the teeth');
-      const expired = fake.entries.find((e) => e.customType === 'pi-openspec-gate.pause.v1' && (e.data as { kind: string }).kind === 'expired');
+      const expired = fake.entries.find((e) => e.customType === 'gate.pause' && (e.data as { kind: string }).kind === 'expired');
       assert.ok(expired, 'the expiry is a recorded fact');
       // resume clears early
       await fake.fire('message_end', { message: { role: 'user', content: 'pause 1h' } }, focusCtx);

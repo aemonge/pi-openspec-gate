@@ -69,7 +69,7 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
     createGate(fake.pi as never, { enabled: true, exempt: [], accountingTools: ['work_focus'] });
     const result = await fake.fire('tool_call', { toolName: 'work_focus', input: {} }, ctx);
     assert.equal(result, undefined);
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.instrument.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.instrument');
     assert.ok(fact, 'instrument fact recorded');
     assert.equal((fact!.data as { tool: string }).tool, 'work_focus');
   });
@@ -122,7 +122,7 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
       createGate(fake.pi as never, config);
       const result = await fake.fire('tool_call', { toolName: verb, input: { title: 't', content: 'c' } }, ctx);
       assert.equal(result, undefined, `${verb} passes ungated`);
-      const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.instrument.v1');
+      const fact = fake.entries.find((e) => e.customType === 'gate.instrument');
       assert.ok(fact, `${verb} recorded as instrument`);
       assert.equal((fact!.data as { tool: string }).tool, verb);
     }
@@ -133,7 +133,7 @@ describe('instrument carve-out: the gate never gates its instruments', () => {
     createGate(fake.pi as never, loadGateConfig());
     const result = await fake.fire('tool_call', { toolName: 'mem_delete', input: { id: 1 } }, ctx);
     assert.equal(result, undefined);
-    assert.ok(fake.entries.some((e) => e.customType === 'pi-openspec-gate.instrument.v1'));
+    assert.ok(fake.entries.some((e) => e.customType === 'gate.instrument'));
   });
 
   test('unknown memory tool still blocks — fail-safe untouched (no classifier change)', async () => {

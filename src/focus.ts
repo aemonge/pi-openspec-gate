@@ -1,24 +1,28 @@
 /**
  * Focus read-path — where the gate learns the active change.
  *
- * Primary: this session's entry store — the openspec focus tool already
- * persists `galactica-status.openspec-focus.v1` facts (verified in the
- * installed status package). The gate only reads that entry type.
+ * Primary: the room file (.focus) — one aim per room, whatever surface
+ * wrote it (readRoomFocus). The gate prefers it over any session fact.
+ *
+ * Fallback: this session's entry store — the status package's focus tool
+ * persists `eospec.focus` facts (the pre-rebuild brand name must ship in
+ * that package before its entries read again). The gate only reads that
+ * entry type.
  *
  * Inheritance: a subagent child process carries PI_SUBAGENT_DELEGATION
  * {parentSessionId,...}; the parent's session file is located under the
- * session root and its latest focus fact is inherited as the child's active
- * change (federated inheritance — the child gate runs the same law).
+ * session root and its latest focus fact is inherited as the child's
+ * active change — only while no room file aims the room.
  *
  * Validation: a focus names an active change only if that change exists on
  * disk (openspec/changes/<id>/) — stale focus facts do not attribute.
- * Fallback: none needed beyond disk validation; the CLI (`openspec list`) is
- * a human remedy, not a gate input.
+ * Fallback: none needed beyond disk validation; the CLI (`eospec focus`)
+ * is a human remedy, not a gate input.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-export const OPENSPEC_FOCUS_ENTRY_TYPE = 'galactica-status.openspec-focus.v1';
+export const OPENSPEC_FOCUS_ENTRY_TYPE = 'eospec.focus';
 
 export type ActiveFocus = {
   change: string;
@@ -45,6 +49,20 @@ function entryToFocus(entry: { type: string; customType?: string; data?: unknown
   const record = data as Record<string, unknown>;
   if (record.mode === 'none') return undefined; // explicit clear
   return focusFromData(data);
+}
+
+/** The room file — the CLI's aim (one flat-yaml snapshot per repo). The
+ *  single focus store: one room has one aim, whatever surface wrote it.
+ *  Reads both the keyed snapshot and the legacy one-line form. */
+export function readRoomFocus(openspecRoot: string): ActiveFocus | undefined {
+  const file = join(openspecRoot, '.focus');
+  if (!existsSync(file)) return undefined;
+  const text = readFileSync(file, 'utf8');
+  const keyed = /^change:\s*(.+?)\s*$/mu.exec(text);
+  if (keyed) return { change: keyed[1] };
+  if (/^#/.test(text.trim())) return undefined; // keyed snapshot without a change: empty room
+  const bare = text.trim().split('\n')[0]?.trim();
+  return bare ? { change: bare } : undefined;
 }
 
 /** Latest focus fact in this session's entry store. */

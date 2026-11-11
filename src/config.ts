@@ -52,7 +52,7 @@ export type GateConfig = {
    *  the tool boundary. The schema owns WHEN (which grant opens which);
    *  this owns the matchers. Absent = built-in defaults. */
   unlocks?: UnlockClasses;
-  /** Approval teeth; absent section = all off (legacy behavior). */
+  /** Approval teeth; absent section = all off. */
   approval: ApprovalConfig;
 };
 

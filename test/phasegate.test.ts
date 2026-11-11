@@ -80,7 +80,7 @@ describe('research window: x-unlocks [research] opens at a grant', () => {
     const reason = (blocked as { reason: string }).reason;
     assert.match(reason, /research window closed — 'c1'/u);
     assert.match(reason, /grant:   eospec approve   ← your terminal/u);
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');
     assert.equal((fact!.data as { kind: string }).kind, 'research-window');
   });
 
@@ -181,7 +181,7 @@ describe('artifact gates: creating gated change artifacts', () => {
         '   docs:    the schema gates this artifact (x-requires-approval)',
       ].join('\n'),
     });
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');
     assert.equal((fact!.data as { kind: string }).kind, 'missing-approval');
   });
 
@@ -226,7 +226,7 @@ describe('artifact gates: creating gated change artifacts', () => {
         '   add it — the grant will refuse to stamp until it exists',
       ].join('\n'),
     });
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');
     assert.equal((fact!.data as { kind: string }).kind, 'missing-sections');
   });
 
@@ -294,7 +294,7 @@ describe('artifact gates: creating gated change artifacts', () => {
     writeFileSync(metaFile, 'schema: multi\ngranted: a, b\n', 'utf8');
     const both = await fire();
     assert.equal(both, undefined);
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');
     assert.equal((fact!.data as { kind: string }).kind, 'missing-approval');
   });
 
@@ -314,7 +314,7 @@ describe('artifact gates: creating gated change artifacts', () => {
     writeFileSync(join(changeDir, '1-a.md'), '# A\n', 'utf8');
     const present = await fire();
     assert.equal(present, undefined);
-    const fact = fake.entries.find((e) => e.customType === 'pi-openspec-gate.phasegate.v1');
+    const fact = fake.entries.find((e) => e.customType === 'gate.phase-gate');
     assert.equal((fact!.data as { kind: string }).kind, 'missing-written');
   });
 

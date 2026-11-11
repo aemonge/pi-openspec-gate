@@ -4,18 +4,18 @@
  * consumes them. Durable, outside LLM context, part of the session record.
  */
 export const FACT = {
-  blocked: 'pi-openspec-gate.blocked.v1',
-  declared: 'pi-openspec-gate.declared.v1',
-  attributed: 'pi-openspec-gate.attributed.v1',
-  exempt: 'pi-openspec-gate.exempt.v1',
-  inherited: 'pi-openspec-gate.inherited.v1',
-  instrument: 'pi-openspec-gate.instrument.v1',
-  unapproved: 'pi-openspec-gate.unapproved.v1',
-  humangate: 'pi-openspec-gate.humangate.v1',
-  creationStamped: 'pi-openspec-gate.creation-stamped.v1',
-  phasegate: 'pi-openspec-gate.phasegate.v1',
-  selfDeclare: 'pi-openspec-gate.self-declare.v1',
-  pause: 'pi-openspec-gate.pause.v1',
+  blocked: 'gate.blocked',
+  declared: 'gate.declared',
+  attributed: 'gate.attributed',
+  exempt: 'gate.exempt',
+  inherited: 'gate.inherited',
+  instrument: 'gate.instrument',
+  unapproved: 'gate.unapproved',
+  humangate: 'gate.human-gate',
+  creationStamped: 'gate.creation-stamped',
+  phasegate: 'gate.phase-gate',
+  selfDeclare: 'gate.self-declare',
+  pause: 'gate.pause',
 } as const;
 
 /** An assistant message carried a declare phrase — a self-declaration
