@@ -214,7 +214,7 @@
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T09:16:48Z
 

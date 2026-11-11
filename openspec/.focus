@@ -1,6 +1,0 @@
-# one active change per room — eospec writes, verbs refresh
-change: rebuild
-artifact-name: 4-execute.md
-artifact-idx: 4/4
-task: 48/53
-next-step: tick 'Human validation' — eospec close
