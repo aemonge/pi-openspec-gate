@@ -1,9 +1,11 @@
 # eospec gates and release.
 
-# Static gate: the vocabulary law (permission words are forbidden here).
+# Static gate: the vocabulary law (permission words are forbidden here)
+# and the doc↔CLI parity law (docs teach only what the bin answers).
 lint:
     @! grep -riE 'waiver|sanitiz|trust' src/ test/ config.json index.ts
     @! grep -rniEw 'mission|ladder|rung|rungs|ladders' src/ bin/ index.ts config.json
+    @node tools/parity-lint.mjs
     @echo "vocabulary law holds"
 
 # Full test suite.
