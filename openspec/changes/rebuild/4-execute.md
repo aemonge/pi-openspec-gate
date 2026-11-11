@@ -203,6 +203,15 @@
       globals
       hash: 3473038
 
+## Slice 16 — the package name is restored (human-directed)
+
+- [x] @aemonge-dev/pi-openspec-gate ships the eospec cli — the tool is
+      eospec, the package keeps its name; 1.0.0's brief @aemonge-dev/eospec
+      publish retired; 1.1.0 under the restored name
+      started_at: 2026-11-11T14:58:00Z · ended_at: 2026-11-11T15:01:00Z · total: 3m · check: ✓ 180/180, laws hold · paths: package.json, justfile, README.md, CHANGELOG.md, test/pios-wrapper.test.ts
+- [x] chore!: restore the package name — pi-openspec-gate ships the eospec cli
+      hash: 12d0509
+
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 
 - [ ] Human validation — response: · outcome: · surfaced:
@@ -890,3 +899,31 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:53:24Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T14:53:24Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-11-11T15:00:34Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-11-11T15:00:34Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/justfile · at 2026-11-11T15:00:34Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/justfile · at 2026-11-11T15:00:34Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T15:00:42Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T15:00:43Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T15:00:43Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T15:00:43Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T15:00:56Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T15:00:56Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T15:00:56Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-11T15:00:57Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T15:01:03Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T15:01:04Z
