@@ -71,17 +71,22 @@ the human read a stale room mid-walk (task "", draft 4/4).
 - [x] this ledger's receipt spam deduped by hand when the fix lands
       started_at: 2026-11-11T16:35:00Z · ended_at: 2026-11-11T16:36:00Z · total: 1m · check: ✓ 108 doubles + blank inflation collapsed; receipts landing during the fix's own commit (the session still runs the old copy until reload) dedupe again at close · paths: openspec/changes/post-delivery/4-execute.md
 
-- [ ] fix(gate): receipts land once; the room refreshes on touches
-      hash:
+- [x] fix(gate): receipts land once; the room refreshes on touches
+      hash: b1e703e
       validation: human runs a bash mutation mid-walk, reads the ledger — one tight receipt block, no doubles; reads .focus after a ledger tick — task climbs without a verb (session reload or global-copy removal arms the fix live)
 
 ## Slice 4 — debt graduates
 
-- [ ] four orphans become parked proposed changes (openspec new change + stub brainstorms): spanned-agent riding · post-archive commit gap · external pause arming · stardeck eospec.focus facts
-- [ ] openspec/learnings/debt.md deleted
-- [ ] README:67 architecture line — closed changes route follow-ups by opening a change; the doors are two
-- [ ] example/README.md:29 surfaced-routing line matches the binary grammar
-- [ ] test/approval.test.ts:579 fixture path swaps off debt.md
+- [x] four orphans become parked proposed changes (openspec new change + stub brainstorms): spanned-agent riding · post-archive commit gap · external pause arming · stardeck eospec.focus facts
+      started_at: 2026-11-11T16:36:20Z · ended_at: 2026-11-11T16:37:30Z · total: 1m · check: ✓ scaffolded via the escape hatch, stub brainstorms carry the debt text as Pain + the open question — each parks at ◻···· until it earns its walk · paths: openspec/changes/spanned-agent-riding/, post-archive-commit-gap/, external-pause-arming/, stardeck-focus-facts/
+- [x] openspec/learnings/debt.md deleted
+      started_at: 2026-11-11T16:37:30Z · ended_at: 2026-11-11T16:37:40Z · total: <1m · check: ✓ learnings/ empty — estimation.md and skills.md still owed by their own consult lines · paths: openspec/learnings/
+- [x] README:67 architecture line — closed changes route follow-ups by opening a change; the doors are two
+      started_at: 2026-11-11T16:37:40Z · ended_at: 2026-11-11T16:37:50Z · total: <1m · check: ✓ the routing sentence carries the binary grammar · paths: README.md
+- [x] example/README.md:29 surfaced-routing line matches the binary grammar
+      started_at: 2026-11-11T16:37:50Z · ended_at: 2026-11-11T16:38:00Z · total: <1m · check: ✓ · paths: example/README.md
+- [x] test/approval.test.ts:579 fixture path swaps off debt.md
+      started_at: 2026-11-11T16:38:00Z · ended_at: 2026-11-11T16:38:10Z · total: <1m · check: ✓ skills.md carries the teeth assertion — path shape unchanged · paths: test/approval.test.ts
 
 - [ ] feat(schema): findings graduate — debt.md dies
       hash:
@@ -218,3 +223,11 @@ the human read a stale room mid-walk (task "", draft 4/4).
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:43Z
 
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:34:43Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:36:47Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:37:34Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:37:56Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-11T16:38:05Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-11T16:38:05Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-11T16:38:05Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:38:09Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:38:50Z

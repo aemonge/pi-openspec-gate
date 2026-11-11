@@ -63,8 +63,9 @@ example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
 two boundaries humans own: spend at plan, judge at the verdict. Copy it
 as your starting point and edit the yaml; the engine hardcodes nothing.
 Findings surfaced while delivering become appended slices in the same
-ledger — the verdict waits for them; a closed change routes follow-ups
-through `openspec/learnings/debt.md`.
+ledger (the small ones) or route `→ post-delivery` in the verdict's
+`surfaced:` line (the too-big ones, designed inside the change) — a
+closed change's follow-ups open their own change.
 
 ## Install
 

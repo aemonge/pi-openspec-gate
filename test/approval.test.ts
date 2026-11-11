@@ -576,7 +576,7 @@ describe('state-aware blocks: gated changes never hear approve', () => {
     // by construction) — so staging under openspec/ still hits the teeth
     const blocked = await fire(
       'tool_call',
-      { toolName: 'bash', input: { command: 'git add openspec/learnings/debt.md' } },
+      { toolName: 'bash', input: { command: 'git add openspec/learnings/skills.md' } },
       focusOn('g1'),
     );
     assert.match((blocked as { reason: string }).reason, /advance: eospec approve/u);

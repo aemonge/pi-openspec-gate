@@ -26,7 +26,9 @@ because void research is unaccounted work. **The ledger anatomy** (in
 the templates, ungated): per-Slice checkpoint checkboxes with timing
 slots → a Commit checkbox whose `hash:` slot is the receipt (a tick
 without a hash is not done) → one final, flip-guarded Human validation
-carrying `surfaced:` routing to `openspec/learnings/debt.md`. Learnings
+carrying `surfaced:` binary routing — `slice` · `→ post-delivery` (the
+fifth artifact designs the too-big ones inside the change; post-close
+findings open their own change). Learnings
 live OUTSIDE the flow — topic-keyed files every step reads, any change
 may append.
 
