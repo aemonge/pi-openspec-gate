@@ -48,7 +48,7 @@
   - 2026-11-10T08:51:23Z · git · commit fb373b3 fix(cli): grant reads the refs the cockpit prints
   - 2026-11-10T08:51:35Z · git · commit 095d205 feat(cli): the gate names the next act at every transition
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: bash · paths: — · at 2026-11-10T11:53:41Z
 

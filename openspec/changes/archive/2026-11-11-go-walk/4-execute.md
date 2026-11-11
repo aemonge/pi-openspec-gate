@@ -68,7 +68,7 @@
   - 2026-11-10T15:36:00Z · bash · just lint, npm test · 173 pass, 0 fail
   - 2026-11-10T15:37:30Z · git · commit 51b444e feat(cli): done — the four-word walk closes: <slug>, go, list, done
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: bash · paths: — · at 2026-11-10T14:45:08Z
 
