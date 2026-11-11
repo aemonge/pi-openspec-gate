@@ -3,6 +3,25 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
+## 1.2.0 — 2026-11-11
+
+- **post-delivery** — the walk's fifth artifact, conditional: when a
+  delivery surfaces findings too big for execute's slices, the verdict's
+  `surfaced:` line routes them (`slice · → post-delivery`) and the
+  fifth designs them inside the change that surfaced them — tick-first
+  (`x-requires-verdict`), skipped entirely when no findings exist
+  (`x-optional`). Schema v9.
+- **the room law** — `next-step` names the human's verb only (approve
+  while anything pends, close when all are granted); the `task:` line
+  exists only when there are checkboxes; the all-granted name follows
+  the walk, the counter follows the receipts. The room re-renders on
+  every gate-side touch, not just verbs.
+- **receipts land once** — identical receipts and debt lines dedupe
+  (double-loaded gates land one line); receipts append as a tight
+  block, no blank-line inflation.
+- **debt.md dies** — deferral walks through post-delivery (route: park);
+  post-close findings open their own change; the doors are two.
+
 ## 1.1.0 — 2026-11-11
 
 - **the package name is restored**: `@aemonge-dev/pi-openspec-gate`

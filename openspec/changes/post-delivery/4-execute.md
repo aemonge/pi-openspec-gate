@@ -102,9 +102,11 @@ the human read a stale room mid-walk (task "", draft 4/4).
       started_at: 2026-11-11T16:41:20Z · ended_at: 2026-11-11T16:41:30Z · total: <1m · check: ✓ v9, five steps (the fifth conditional); the findings-free four-press walk named as such · paths: example/README.md
 - [x] `just lint` green (vocabulary + parity), `npm test` green
       started_at: 2026-11-11T16:41:30Z · ended_at: 2026-11-11T16:41:41Z · total: <1m · check: ✓ 190/190 · walkthrough 21/21 · parity holds · paths: —
+- [x] CHANGELOG entry for the change (amendment 2026-11-11: the release aims here — no slice named it)
+      started_at: 2026-11-11T16:42:30Z · ended_at: 2026-11-11T16:42:50Z · total: <1m · check: ✓ 1.2.0 entry — the fifth artifact, the room law, receipts land once, debt graduates · paths: CHANGELOG.md
 
-- [ ] docs(walk): the walk line learns five steps
-      hash:
+- [x] docs(walk): the walk line learns five steps
+      hash: 3836556
       validation: human runs `./example/try.sh` and reads the final room output in the scratch repo
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
@@ -247,3 +249,5 @@ the human read a stale room mid-walk (task "", draft 4/4).
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-11T16:41:31Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:31Z
   gate-attributed · tool: bash · paths: — · at 2026-11-11T16:41:56Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-11T16:42:29Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-11T16:42:32Z
