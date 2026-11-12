@@ -40,7 +40,7 @@ const UNGATED_SCHEMA = `name: ungated\nversion: 1\nartifacts:\n  - id: a\n    ge
 const MULTI_SCHEMA = `name: multi\nversion: 1\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n  - id: c\n    generates: 3-c.md\n    x-requires-approval: [a, b]\n`;
 const WRITTEN_SCHEMA = `name: written\nversion: 1\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-written: [a]\n`;
 const WINDOW_SCHEMA = `name: window\nversion: 1\nartifacts:\n  - id: brief\n    generates: 1-brief.md\n  - id: dig\n    generates: 2-dig.md\n    x-grant-verb: dig\n    x-requires-approval: [brief]\n    x-unlocks: [research]\n`;
-const VERDICT_SCHEMA = `name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n`;
+const VERDICT_SCHEMA = `name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n`;
 
 function fixture(schemaName: string, meta: Record<string, string> = {}) {
   const root = mkdtempSync(join(tmpdir(), 'phasegate-'));

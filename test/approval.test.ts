@@ -84,7 +84,7 @@ describe('approval teeth: attribution is not approval', () => {
     mkdirSync(join(root, 'schemas', 'teeth'), { recursive: true });
     writeFileSync(
       join(root, 'schemas', 'teeth', 'schema.yaml'),
-      'name: teeth\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
+      'name: teeth\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n',
       'utf8',
     );
     writeChangeMeta(root, 'c1', { schema: 'teeth' });
@@ -195,7 +195,7 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal(pass, undefined);
     assert.ok(entries.some((e) => e.customType === 'gate.attributed'));
     await new Promise((r) => setTimeout(r, 30));
-    const receipt = readFileSync(join(repo, 'openspec', 'changes', 'c1', '4-tasks.md'), 'utf8');
+    const receipt = readFileSync(join(repo, 'openspec', 'changes', 'c1', '.ledger'), 'utf8');
     assert.match(receipt, /gate-attributed · tool: write/u);
   });
 

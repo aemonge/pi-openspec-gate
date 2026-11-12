@@ -22,7 +22,7 @@
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { grantedSet, readChangeMeta } from './approval.ts';
-import { receiptArtifactFor, resolveChangeSchema, schemaIsGated } from './schema.ts';
+import { resolveChangeSchema, schemaIsGated } from './schema.ts';
 
 export const OPENSPEC_FOCUS_ENTRY_TYPE = 'eospec.focus';
 
@@ -234,7 +234,7 @@ export function renderRoom(root: string, slug: string): Record<string, string> {
   const fileOnDisk = (g: string) => existsSync(join(root, 'changes', slug, g));
   const idx = schema.artifacts.findIndex((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
   const finalStep = schema.artifacts[schema.artifacts.length - 1]!;
-  const bearer = receiptArtifactFor(schema) ?? finalStep;
+  const bearer = schema.artifacts.find((a) => a.completes) ?? finalStep;
   if (idx === -1) {
     fields['artifact-name'] = finalStep.generates;
     fields['artifact-idx'] = `${schema.artifacts.length}/${schema.artifacts.length}`;

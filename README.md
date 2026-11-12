@@ -9,7 +9,7 @@ Each call lands in exactly one of four buckets:
   ground: they pass, recorded
 - **attributed** — the room is aimed at a change (the `openspec/.focus`
   snapshot); the call proceeds and a receipt (tool · paths · UTC) lands in
-  that change's ledger
+  that change's sidecar (`.ledger`) — artifacts stay prose
 - **declared** — you say a phrase the schema declares; the shipped `spec`
   schema declares two doors: **"start the spec"** — run the ceremony
   (create, aim, draft — that part needs no declaration) — and
@@ -54,7 +54,8 @@ while anything pends, `eospec close` once all are granted; the draft
 rhythm and the verdict reminder live in the CLI echo and close's
 refusal. The `task:` line exists only when the artifact has checkboxes
 (no empty counters). The all-granted name follows the walk (the final
-artifact) while the counter follows the receipts (the ledger). The
+artifact) while the counter follows the checkboxes (the completing
+artifact). The
 watcher re-renders on every gate-side touch; verbs re-render; `close`
 deletes it. A snapshot, never the truth — the change's meta, the
 schema, and the artifact files decide.
@@ -64,7 +65,7 @@ schema, and the artifact files decide.
 Changes declare a schema; the schema declares the human gates as data
 (`x-` tags), and the gate enforces them: approve step N before step N+1
 drafts, sections present at stamp time, receipts flowing into the
-declared ledger, one human-verdict line closing the walk. The shipped
+change's sidecar (`.ledger`), one human-verdict line closing the walk. The shipped
 example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
 — five steps (brainstorm → investigate → plan → execute →
 post-delivery — the fifth conditional: it exists only when the

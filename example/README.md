@@ -12,7 +12,7 @@ words: aim once (`eospec focus lab-run`), `eospec approve` at each step,
 | 1 | `1-brainstorm.md` | `x-sections: [Pain, Questions]` — drafts free, first approval |
 | 2 | `2-investigate.md` | requires `brainstorm` · `x-unlocks: [research]` — **no structure: the journal is free** |
 | 3 | `3-plan.md` | requires `investigate` · `x-unlocks: [writes]` — **the docs→code boundary** · six declared sections |
-| 4 | `4-execute.md` | requires `plan` · `x-receives-receipts` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
+| 4 | `4-execute.md` | requires `plan` · `x-completes: approved` · `x-verdict-line: Human validation` — no fixed sections |
 
 Plus schema-level `x-declares: [start the spec, skip the spec]` — two
 doors: "start the spec" runs the ceremony; "skip the spec" lands one
@@ -82,7 +82,8 @@ artifact, live room, receipts-once, verdict-first — lives in
    lands exactly one mutation as declared work (human words only) → one
    debt line in `openspec/bare-work.md`
 3. Aim your change (`eospec focus my-change`) → mutations attributed;
-   receipts land in the `x-receives-receipts` artifact while work runs
+   receipts land in the change's sidecar (`changes/<slug>/.ledger`)
+   while work runs
 4. Try `bash: eospec approve` → **refused** — approval is human-terminal,
    stamps are yours
 5. Create `2-investigate.md` while `brainstorm` is unapproved →

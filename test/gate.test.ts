@@ -66,7 +66,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     mkdirSync(join(repo, 'openspec', 'schemas', 'teeth'), { recursive: true });
     writeFileSync(
       join(repo, 'openspec', 'schemas', 'teeth', 'schema.yaml'),
-      'name: teeth\nx-declares: [action the job, execute the job]\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n    x-receives-receipts: true\n',
+      'name: teeth\nx-declares: [action the job, execute the job]\nartifacts:\n  - id: tasks\n    generates: 4-tasks.md\n    x-verdict-line: Human validation\n',
       'utf8',
     );
     writeFileSync(join(repo, 'openspec', 'changes', 'c1', '.openspec.yaml'), 'schema: teeth\n', 'utf8');
@@ -188,7 +188,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.ok(fact, 'attributed fact recorded');
     assert.equal((fact!.data as { change: string }).change, 'c1');
     await new Promise((r) => setTimeout(r, 30)); // serialized appends settle
-    const receipt = readFileSync(join(repo, 'openspec', 'changes', 'c1', '4-tasks.md'), 'utf8');
+    const receipt = readFileSync(join(repo, 'openspec', 'changes', 'c1', '.ledger'), 'utf8');
     assert.match(receipt, /gate-attributed · tool: edit · paths: [^\n]*src\/a\.ts · at \d{4}-/u);
   });
 
@@ -416,20 +416,18 @@ describe('receipts land once; the room refreshes on touches', () => {
   test('appendAttributionReceipt: the same call lands once, different at lands tight', async () => {
     const root = mkdtempSync(join(tmpdir(), 'receipt-lab-'));
     try {
-      const target = join(root, 'changes', 'c1', '4-tasks.md');
       mkdirSync(join(root, 'changes', 'c1'), { recursive: true });
-      writeFileSync(target, '# Tasks\n', 'utf8');
       const receipt = { tool: 'bash', paths: [] as string[], at: '2026-11-11T16:00:00Z' };
-      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
-      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
-      await appendAttributionReceipt(root, 'c1', receipt, '4-tasks.md');
+      await appendAttributionReceipt(root, 'c1', receipt);
+      await appendAttributionReceipt(root, 'c1', receipt);
+      await appendAttributionReceipt(root, 'c1', receipt);
+      const target = join(root, 'changes', 'c1', '.ledger');
       let text = readFileSync(target, 'utf8');
       assert.equal((text.match(/gate-attributed/gu) ?? []).length, 1, 'identical receipts dedupe');
       assert.doesNotMatch(text, /\n\n\n/u, 'no blank-line inflation');
-      await appendAttributionReceipt(root, 'c1', { ...receipt, at: '2026-11-11T16:00:05Z' }, '4-tasks.md');
+      await appendAttributionReceipt(root, 'c1', { ...receipt, at: '2026-11-11T16:00:05Z' }, );
       text = readFileSync(target, 'utf8');
       assert.equal((text.match(/gate-attributed/gu) ?? []).length, 2, 'a different call lands');
-      assert.match(text, /# Tasks\n\n  gate-attributed/u, 'one blank line separates content from the block');
       assert.doesNotMatch(text, /gate-attributed[^\n]*\n\n  gate-attributed/u, 'receipt lines stay tight');
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -455,7 +453,7 @@ describe('receipts land once; the room refreshes on touches', () => {
       mkdirSync(join(openspec, 'schemas', 'gate5'), { recursive: true });
       writeFileSync(
         join(openspec, 'schemas', 'gate5', 'schema.yaml'),
-        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-receives-receipts: true\n',
+        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n',
         'utf8',
       );
       mkdirSync(join(openspec, 'changes', 'c2'), { recursive: true });
@@ -510,7 +508,7 @@ function verdictFixture() {
   mkdirSync(join(openspec, 'schemas', 'verdict'), { recursive: true });
   writeFileSync(
     join(openspec, 'schemas', 'verdict', 'schema.yaml'),
-    'name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n',
+    'name: verdict\nversion: 1\nartifacts:\n  - id: ledger\n    generates: 4-ledger.md\n    x-verdict-line: Human validation\n  - id: fifth\n    generates: 5-post.md\n    x-requires-approval: [ledger]\n    x-requires-verdict: true\n',
     'utf8',
   );
   mkdirSync(join(openspec, 'changes', 'c1'), { recursive: true });
@@ -566,7 +564,7 @@ describe('the /tmp/test findings', () => {
       mkdirSync(join(openspec, 'schemas', 'gate5'), { recursive: true });
       writeFileSync(
         join(openspec, 'schemas', 'gate5', 'schema.yaml'),
-        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-receives-receipts: true\n    x-verdict-line: Human validation\n  - id: post\n    generates: 5-post.md\n    x-requires-approval: [b]\n    x-optional: true\n    x-requires-verdict: true\n',
+        'name: gate5\nartifacts:\n  - id: a\n    generates: 1-a.md\n  - id: b\n    generates: 2-b.md\n    x-requires-approval: [a]\n    x-verdict-line: Human validation\n  - id: post\n    generates: 5-post.md\n    x-requires-approval: [b]\n    x-optional: true\n    x-requires-verdict: true\n',
         'utf8',
       );
       mkdirSync(join(openspec, 'changes', 'c9'), { recursive: true });

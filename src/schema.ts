@@ -42,8 +42,6 @@ export type Artifact = {
   lines: string[];
   /** x-verdict-line — the checkbox line only a human may tick */
   verdictLine?: string;
-  /** x-receives-receipts — attribution receipts land in this artifact */
-  receivesReceipts: boolean;
   /** x-completes — status stamp written when this grant completes the schema */
   completes?: string;
   /** x-optional — skipped by grant, room, and close while its file is absent;
@@ -166,7 +164,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
 
   const newArtifact = (): Artifact => ({
     id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
-    receivesReceipts: false, unlocks: [], optional: false, requiresVerdict: false,
+    unlocks: [], optional: false, requiresVerdict: false,
   });
 
   const flushPending = () => {
@@ -292,11 +290,6 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       current.completes = v.trim();
       continue;
     }
-    if (k === 'x-receives-receipts') {
-      flushPending();
-      current.receivesReceipts = parseFlag(v.trim(), k, source, current.id);
-      continue;
-    }
     if (k === 'x-optional') {
       flushPending();
       current.optional = parseFlag(v.trim(), k, source, current.id);
@@ -400,12 +393,10 @@ export function parseSchemaYaml(content: string, source: string): Schema {
     }
   }
   for (const [tag] of [
-    ['x-completes'], ['x-verdict-line'], ['x-receives-receipts'],
+    ['x-completes'], ['x-verdict-line'],
   ] as const) {
     const bearers = artifactsReal.filter((a) =>
-      tag === 'x-completes' ? a.completes !== undefined
-        : tag === 'x-verdict-line' ? a.verdictLine !== undefined
-          : a.receivesReceipts,
+      tag === 'x-completes' ? a.completes !== undefined : a.verdictLine !== undefined,
     );
     if (bearers.length > 1) {
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
@@ -479,11 +470,6 @@ export function allArtifactsGranted(
 /** Declared heading titles, for structure checks. */
 export function sectionTitles(artifact: Artifact): string[] {
   return artifact.sections.map((s) => s.id);
-}
-
-/** Artifact carrying attribution receipts: the declared target, else the completing artifact. */
-export function receiptArtifactFor(schema: Schema): Artifact | undefined {
-  return schema.artifacts.find((a) => a.receivesReceipts) ?? schema.artifacts.find((a) => a.completes);
 }
 
 /** The single declared verdict line, when any artifact carries one. */

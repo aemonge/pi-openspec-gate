@@ -15,7 +15,6 @@ import { describe, test } from 'node:test';
 import {
   allArtifactsGranted,
   parseSchemaYaml,
-  receiptArtifactFor,
   schemaVerdictLine,
   sectionTitles,
   capabilityUnlocked,
@@ -45,7 +44,6 @@ const RICH_SCHEMA = [
   '    generates: 3-ship.md',
   '    x-requires-approval: [build]',
   '    x-verdict-line: Owner acceptance',
-  '    x-receives-receipts: true',
   '    x-completes: approved',
 ].join('\n');
 
@@ -59,7 +57,7 @@ describe('vocabulary: parsing and validation', () => {
     assert.ok(!('grantVerb' in schema.artifacts[0]!), 'declared verbs died by silent ignore');
     assert.ok(!('grantVerb' in schema.artifacts[1]!), 'declared verbs died by silent ignore');
     assert.equal(schemaVerdictLine(schema), 'Owner acceptance');
-    assert.equal(receiptArtifactFor(schema)?.id, 'ship');
+    assert.equal(schema.artifacts.find((a) => a.completes)?.id, 'ship'); // the counter reads the completing artifact
     assert.equal(schema.artifacts[2]!.completes, 'approved');
     assert.deepEqual(schema.artifacts[1]!.unlocks, ['research', 'writes']); // build unlocks early
     assert.deepEqual(schema.artifacts[2]!.unlocks, []);

@@ -279,7 +279,6 @@ describe('bin parser reads the shipped schemas', () => {
     );
     const execute = schema.artifacts.find((a: any) => a.id === 'execute');
     assert.equal(execute?.verdictLine, 'Human validation');
-    assert.equal(execute?.receivesReceipts, true);
     assert.equal(execute?.completes, 'approved');
   });
 });
@@ -300,7 +299,6 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
         lines: a.lines ?? [],
         verdictLine: a.verdictLine,
         completes: a.completes,
-        receivesReceipts: !!a.receivesReceipts,
         unlocksSource: !!a.unlocksSource,
       })),
     });

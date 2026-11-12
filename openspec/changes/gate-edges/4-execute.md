@@ -15,22 +15,22 @@
 - [x] `just lint` and `npm test` green
       started_at: 2026-11-12T13:46:00Z · ended_at: 2026-11-12T13:47:00Z · total: 1m · check: parity holds (6 verbs, 12 facts); vocabulary law holds; 192 pass / 0 fail · paths: test/, src/
   - [ ] feat(gate): research flows as fact — the wall retires at stage zero
-        hash:
+        hash: 85088b4
 
 ## Slice 2 — the receipt sidecar
 
-- [ ] `src/attribution.ts`: `appendAttributionReceipt` targets `changes/<slug>/.ledger` (mkdir-safe, same dedupe + tight block); undeclared-schema fallback behavior retires with the bearer concept
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] `src/gate.ts`: the receipt call passes the sidecar path; `receiptArtifactFor` loses its `x-receives-receipts` duty (verdict-line duty untouched)
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] `src/schema.ts` + `schema.yaml`: `x-receives-receipts` retires from the parser key lists and the spec schema; version bumped; `x-verdict-line` and the execute verdict law untouched
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] `bin/eospec.js`: close names the sidecar (receipt count) in its output; the tick law still reads execute
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] tests: receipts land in `.ledger` and never in `4-execute.md`; dedupe holds across touches; close summary renders; parity lint vocabulary updated; README receipt section rewritten
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] CHANGELOG line; `just lint` and `npm test` green
-      started_at: · ended_at: · total: · check: · paths:
+- [x] `src/attribution.ts`: `appendAttributionReceipt` targets `changes/<slug>/.ledger` (mkdir-safe, same dedupe + tight block); undeclared-schema fallback behavior retires with the bearer concept
+      started_at: 2026-11-12T13:48:00Z · ended_at: 2026-11-12T13:49:00Z · total: 1m · check: targetFile param gone; the sidecar is appender-owned · paths: src/attribution.ts
+- [x] `src/gate.ts`: the receipt call passes the sidecar path; `receiptArtifactFor` loses its `x-receives-receipts` duty (verdict-line duty untouched)
+      started_at: 2026-11-12T13:49:00Z · ended_at: 2026-11-12T13:50:00Z · total: 1m · check: receipt call = sidecar, no target; verdict bearer locates via x-verdict-line · paths: src/gate.ts
+- [x] `src/schema.ts` + `schema.yaml`: `x-receives-receipts` retires from the parser key lists and the spec schema; version bumped; `x-verdict-line` and the execute verdict law untouched
+      started_at: 2026-11-12T13:50:00Z · ended_at: 2026-11-12T13:52:00Z · total: 2m · check: key gone from parse/validation/type/defaults in BOTH mirrors (src + bin); example schema also caught up to v10 (Slice 1 drift absorbed); counter locates via x-completes · paths: src/schema.ts, bin/gate-lib.js, src/focus.ts, bin/eospec.js, openspec/schemas/spec/schema.yaml, example/openspec/schemas/spec/schema.yaml
+- [x] `bin/eospec.js`: close names the sidecar (receipt count) in its output; the tick law still reads execute
+      started_at: 2026-11-12T13:52:00Z · ended_at: 2026-11-12T13:53:00Z · total: 1m · check: `receipts: N` suffix on both close echoes; unticked check locates via verdict-line · paths: bin/eospec.js
+- [x] tests: receipts land in `.ledger` and never in `4-execute.md`; dedupe holds across touches; close summary renders; parity lint vocabulary updated; README receipt section rewritten
+      started_at: 2026-11-12T13:53:00Z · ended_at: 2026-11-12T13:55:00Z · total: 2m · check: residual scan = zero references; 192/192 green; parity holds; READMEs (root + example) rewritten · paths: test/*, README.md, example/README.md
+- [x] CHANGELOG line; `just lint` and `npm test` green
+      started_at: 2026-11-12T13:55:00Z · ended_at: 2026-11-12T13:55:00Z · total: <1m · check: Unreleased carries the sidecar law · paths: CHANGELOG.md
   - [ ] feat(gate): receipts land in a per-change sidecar — artifacts stay prose
         hash:
 
@@ -75,3 +75,27 @@
 - [ ] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: bash · paths: — · at 2026-11-12T13:47:31Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-12T13:50:29Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-12T13:50:41Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-12T13:50:50Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-12T13:51:00Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:06Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:25Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-12T13:53:20Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-12T13:53:29Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-12T13:53:29Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/vocabulary.test.ts · at 2026-11-12T13:53:41Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/vocabulary.test.ts · at 2026-11-12T13:53:42Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-12T13:53:49Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-12T13:53:49Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-12T13:53:50Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T13:54:03Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-12T13:54:09Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:54:19Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-12T13:54:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-12T13:54:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-12T13:54:40Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:54:47Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:40Z

@@ -3,9 +3,8 @@
  *
  *   declaration → one debt line in <openspec-root>/bare-work.md
  *                 (`bare — <words> · at <UTC>`), exactly one per job command
- *   attribution → one receipt line in the change's declared receipt
- *                 artifact (x-receives-receipts, else the completing
- *                 artifact — the schema names the file, the engine does not)
+ *   attribution → one receipt line in the change's sidecar ledger
+ *                 (changes/<slug>/.ledger — artifacts stay prose)
  *
  * Writes are serialized through a single-flight queue; failures never break
  * the gate's verdict (the fact store still holds the event).
@@ -48,16 +47,15 @@ export function appendDebtLine(openspecRoot: string | undefined, words: string, 
   });
 }
 
-/** One attribution receipt into the change's declared receipt artifact. */
+/** One attribution receipt into the change's sidecar ledger. */
 export function appendAttributionReceipt(
   openspecRoot: string | undefined,
   change: string,
   receipt: { tool: string; paths: string[]; at: string },
-  targetFile?: string,
 ): Promise<void> {
   return serialized(() => {
-    if (!openspecRoot || !targetFile) return; // no declared target: the fact store still records
-    const file = join(openspecRoot, 'changes', change, targetFile);
+    if (!openspecRoot) return; // no openspec root on disk: the fact store still records
+    const file = join(openspecRoot, 'changes', change, '.ledger');
     const line = `  gate-attributed · tool: ${receipt.tool} · paths: ${receipt.paths.join(', ') || '—'} · at ${receipt.at}`;
     // the gate can be loaded twice (dev machine: the published copy AND
     // this repo as a project package) — the same call lands once

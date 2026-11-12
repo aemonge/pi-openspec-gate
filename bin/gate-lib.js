@@ -124,7 +124,7 @@ function renderRoom(root, slug) {
   const fileOnDisk = (g) => existsSync(join(root, 'changes', slug, g));
   const idx = schema.artifacts.findIndex((a) => !approved.has(a.id) && !(a.optional && !fileOnDisk(a.generates)));
   const finalStep = schema.artifacts[schema.artifacts.length - 1];
-  const bearer = receiptArtifactFor(schema) ?? finalStep;
+  const bearer = schema.artifacts.find((a) => a.completes) ?? finalStep;
   if (idx === -1) {
     // the walk's end: the room names the final artifact (the name follows
     // the walk) and the one human verb left; the counter reads the receipt
@@ -246,7 +246,7 @@ export function parseSchemaYaml(content, source) {
 
   const newArtifact = () => ({
     id: '', generates: '', requiresApproval: [], requiresWritten: [], sections: [], lines: [],
-    receivesReceipts: false, unlocks: [], optional: false, requiresVerdict: false,
+    unlocks: [], optional: false, requiresVerdict: false,
   });
 
   const flushPending = () => {
@@ -367,11 +367,6 @@ export function parseSchemaYaml(content, source) {
       current.completes = v.trim();
       continue;
     }
-    if (k === 'x-receives-receipts') {
-      flushPending();
-      current.receivesReceipts = parseFlag(v.trim(), k, source, current.id);
-      continue;
-    }
     if (k === 'x-optional') {
       flushPending();
       current.optional = parseFlag(v.trim(), k, source, current.id);
@@ -464,11 +459,12 @@ export function parseSchemaYaml(content, source) {
       }
     }
   }
-  for (const [bearers, tag] of [
-    [real.filter((a) => a.completes !== undefined), 'x-completes'],
-    [real.filter((a) => a.verdictLine !== undefined), 'x-verdict-line'],
-    [real.filter((a) => a.receivesReceipts), 'x-receives-receipts'],
+  for (const [tag] of [
+    ['x-completes'], ['x-verdict-line'],
   ]) {
+    const bearers = real.filter((a) =>
+      tag === 'x-completes' ? a.completes !== undefined : a.verdictLine !== undefined,
+    );
     if (bearers.length > 1) {
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
     }
@@ -524,10 +520,6 @@ export function allArtifactsGranted(schema, approvedSet, exists = () => true) {
 
 export function sectionTitles(artifact) {
   return artifact.sections.map((s) => s.id);
-}
-
-export function receiptArtifactFor(schema) {
-  return schema.artifacts.find((a) => a.receivesReceipts) ?? schema.artifacts.find((a) => a.completes);
 }
 
 export function schemaVerdictLine(schema) {
@@ -620,7 +612,7 @@ export function grantArtifact(root, slug, artifactRef) {
   // the stamp refuses while it is unticked, whatever path the creation
   // took (belt to the watcher's draft gate)
   if (artifact.requiresVerdict) {
-    const bearer = receiptArtifactFor(schema);
+    const bearer = schema.artifacts.find((a) => a.verdictLine);
     const verdict = schemaVerdictLine(schema);
     const ledger = bearer ? join(root, 'changes', slug, bearer.generates) : undefined;
     if (verdict && ledger && existsSync(ledger)) {
@@ -679,7 +671,7 @@ export function pendingReport(root) {
       const schema = resolution.schema;
       const approved = grantedSet(meta);
       const verdictLine = schemaVerdictLine(schema);
-      const counterArtifact = receiptArtifactFor(schema) ?? schema.artifacts[schema.artifacts.length - 1];
+      const counterArtifact = schema.artifacts.find((a) => a.completes) ?? schema.artifacts[schema.artifacts.length - 1];
       const counterFile = join(changesDir, dir.name, counterArtifact.generates);
       if (existsSync(counterFile)) {
         const tasks = readFileSync(counterFile, 'utf8');

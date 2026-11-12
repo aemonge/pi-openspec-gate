@@ -47,7 +47,6 @@ describe('the example schema (spec)', () => {
       ['Estimate', 'Skills', 'Workflow', 'Slices', 'Verification', 'History'],
     );
     assert.equal(src.artifacts[3]!.verdictLine, 'Human validation');
-    assert.equal(src.artifacts[3]!.receivesReceipts, true);
     assert.equal(src.artifacts[3]!.completes, 'approved');
 
     // the conditional fifth: optional, verdict-first, chained to execute

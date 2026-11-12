@@ -32,7 +32,6 @@ import {
   readChangeMeta,
   readFocus,
   focusPath,
-  receiptArtifactFor,
   resolveChangeSchema,
   schemaIsGated,
   schemaVerdictLine,
@@ -62,6 +61,17 @@ const aimFocus = (root, target) => {
     : 'no gates — eospec close closes it as it stands';
   console.log(`focused ${target} · next: ${act}`);
   process.exit(0);
+};
+
+/** The sidecar's receipt count — the trail the walk left, named at close. */
+const receiptCount = (root, slug) => {
+  try {
+    const file = join(root, 'changes', slug, '.ledger');
+    const n = (readFileSync(file, 'utf8').match(/^  gate-attributed/gmu) ?? []).length;
+    return n > 0 ? ` · receipts: ${n}` : '';
+  } catch {
+    return '';
+  }
 };
 
 /** The stamp echo — what was approved, and what the next approve does.
@@ -191,7 +201,7 @@ if (command === 'close') {
     // ungated room: nothing to walk — close IS the judgment
     const at = utcNowStamp();
     writeChangeMeta(root, focused, { 'x-status': 'approved', 'x-approved_at': at, 'x-validated': at, 'x-validated_at': at });
-    console.log(`closed ${focused} · ungated — approved, validated · archiving`);
+    console.log(`closed ${focused} · ungated — approved, validated · archiving${receiptCount(root, focused)}`);
     const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
     if (archive.status === 0) {
       try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
@@ -207,7 +217,7 @@ if (command === 'close') {
   }
   const verdict = schemaVerdictLine(resolution.schema);
   if (verdict && !meta['x-validated']) {
-    const bearer = receiptArtifactFor(resolution.schema);
+    const bearer = resolution.schema.artifacts.find((a) => a.verdictLine);
     const ledger = bearer ? join(root, 'changes', focused, bearer.generates) : undefined;
     const unticked = ledger && existsSync(ledger)
       ? new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'))
@@ -219,7 +229,7 @@ if (command === 'close') {
   }
   const at = utcNowStamp();
   writeChangeMeta(root, focused, { 'x-validated': at, 'x-validated_at': at });
-  console.log(`closed ${focused} · validated · archiving`);
+  console.log(`closed ${focused} · validated · archiving${receiptCount(root, focused)}`);
   const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
   if (archive.status === 0) {
     try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }

@@ -11,6 +11,11 @@ change that built this package is there, with receipts.
   Brainstorm joins `x-unlocks: [research]`, so aimed searches attribute
   from step one (schema v10). The aimed-but-ungranted window keeps its
   teeth.
+- **the receipt sidecar** — attribution receipts land in
+  `changes/<slug>/.ledger` instead of inside the ledger artifact;
+  `x-receives-receipts` retires (schema v10), the verdict tick stays in
+  execute (`x-verdict-line` untouched), the room counter reads the
+  completing artifact, and `eospec close` names the receipt count.
 
 ## 1.2.0 — 2026-11-11
 

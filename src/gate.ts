@@ -42,7 +42,6 @@ import { matchExemption } from './exemptions.ts';
 import {
   artifactForFilename,
   capabilityUnlocked,
-  receiptArtifactFor,
   resolveChangeSchema,
   scanDeclares,
   schemaIsGated,
@@ -697,9 +696,10 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         }
         // x-requires-verdict — the artifact reads the bearer's verdict line,
         // so the tick is a data dependency, not just strictness: refuse the
-        // draft until the declared verdict is ticked in the receipt ledger
+        // draft until the declared verdict is ticked in the ledger where
+        // the verdict line lives
         if (artifact.requiresVerdict) {
-          const bearer = receiptArtifactFor(resolution.schema);
+          const bearer = resolution.schema.artifacts.find((a) => a.verdictLine);
           const verdict = schemaVerdictLine(resolution.schema);
           const ledger = bearer ? join(openspecRoot, 'changes', slug, bearer.generates) : undefined;
           if (verdict && ledger && exists(ledger)) {
@@ -810,11 +810,9 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         basis: verdict.basis,
         at,
       });
-      // receipts land where the schema declares (x-receives-receipts,
-      // else the completing artifact); undeclared → facts only
-      const receiptResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
-      const receiptTarget = receiptResolution.ok ? receiptArtifactFor(receiptResolution.schema)?.generates : undefined;
-      void appendAttributionReceipt(openspecRoot, focus.change, { tool: toolName, paths, at }, receiptTarget);
+      // receipts land in the change's sidecar — artifacts stay prose
+      // (2026-11-12, gate-edges: the bearer concept retires)
+      void appendAttributionReceipt(openspecRoot, focus.change, { tool: toolName, paths, at });
       // the room snapshot re-renders on every gate-side touch — the 1.0
       // contract; a stale count never blocks the work (next verb self-heals).
       // Refresh, never create: an absent room is the birth law's to aim

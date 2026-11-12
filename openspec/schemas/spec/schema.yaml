@@ -14,7 +14,7 @@ description: "Coding runs in one of two modes — human-coder assisted
   or a declaration. The openspec mode is one human-validatable value
   slice as a five-step flow — Brainstorm (why + questions; research
   opens) → Investigate (de-risk) → Plan (the contract; writes
-  open) → Execute (the ledger; receipts land, the human verdict
+  open) → Execute (the ledger; the human verdict
   closes it) → Post-delivery (conditional; findings too big for
   slices, designed inside the change that surfaced them, drafted
   only when the verdict's surfaced: line names them). Strictness
@@ -86,7 +86,7 @@ artifacts:
     x-sections: [Estimate, Skills, Workflow, Slices, Verification, History]
   - id: execute
     generates: 4-execute.md
-    description: The ledger — per-Slice checkpoints, hash-evidenced commits, receipts, and the final human verdict
+    description: The ledger — per-Slice checkpoints, hash-evidenced commits, and the final human verdict
     template: 4-execute.md
     instruction: 'Record WHAT ACTUALLY HAPPENED. Literal H1 Execute, the
       state-legend line, one H2 per Slice (mirroring the Plan''s H3s).
@@ -95,8 +95,9 @@ artifacts:
       per-Task commit) · a Commit checkbox (the pre-declared conventional
       message; a hash: slot beneath — a tick without a hash is not done;
       no repo → `hash: n/a — no repo`, visible debt) — the commit IS the
-      receipt. Gate-appended receipts (tool · paths · UTC) land while
-      work runs. Findings surfaced while delivering — bugs, tech debt,
+      receipt. Gate-appended receipts (tool · paths · UTC) land in the
+      change''s sidecar (`.ledger`) while work runs — this file stays
+      prose. Findings surfaced while delivering — bugs, tech debt,
       enhancements the plan could not have named — do not open a new
       spec: append the small ones as new Slices here (same tasks +
       commit-hash law) and add a one-line amendment to the Plan''s
@@ -116,7 +117,6 @@ artifacts:
     requires:
       - plan
     x-requires-approval: [plan]
-    x-receives-receipts: true
     x-completes: approved
     x-verdict-line: Human validation
   - id: post-delivery
