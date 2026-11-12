@@ -3,6 +3,15 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
+## Unreleased
+
+- **stage-zero research flows as fact** — the 2026-10-27 wall retires:
+  research instruments with no aimed change pass, recorded as
+  `research-void` facts — the gate fences writes, reads flow recorded.
+  Brainstorm joins `x-unlocks: [research]`, so aimed searches attribute
+  from step one (schema v10). The aimed-but-ungranted window keeps its
+  teeth.
+
 ## 1.2.0 — 2026-11-11
 
 - **post-delivery** — the walk's fifth artifact, conditional: when a

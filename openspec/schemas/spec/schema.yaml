@@ -1,5 +1,5 @@
 name: spec
-version: 9
+version: 10
 x-declares: [start the spec, skip the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -12,8 +12,8 @@ description: "Coding runs in one of two modes — human-coder assisted
   with the content · DELETE: path — and the human codes it by hand.
   The gate is untouched: a mutating call still needs focus, a change,
   or a declaration. The openspec mode is one human-validatable value
-  slice as a five-step flow — Brainstorm (why + questions) →
-  Investigate (de-risk; research opens) → Plan (the contract; writes
+  slice as a five-step flow — Brainstorm (why + questions; research
+  opens) → Investigate (de-risk) → Plan (the contract; writes
   open) → Execute (the ledger; receipts land, the human verdict
   closes it) → Post-delivery (conditional; findings too big for
   slices, designed inside the change that surfaced them, drafted
@@ -30,6 +30,7 @@ description: "Coding runs in one of two modes — human-coder assisted
 artifacts:
   - id: brainstorm
     generates: 1-brainstorm.md
+    x-unlocks: [research]
     description: Why and for whom — the pain, and the questions it raises
     template: 1-brainstorm.md
     instruction: 'Answer WHY this exists — the problem only. Sections:

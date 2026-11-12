@@ -552,14 +552,11 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     if (!verdict.mutating) {
       // 0.85 research window — research instruments are WORK: with a
       // focused change they open at the schema-declared step
-      // (x-unlocks: [research]); with NO active change they block with the
-      // same state-aware remedies as the mutation block — void research is
-      // unaccounted work (live-caught 2026-10-27 walk #2: a cold agent ran
-      // a whole research phase — the investigate artifact's substance — in
-      // the void, because the window keyed on focus alone, and the old copy
-      // even advertised the escape: "research without a focused change
-      // stays free — clear the focus"). Reads that are not research
-      // instruments stay free.
+      // (x-unlocks: [research]) and stay shut until the bearer is granted.
+      // With NO active change they flow as a recorded fact — the gate
+      // fences writes, reads flow recorded (2026-11-12, gate-edges: the
+      // 2026-10-27 wall retires; the aimed-without-grant branch keeps its
+      // teeth). Reads that are not research instruments stay free.
       if (!paused && approval.phaseGates && openspecRoot && researchCallMatches(toolName, bashCommand, config)) {
         const focusNow = activeFocus(ctx.sessionManager, cwd);
         if (focusNow && focusIsActive(focusNow, openspecRoot)) {
@@ -582,20 +579,6 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
           }
         } else {
           appendFact(FACT.phasegate, { kind: 'research-void', tool: toolName, at: utcNow() });
-          return {
-            block: true,
-            reason: withDeclareNote(
-              blockUnaccounted({
-                headline: '⛔ research window closed — no active change',
-                lead: 'research instruments are work — they open at a schema-declared step, or the human declares',
-                subagent: parseDelegationEnv(process.env.PI_SUBAGENT_DELEGATION) !== undefined,
-                focusable: (pi.getAllTools?.() ?? []).some((tool) => tool.name === 'openspec_focus'),
-                aim: openspecRoot ? firstActiveChange(openspecRoot) : undefined,
-                schemas: scanSchemaNames(openspecRoot),
-                declares: [...scanDeclares(openspecRoot)],
-              }),
-            ),
-          };
         }
       }
       return undefined; // read-only or creation: pass
