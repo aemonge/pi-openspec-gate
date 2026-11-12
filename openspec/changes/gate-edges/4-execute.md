@@ -43,14 +43,14 @@
 - [x] CHANGELOG line; `just lint` and `npm test` green
       started_at: 2026-11-12T14:00:00Z · ended_at: 2026-11-12T14:00:00Z · total: <1m · check: Unreleased carries the landing law · paths: CHANGELOG.md
   - [ ] fix(cli): archive releases the aim and teaches its commit
-        hash:
+        hash: efb6cb5
 
 ## Slice 4 — the spawner contract
 
-- [ ] README: a "spawning children" section — the admission contract (the two hooks a spawner must claim), the `PI_SUBAGENT_DELEGATION` relay law, and the revisit trigger (gate-side admission when pi exposes child-parentage)
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] CHANGELOG line; `just lint` green
-      started_at: · ended_at: · total: · check: · paths:
+- [x] README: a "spawning children" section — the admission contract (the two hooks a spawner must claim), the `PI_SUBAGENT_DELEGATION` relay law, and the revisit trigger (gate-side admission when pi exposes child-parentage)
+      started_at: 2026-11-12T14:00:00Z · ended_at: 2026-11-12T14:01:00Z · total: 1m · check: section sits before Schemas; hooks named, relay law named, revisit trigger named · paths: README.md
+- [x] CHANGELOG line; `just lint` green
+      started_at: 2026-11-12T14:01:00Z · ended_at: 2026-11-12T14:01:00Z · total: <1m · check: parity holds; suite green · paths: CHANGELOG.md
   - [ ] docs(readme): the spawner contract — what a child-spawner must claim
         hash:
 
@@ -112,3 +112,8 @@
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:00:07Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:11Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:43Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:00:57Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:01:13Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:01:18Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:20Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:48Z

@@ -61,6 +61,25 @@ watcher re-renders on every gate-side touch; verbs re-render; `close`
 deletes it. A snapshot, never the truth — the change's meta, the
 schema, and the artifact files decide.
 
+## Spawning children — the admission contract
+
+Subagents are only as gated as their spawner makes them. A child spawned
+through pi's native delegation is accounted: the gate reads
+`PI_SUBAGENT_DELEGATION` and relays its blocks upward instead of pressing
+a child that cannot aim, approve, or close. A spawner that does NOT set
+that environment spawns an unaccounted child — the admission hooks a
+compliant spawner must claim are `registerRequiredChildExtensions`
+(fail-closed admission: a child inherits the gate or does not spawn) and
+`registerSubagentCapabilityCeiling` (a ceiling on what a child may do).
+Neither is claimed by any installed package today, so the native path is
+the only path, and it is gated.
+
+Revisit trigger: gate-side admission (refusing an unaccounted child
+regardless of spawner) needs a child-parentage signal from pi core —
+when pi exposes it, the gate grows the teeth; until then, the contract
+above is the law. Install `npm:pi-subagents` (or any spawner) only after
+it claims both hooks.
+
 ## Schemas
 
 Changes declare a schema; the schema declares the human gates as data

@@ -5,6 +5,9 @@ change that built this package is there, with receipts.
 
 ## Unreleased
 
+- **the spawner contract** — the README names the admission law for
+  child-spawners: `PI_SUBAGENT_DELEGATION` relay, the two hooks a
+  compliant spawner must claim, and the gate-side revisit trigger.
 - **the post-archive landing** — `openspec archive` via the CLI releases
   the aim when the room names the archived change (the close unlink law,
   mirrored — no more dangling focus), and close/archive teach the
