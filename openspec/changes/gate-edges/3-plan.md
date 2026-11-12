@@ -75,6 +75,8 @@ Committed routes, exactly one per edge:
 
 ### Slice 5 — release
 
+### Slice 6 — the walk's own receipts migrate to the sidecar *(surfaced at delivery: the installed v1.2.0 gate kept appending to the ledger until v1.3.0 loads; the 50-line block moved, the artifact stays prose)*
+
 - [ ] CHANGELOG: the four edges consolidated under the version header; `package.json` bumped (minor — the wall retired is a behavior change)
       started_at: · ended_at: · total: · check: · paths:
 - [ ] README walk section mentions the sidecar and the taught commit

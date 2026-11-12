@@ -63,6 +63,13 @@
 - [x] `just lint` and `npm test` green
       started_at: 2026-11-12T14:02:00Z · ended_at: 2026-11-12T14:02:00Z · total: <1m · check: parity holds (7 verbs, 12 facts); 194/194 · paths: test/, src/
   - [ ] chore(release): v1.3.0 — four edges ship
+        hash: d8d0436
+
+## Slice 6 — the walk's own receipts migrate to the sidecar
+
+- [x] the 50 receipts the running (installed v1.2.0) gate appended to this ledger move to `changes/gate-edges/.ledger` — the artifact goes back to prose before the verdict tick
+      started_at: 2026-11-12T14:04:00Z · ended_at: 2026-11-12T14:05:00Z · total: 1m · check: 4-execute.md = 0 receipts; .ledger = 50 lines; future receipts land in .ledger once v1.3.0 is installed/reloaded · paths: openspec/changes/gate-edges/4-execute.md, openspec/changes/gate-edges/.ledger
+  - [ ] chore(gate): the walk's receipts migrate to the sidecar
         hash:
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
@@ -74,51 +81,4 @@
 
 - [ ] Human validation — response: · outcome: · surfaced:
 
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:47:31Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-12T13:50:29Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-12T13:50:41Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/attribution.ts · at 2026-11-12T13:50:50Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-12T13:51:00Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:06Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:25Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:51:40Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-12T13:53:20Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/phasegate.test.ts · at 2026-11-12T13:53:29Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-12T13:53:29Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/vocabulary.test.ts · at 2026-11-12T13:53:41Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/vocabulary.test.ts · at 2026-11-12T13:53:42Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-12T13:53:49Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-12T13:53:49Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-12T13:53:50Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T13:54:03Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/README.md · at 2026-11-12T13:54:09Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:54:19Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/focus.ts · at 2026-11-12T13:54:40Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/schema.ts · at 2026-11-12T13:54:40Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/gate-lib.js · at 2026-11-12T13:54:40Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:54:47Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:12Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:40Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:56:35Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:56:48Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:01Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:20Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:22Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:57:31Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:57:33Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:57:42Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:57:44Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:59:21Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:00:07Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:11Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:43Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:00:57Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:01:13Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:01:18Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:20Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:48Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:01:58Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-11-12T14:01:58Z
-  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:02:06Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:02:10Z
-  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:02:33Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:04:05Z
