@@ -1,0 +1,19 @@
+schema: spec
+created: 2026-11-12
+skip_specs: true
+
+x-status: approved
+x-created_by: assistant
+
+x-granted: brainstorm,investigate,plan,execute
+x-granted_brainstorm: 2026-11-12T12:15:23Z
+
+x-granted_investigate: 2026-11-12T13:34:00Z
+
+x-granted_plan: 2026-11-12T13:42:17Z
+
+x-granted_execute: 2026-11-12T14:48:22Z
+x-approved_at: 2026-11-12T14:48:22Z
+
+x-validated: 2026-11-12T14:48:39Z
+x-validated_at: 2026-11-12T14:48:39Z

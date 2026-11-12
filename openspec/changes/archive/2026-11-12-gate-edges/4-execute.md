@@ -70,7 +70,7 @@
 - [x] the 50 receipts the running (installed v1.2.0) gate appended to this ledger move to `changes/gate-edges/.ledger` — the artifact goes back to prose before the verdict tick
       started_at: 2026-11-12T14:04:00Z · ended_at: 2026-11-12T14:05:00Z · total: 1m · check: 4-execute.md = 0 receipts; .ledger = 50 lines; future receipts land in .ledger once v1.3.0 is installed/reloaded · paths: openspec/changes/gate-edges/4-execute.md, openspec/changes/gate-edges/.ledger
   - [ ] chore(gate): the walk's receipts migrate to the sidecar
-        hash:
+        hash: 3af3d02
 
 <!-- gate receipts land here while work runs; per-Slice H2s mirror the Plan's H3s -->
 <!-- findings surfaced while delivering? append the small ones as new Slices here —
@@ -79,6 +79,7 @@
      → post-delivery (the fifth designs the too-big ones inside this change;
      deferred parks through it). Post-close findings open their own change. -->
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: · outcome: · surfaced:
 
   gate-attributed · tool: bash · paths: — · at 2026-11-12T14:04:05Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:04:14Z

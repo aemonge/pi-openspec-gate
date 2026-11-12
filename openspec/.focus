@@ -1,6 +1,0 @@
-# one active change per room — eospec writes, verbs refresh
-change: gate-edges
-artifact-name: 4-execute.md
-artifact-idx: 4/5
-task: 20/27
-next-step: eospec approve
