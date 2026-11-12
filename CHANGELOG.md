@@ -3,7 +3,7 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
-## Unreleased
+## 1.3.0 — 2026-11-12
 
 - **the spawner contract** — the README names the admission law for
   child-spawners: `PI_SUBAGENT_DELEGATION` relay, the two hooks a

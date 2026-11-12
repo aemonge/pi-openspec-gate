@@ -52,16 +52,16 @@
 - [x] CHANGELOG line; `just lint` green
       started_at: 2026-11-12T14:01:00Z · ended_at: 2026-11-12T14:01:00Z · total: <1m · check: parity holds; suite green · paths: CHANGELOG.md
   - [ ] docs(readme): the spawner contract — what a child-spawner must claim
-        hash:
+        hash: 60202d3
 
 ## Slice 5 — release
 
-- [ ] CHANGELOG: the four edges consolidated under the version header; `package.json` bumped (minor — the wall retired is a behavior change)
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] README walk section mentions the sidecar and the taught commit
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] `just lint` and `npm test` green
-      started_at: · ended_at: · total: · check: · paths:
+- [x] CHANGELOG: the four edges consolidated under the version header; `package.json` bumped (minor — the wall retired is a behavior change)
+      started_at: 2026-11-12T14:01:00Z · ended_at: 2026-11-12T14:02:00Z · total: 1m · check: Unreleased → 1.3.0 — 2026-11-12; 1.2.0 → 1.3.0 · paths: CHANGELOG.md, package.json
+- [x] README walk section mentions the sidecar and the taught commit
+      started_at: 2026-11-12T14:02:00Z · ended_at: 2026-11-12T14:02:00Z · total: <1m · check: already landed — sidecar in the attributed bullet (Slice 2), taught commit in the archive verb line (Slice 3); nothing left to add · paths: README.md
+- [x] `just lint` and `npm test` green
+      started_at: 2026-11-12T14:02:00Z · ended_at: 2026-11-12T14:02:00Z · total: <1m · check: parity holds (7 verbs, 12 facts); 194/194 · paths: test/, src/
   - [ ] chore(release): v1.3.0 — four edges ship
         hash:
 
@@ -117,3 +117,8 @@
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:01:18Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:20Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T14:01:48Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:01:58Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/package.json · at 2026-11-12T14:01:58Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T14:02:06Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:02:10Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:02:33Z
