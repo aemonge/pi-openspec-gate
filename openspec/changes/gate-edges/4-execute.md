@@ -32,16 +32,16 @@
 - [x] CHANGELOG line; `just lint` and `npm test` green
       started_at: 2026-11-12T13:55:00Z · ended_at: 2026-11-12T13:55:00Z · total: <1m · check: Unreleased carries the sidecar law · paths: CHANGELOG.md
   - [ ] feat(gate): receipts land in a per-change sidecar — artifacts stay prose
-        hash:
+        hash: 14713bd
 
 ## Slice 3 — the post-archive landing
 
-- [ ] `bin/eospec.js`: the `openspec archive` passthrough releases the aim when the room names the archived change (the close unlink law, mirrored); close already releases — output now also teaches the commit verbatim (`git add -A && git commit -m "chore(openspec): <slug> archived"`)
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] wrapper tests: bare archive releases a matching aim and keeps a foreign one; the teaching line renders on close and archive; passthrough argv untouched
-      started_at: · ended_at: · total: · check: · paths:
-- [ ] CHANGELOG line; `just lint` and `npm test` green
-      started_at: · ended_at: · total: · check: · paths:
+- [x] `bin/eospec.js`: the `openspec archive` passthrough releases the aim when the room names the archived change (the close unlink law, mirrored); close already releases — output now also teaches the commit verbatim (`git add -A && git commit -m "chore(openspec): <slug> archived"`)
+      started_at: 2026-11-12T13:56:00Z · ended_at: 2026-11-12T13:58:00Z · total: 2m · check: archive branch intercepts, filters the gate-side flag like the passthrough, releases on slug match, teaches on success; both close echoes teach · paths: bin/eospec.js
+- [x] wrapper tests: bare archive releases a matching aim and keeps a foreign one; the teaching line renders on close and archive; passthrough argv untouched
+      started_at: 2026-11-12T13:58:00Z · ended_at: 2026-11-12T14:00:00Z · total: 2m · check: 2 new tests + close-teaching pin; 194/194 green; README verb block teaches the archive surface (parity 7 verbs) · paths: test/pios-wrapper.test.ts, README.md
+- [x] CHANGELOG line; `just lint` and `npm test` green
+      started_at: 2026-11-12T14:00:00Z · ended_at: 2026-11-12T14:00:00Z · total: <1m · check: Unreleased carries the landing law · paths: CHANGELOG.md
   - [ ] fix(cli): archive releases the aim and teaches its commit
         hash:
 
@@ -99,3 +99,16 @@
   gate-attributed · tool: bash · paths: — · at 2026-11-12T13:54:47Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:12Z
   gate-attributed · tool: bash · paths: — · at 2026-11-12T13:55:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:56:35Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:56:48Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:01Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:20Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/pios-wrapper.test.ts · at 2026-11-12T13:57:22Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:57:31Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/CHANGELOG.md · at 2026-11-12T13:57:33Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:57:42Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T13:57:44Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-12T13:59:21Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-12T14:00:07Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:11Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-12T14:00:43Z

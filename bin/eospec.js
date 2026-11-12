@@ -205,6 +205,7 @@ if (command === 'close') {
     const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
     if (archive.status === 0) {
       try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
+      console.log(`the archival commit is yours: git add -A && git commit -m "chore(openspec): ${focused} archived"`);
     }
     process.exit(archive.status ?? 1);
   }
@@ -233,8 +234,27 @@ if (command === 'close') {
   const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
   if (archive.status === 0) {
     try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
+    console.log(`the archival commit is yours: git add -A && git commit -m "chore(openspec): ${focused} archived"`);
   }
   process.exit(archive.status ?? 1);
+}
+
+// archive: the passthrough plus the fence — the aim dies with the change
+// (the close unlink law, mirrored) and the commit is taught, never taken
+if (command === 'archive') {
+  const root = findOpenspecRoot(process.cwd());
+  const result = spawnSync('openspec', process.argv.slice(2).filter((a) => a !== '--i-am-the-human'), { stdio: 'inherit' });
+  if (result.status === 0) {
+    const slug = rest[0];
+    if (root && slug) {
+      const focused = readFocus(root);
+      if (focused === slug) {
+        try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
+      }
+    }
+    console.log(`the archival commit is yours: git add -A && git commit -m "chore(openspec): ${slug ?? 'archive'} archived"`);
+  }
+  process.exit(result.status ?? 1);
 }
 
 // everything else: exec openspec verbatim — no arg rewriting, ever —

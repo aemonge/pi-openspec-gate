@@ -5,6 +5,11 @@ change that built this package is there, with receipts.
 
 ## Unreleased
 
+- **the post-archive landing** — `openspec archive` via the CLI releases
+  the aim when the room names the archived change (the close unlink law,
+  mirrored — no more dangling focus), and close/archive teach the
+  archival commit verbatim: the commit is the human's, by law and by
+  fast track.
 - **stage-zero research flows as fact** — the 2026-10-27 wall retires:
   research instruments with no aimed change pass, recorded as
   `research-void` facts — the gate fences writes, reads flow recorded.

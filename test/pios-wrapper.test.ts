@@ -420,6 +420,35 @@ test('dead verbs forward — the three words are the whole gate surface', () => 
   }
 });
 
+test('archive: the passthrough releases the aim and teaches its commit', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'm1');
+    writeFileSync(join(repo.dir, 'openspec', '.focus'), 'change: m1\n');
+    const result = run(repo, ['archive', 'm1']);
+    assert.equal(result.status, 0);
+    assert.equal(existsSync(join(repo.dir, 'openspec', '.focus')), false, 'matching aim released');
+    assert.match(result.stdout, /the archival commit is yours: git add -A && git commit -m "chore\(openspec\): m1 archived"/, 'the commit is taught');
+    assert.match(readFileSync(repo.log, 'utf8'), /archive m1/, 'argv forwarded verbatim');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
+test('archive: a foreign aim survives the slug mismatch', () => {
+  const repo = makeRepo();
+  try {
+    change(repo, 'm1');
+    change(repo, 'm2');
+    writeFileSync(join(repo.dir, 'openspec', '.focus'), 'change: m2\n');
+    const result = run(repo, ['archive', 'm1']);
+    assert.equal(result.status, 0);
+    assert.match(readFileSync(join(repo.dir, 'openspec', '.focus'), 'utf8'), /change: m2/, 'foreign aim kept');
+  } finally {
+    rmSync(repo.dir, { recursive: true, force: true });
+  }
+});
+
 test('archive: the gate-side flag never reaches openspec argv (catch #5)', () => {
   const repo = makeRepo();
   try {

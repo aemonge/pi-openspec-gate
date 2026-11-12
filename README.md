@@ -29,6 +29,7 @@ eospec focus <change>   # aim the room at a change
 eospec focus            # the room + every change, one line each
 eospec approve          # approve the next pending step of the aim
 eospec close            # tick-checked close: validate, archive, release
+eospec archive <change> # openspec archive, plus the fence: aim released, commit taught
 eospec -- <args>        # everything after -- is openspec, verbatim
 ```
 
