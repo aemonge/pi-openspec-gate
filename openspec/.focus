@@ -1,0 +1,6 @@
+# one active change per room — eospec writes, verbs refresh
+change: schema-v11
+artifact-name: 4-execute.md
+artifact-idx: 4/5
+task: 19/20
+next-step: eospec approve
