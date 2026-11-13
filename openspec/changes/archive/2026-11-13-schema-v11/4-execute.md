@@ -101,6 +101,5 @@
   - [x] fix(cli): the slice-title capture stops at the heading line — negated classes cross newlines
         hash: 422922a
 
-- [ ] Human validation — response: · outcome: · surfaced:
+- [x] Human validation — response: the walls held · outcome: shipped · surfaced: none
 
-  gate-attributed · tool: bash · paths: — · at 2026-11-13T11:18:51Z
