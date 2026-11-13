@@ -1,5 +1,5 @@
 name: spec
-version: 10
+version: 11
 x-declares: [start the spec, skip the spec]
 description: "Coding runs in one of two modes — human-coder assisted
   by pi conversation, or pi-coder gated by openspec — and the choice
@@ -35,11 +35,16 @@ artifacts:
     template: 1-brainstorm.md
     instruction: 'Answer WHY this exists — the problem only. Sections:
       Pain (two to four sentences of observed pain, no solutions) ·
-      Questions (the open questions — this artifact''s product; Investigate
-      aims at them, Plan retires them). Direction (one mutable paragraph
-      of hunch) is optional free prose. The one-line Goal lives in
-      .openspec.yaml (top-level `goal:` key), not here. Free step — schema entry,
-      never gated.'
+      Questions (the open questions — this artifact''s product; each
+      question is open, or `answered — <one line · source>` when the
+      conversation already settled it: Investigate aims at the open ones
+      and journals the answered as found, never re-runs them). Drafted
+      retroactively — the conversation researched before the spec
+      existed — is a first-class case, not a fudge: distill the pain as
+      observed and mark what the talk already settled. Direction (one
+      mutable paragraph of hunch) is optional free prose. The one-line
+      Goal lives in .openspec.yaml (top-level `goal:` key), not here.
+      Free step — schema entry, never gated.'
     requires: []
     x-sections: [Pain, Questions]
   - id: investigate
@@ -47,7 +52,11 @@ artifacts:
     description: De-risk the plan — findings, options, evidence; research instruments open here
     template: 2-investigate.md
     instruction: 'The investigation that de-risks the Plan. No declared
-      structure — the journal follows what was actually found. Suggested
+      structure — the journal follows what was actually found. Drafted
+      retroactively — the conversation researched before the spec
+      existed — it journals what the talk already settled, sources and
+      all; the Brainstorm''s answered questions arrive here as starting
+      findings, never re-run. Suggested
       shapes: Findings (facts with sources) · Options (compared, inside
       scope) · Alternatives (two or more, each three lines — what it is ·
       the trade-off · pick-when — ONLY when genuine; manufacturing one is
@@ -73,11 +82,19 @@ artifacts:
       why the others lost; `direct, because trivial` is a valid
       one-liner) · Slices (two-level: each H3 is a Slice — the
       committable unit, ending in one conventional commit
-      type(scope): subject and one post-commit human validation; under
+      type(scope): subject and one post-commit human validation; the H3
+      title states that slice''s acceptance — the observable outcome the
+      validation checks, no implementation words; a slice that cannot
+      state it in its title is two slices; under
       each Slice, checkbox Tasks as quick checkpoints, no per-Task
       commit) · Verification (deterministic checks, then the one
       human-only act, named) · History (commit subject, or
-      evidence-as-of-date). Depth scales with risk. This approval is the
+      evidence-as-of-date). Agreements pin here, under the Slice that
+      delivers them: function signatures (args → return), JSON and
+      contract shapes — fenced, written once; Execute references, code
+      matches, and drift is a finding. A contract that grows into a file
+      (OpenAPI, JSON schema) becomes its own deliverable Slice, named by
+      path. Depth scales with risk. This approval is the
       docs→code boundary: writes unlock here.'
     requires:
       - investigate
@@ -89,7 +106,9 @@ artifacts:
     description: The ledger — per-Slice checkpoints, hash-evidenced commits, and the final human verdict
     template: 4-execute.md
     instruction: 'Record WHAT ACTUALLY HAPPENED. Literal H1 Execute, the
-      state-legend line, one H2 per Slice (mirroring the Plan''s H3s).
+      state-legend line, one H2 per Slice (mirroring the Plan''s H3s) —
+      the mirrored title is that slice''s acceptance, declared by the
+      Plan; the human validation''s `outcome:` answers it.
       Each Slice carries: checkbox Tasks (quick checkpoints; started_at ·
       ended_at · total · check · paths on indented non-checkbox lines; no
       per-Task commit) · a Commit checkbox (the pre-declared conventional
