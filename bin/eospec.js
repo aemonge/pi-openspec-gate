@@ -40,6 +40,12 @@ import {
   writeFocus,
 } from './gate-lib.js';
 
+// the verdict registry: one unticked-check, shared by approve and close —
+// an open tick on the bearer is the one lock both words must honor
+const verdictUnticked = (ledger, verdict) =>
+  !existsSync(ledger) ||
+  new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'));
+
 const [command, ...rest] = process.argv.slice(2);
 
 const rootOf = () => {
@@ -179,6 +185,10 @@ if (command === 'approve') {
     process.exit(1);
   }
   const nextArtifact = resolution.schema.artifacts.find((a) => !grantedSet(meta).has(a.id));
+  if (nextArtifact.verdictLine && verdictUnticked(join(root, 'changes', focused, nextArtifact.generates), nextArtifact.verdictLine)) {
+    console.error(`not approved — tick '${nextArtifact.verdictLine}' in ${nextArtifact.generates} first — the verdict is yours, the registry remembers it`);
+    process.exit(1);
+  }
   doApprove(root, focused, nextArtifact.id);
 }
 
@@ -217,19 +227,21 @@ if (command === 'close') {
     process.exit(1);
   }
   const verdict = schemaVerdictLine(resolution.schema);
+  const bearer = resolution.schema.artifacts.find((a) => a.verdictLine);
   if (verdict && !meta['x-validated']) {
-    const bearer = resolution.schema.artifacts.find((a) => a.verdictLine);
     const ledger = bearer ? join(root, 'changes', focused, bearer.generates) : undefined;
-    const unticked = ledger && existsSync(ledger)
-      ? new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'))
-      : true;
+    const unticked = ledger ? verdictUnticked(ledger, verdict) : true;
     if (unticked) {
       console.error(`not closed — tick '${verdict}' in ${bearer?.generates ?? 'the ledger'} first, then: eospec close`);
       process.exit(1);
     }
   }
   const at = utcNowStamp();
-  writeChangeMeta(root, focused, { 'x-validated': at, 'x-validated_at': at });
+  writeChangeMeta(root, focused, {
+    'x-validated': at,
+    'x-validated_at': at,
+    ...(bearer ? { [`x-validated_${bearer.id}`]: at } : {}),
+  });
   console.log(`closed ${focused} · validated · archiving${receiptCount(root, focused)}`);
   const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
   if (archive.status === 0) {

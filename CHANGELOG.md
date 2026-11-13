@@ -10,7 +10,11 @@ change that built this package is there, with receipts.
   research journals into investigate, never re-run), a slice's title
   states its acceptance (the validation checks the title, not the
   tasks), and signatures and contract shapes pin under their slice in
-  plan. Instructions and templates only; no engine keys, the walls are
+  plan. The verdict registry remembers per spec: close stamps
+  `x-validated_<artifact>` beside the change stamp, and approve refuses
+  the verdict bearer while its tick is open — a walk stopped mid-verdict
+  shows in the registry, so multi-hopping the board never loses where a
+  spec waits. Instructions and templates only; no engine keys, the walls are
   untouched.
 
 ## 1.3.0 — 2026-11-12

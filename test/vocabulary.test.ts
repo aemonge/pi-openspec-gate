@@ -147,7 +147,7 @@ describe('vocabulary: the CLI walk on a custom schema', () => {
       const changeDir = join(dir, 'openspec', 'changes', 'm2');
       writeFileSync(join(changeDir, '1-dream.md'), '# Dream\n', 'utf8');
       writeFileSync(join(changeDir, '2-build.md'), '# Build\n\n## alpha\n\n## beta\n', 'utf8');
-      writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [ ] Owner acceptance — reply VALID\n', 'utf8');
+      writeFileSync(join(changeDir, '3-ship.md'), '# Ship\n\n- [x] Owner acceptance — reply VALID\n', 'utf8');
 
       // aim, then approve stamps artifact 1 — the engine never knew a verb
       assert.equal(run(dir, ['m2']).status, 0);

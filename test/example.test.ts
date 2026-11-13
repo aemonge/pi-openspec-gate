@@ -81,13 +81,15 @@ describe('the example schema (spec)', () => {
     for (const marker of [
       'not drafted yet',
       'missing declared structure: Workflow',
+      'not approved — tick',
       'all steps approved — status: approved',
       '— eospec close',
       'not closed — tick',
       'closed hello-gate · validated · archiving',
       'approved hello-two · post-delivery · all steps approved — status: approved',
       'closed hello-two · validated · archiving',
-      'passed: 21',
+      'registry: x-validated_execute stamped',
+      'passed: 23',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);
     }

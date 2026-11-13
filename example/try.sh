@@ -78,11 +78,14 @@ echo '4 ── the room view names the next human act'
 printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
 expect '→ eospec approve' focus
 
-echo '5 ── completion: the last approve stamps the change approved'
+echo '5 ── the verdict wall: approve refuses the bearer while the tick is open'
+expect_fail 'not approved — tick' approve
+printf '# Execute\n\n- [x] Human validation — response: the walk held · outcome: pass\n' > "$C/4-execute.md"
 expect 'all steps approved — status: approved' approve
 
-echo '6 ── the close: tick the verdict, then close'
+echo '6 ── the close: the registry remembers which artifact''s verdict closed it'
 expect '— eospec close' focus
+printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
 expect_fail 'not closed — tick' close
 printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
 expect 'closed hello-gate · validated · archiving' close
@@ -99,17 +102,20 @@ expect 'focused hello-two' hello-two
 expect 'approved hello-two · brainstorm' approve
 expect 'approved hello-two · investigate' approve
 expect 'approved hello-two · plan' approve
-expect 'all steps approved — status: approved' approve
-expect_fail 'not closed — tick' close
+expect_fail 'not approved — tick' approve
 printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
+expect 'all steps approved — status: approved' approve
 printf '# Post-delivery\n\n## F1 — the walk needs a fifth step\n\n- from: slice 4 review\n- why here: the routing law needs its own risk pass\n- route: the fifth artifact designs it\n- risk: the walk grows ceremony\n\n- [x] design the fifth artifact\n- [x] feat(walk): post-delivery — the conditional fifth\n      hash: def5678\n\n- [x] Human validation — response: yes · outcome: pass\n' > "$C2/5-post-delivery.md"
 expect '→ eospec approve' focus
 expect 'approved hello-two · post-delivery · all steps approved — status: approved' approve
 expect 'closed hello-two · validated · archiving' close
 
 echo '8 ── the final state on disk'
-echo '── .openspec.yaml:'
-cat "$C/.openspec.yaml"
+ARCH_C=$(ls -d "$WORK"/openspec/changes/archive/*hello-gate 2>/dev/null | head -1)
+ARCH_C2=$(ls -d "$WORK"/openspec/changes/archive/*hello-two 2>/dev/null | head -1)
+grep -q 'x-validated_execute' "$ARCH_C/.openspec.yaml" && ok 'registry: x-validated_execute stamped' || bad 'registry: x-validated_execute missing'
+echo '── .openspec.yaml (archived hello-gate):'
+cat "$ARCH_C/.openspec.yaml"
 echo '── room:'
 "$GATE" focus
 
