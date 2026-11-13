@@ -3,6 +3,16 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
+## Unreleased
+
+- **schema v11 — honest retro drafts, titled acceptance, pinned contracts** —
+  the brainstorm splits questions open from answered (the conversation's
+  research journals into investigate, never re-run), a slice's title
+  states its acceptance (the validation checks the title, not the
+  tasks), and signatures and contract shapes pin under their slice in
+  plan. Instructions and templates only; no engine keys, the walls are
+  untouched.
+
 ## 1.3.0 — 2026-11-12
 
 - **the spawner contract** — the README names the admission law for
