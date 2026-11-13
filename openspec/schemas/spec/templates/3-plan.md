@@ -18,9 +18,12 @@
 ## Slices
 
 <!-- two-level: each H3 is a Slice — committable unit, one conventional commit + one
-     post-commit human validation; checkboxes beneath are quick checkpoints, no per-Task commit
+     post-commit human validation; the H3 title STATES the acceptance (observable
+     outcome, no implementation words — can't state it? two slices); signatures
+     and JSON/contract shapes pin fenced under the slice that delivers them;
+     checkboxes beneath are quick checkpoints, no per-Task commit
 
-### Slice 1 — <name>
+### Slice 1 — <the acceptance in one line>
 
 - [ ] <task checkpoint>
       started_at: · ended_at: · total: · check: · paths:
