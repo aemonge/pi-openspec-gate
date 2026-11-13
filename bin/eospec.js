@@ -65,7 +65,7 @@ const ledgerOffenses = (ledgerText, planPath, verdict) => {
   }
   if (planPath && existsSync(planPath)) {
     const sliceTitles = (text, level) =>
-      [...text.matchAll(new RegExp(`^${level}\\s+(Slice[^*(]*)`, 'gmu'))].map((m) => m[1].trim());
+      [...text.matchAll(new RegExp(`^${level}\\s+(Slice[^*(\\n]*)`, 'gmu'))].map((m) => m[1].trim());
     const plan = readFileSync(planPath, 'utf8');
     const planSlices = sliceTitles(plan, '###');
     const ledgerSlices = sliceTitles(ledgerText, '##');
