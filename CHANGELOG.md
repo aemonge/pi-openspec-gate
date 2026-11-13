@@ -3,7 +3,7 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
-## Unreleased
+## 1.4.0 — 2026-11-13
 
 - **schema v11 — honest retro drafts, titled acceptance, pinned contracts** —
   the brainstorm splits questions open from answered (the conversation's
