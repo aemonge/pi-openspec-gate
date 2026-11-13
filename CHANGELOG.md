@@ -14,7 +14,10 @@ change that built this package is there, with receipts.
   `x-validated_<artifact>` beside the change stamp, and approve refuses
   the verdict bearer while its tick is open — a walk stopped mid-verdict
   shows in the registry, so multi-hopping the board never loses where a
-  spec waits. Instructions and templates only; no engine keys, the walls are
+  spec waits. And close lints the ledger's own three walls before it
+  stamps — a commit tick without a hash, a slice gone missing from the
+  plan's mirror, a verdict line out of position — each offense naming
+  its line. Instructions and templates only; no engine keys, the walls are
   untouched.
 
 ## 1.3.0 — 2026-11-12

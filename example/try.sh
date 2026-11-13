@@ -105,6 +105,9 @@ expect 'approved hello-two · plan' approve
 expect_fail 'not approved — tick' approve
 printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
 expect 'all steps approved — status: approved' approve
+printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
+expect_fail 'not closed — the ledger owes' close
+printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
 printf '# Post-delivery\n\n## F1 — the walk needs a fifth step\n\n- from: slice 4 review\n- why here: the routing law needs its own risk pass\n- route: the fifth artifact designs it\n- risk: the walk grows ceremony\n\n- [x] design the fifth artifact\n- [x] feat(walk): post-delivery — the conditional fifth\n      hash: def5678\n\n- [x] Human validation — response: yes · outcome: pass\n' > "$C2/5-post-delivery.md"
 expect '→ eospec approve' focus
 expect 'approved hello-two · post-delivery · all steps approved — status: approved' approve

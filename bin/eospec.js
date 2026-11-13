@@ -46,6 +46,43 @@ const verdictUnticked = (ledger, verdict) =>
   !existsSync(ledger) ||
   new RegExp(`^- \\[ \\][^\\n]*${verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}`, 'mu').test(readFileSync(ledger, 'utf8'));
 
+// the ledger lint: the three walls the instructions teach, checked where
+// they bind — each offense names its line. One: a commit tick without a
+// hash beneath it (a tick without a hash is not done). Two: execute's
+// slice titles must mirror the plan's, one for one. Three: exactly one
+// verdict line — the schema-declared one — and it is the last countable
+// checkbox in the ledger.
+const ledgerOffenses = (ledgerText, planPath, verdict) => {
+  const offenses = [];
+  const lines = ledgerText.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (/^\s*-\s+\[[xX]\]\s+\w+\([\w.-]+\):/.test(lines[i])) {
+      const next = lines.slice(i + 1).find((l) => l.trim().length > 0) ?? '';
+      if (!/^\s+hash:\s+\S/.test(next)) {
+        offenses.push(`a tick without a hash is not done — line ${i + 1}: ${lines[i].trim()}`);
+      }
+    }
+  }
+  if (planPath && existsSync(planPath)) {
+    const sliceTitles = (text, level) =>
+      [...text.matchAll(new RegExp(`^${level}\\s+(Slice[^*(]*)`, 'gmu'))].map((m) => m[1].trim());
+    const plan = readFileSync(planPath, 'utf8');
+    const planSlices = sliceTitles(plan, '###');
+    const ledgerSlices = sliceTitles(ledgerText, '##');
+    if (planSlices.length !== ledgerSlices.length || planSlices.some((t, i) => ledgerSlices[i] !== t)) {
+      offenses.push(`the ledger's slices must mirror the plan's — plan: [${planSlices.join(' · ')}] vs ledger: [${ledgerSlices.join(' · ')}]`);
+    }
+  }
+  const verdictLines = verdict
+    ? lines.filter((l) => /^\s*-\s+\[[xX ]\]/.test(l) && new RegExp(verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'iu').test(l))
+    : [];
+  const checkboxes = lines.filter((l) => /^\s*-\s+\[[xX ]\]/.test(l));
+  if (verdict && (verdictLines.length !== 1 || checkboxes[checkboxes.length - 1] !== verdictLines[0])) {
+    offenses.push(`exactly one '${verdict}' line, and it must be the last countable checkbox`);
+  }
+  return offenses;
+};
+
 const [command, ...rest] = process.argv.slice(2);
 
 const rootOf = () => {
@@ -237,6 +274,14 @@ if (command === 'close') {
     }
   }
   const at = utcNowStamp();
+  const planPath = bearer ? join(root, 'changes', focused, '3-plan.md') : undefined;
+  const ledgerPath = bearer ? join(root, 'changes', focused, bearer.generates) : undefined;
+  const ledgerText = ledgerPath && existsSync(ledgerPath) ? readFileSync(ledgerPath, 'utf8') : '';
+  const offenses = bearer ? ledgerOffenses(ledgerText, planPath, verdict) : [];
+  if (offenses.length > 0) {
+    console.error(`not closed — the ledger owes its own laws:\n${offenses.map((o) => `  - ${o}`).join('\n')}\n  fix the lines, then: eospec close`);
+    process.exit(1);
+  }
   writeChangeMeta(root, focused, {
     'x-validated': at,
     'x-validated_at': at,
