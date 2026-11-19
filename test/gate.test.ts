@@ -18,7 +18,7 @@ const EXPECTED_BASE_COPY = [
   '⛔ unaccounted mutation — no active change',
   '   stop:    this refusal is final — do not retry, do not investigate; act on one remedy or relay them to the human',
   '   create:  openspec new change <slug> --schema <schema-name>',
-  '   the walk: create → aim → draft → approve → draft → … → tick the verdict → eospec close',
+  '   the walk: create → draft plan.md → eospec approve → code (+.ledger) → tick tasks → hands-on → eospec close',
 ].join('\n');
 
 type AnyHandler = (event: never, ctx: never) => unknown;
@@ -109,7 +109,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.match(result.reason!, /you may run this/, 'aiming is assistant-runnable — no catch-22');
     assert.ok(!result.reason!.includes('openspec_focus'), 'no phantom instruments — this session has none');
     assert.ok(result.reason!.includes('create:'), 'create remedy');
-    assert.match(result.reason!, /the walk: create → aim → draft → approve/, 'the loop order is taught');
+    assert.match(result.reason!, /the walk: create → draft plan.md → eospec approve/, 'the loop order is taught');
     assert.ok(result.reason!.includes('declare:'), 'declare remedy — the fixture schema declares');
     assert.ok(result.reason!.includes('"action the job"'), 'declare names the exact phrases');
     assert.ok(!result.reason!.includes('"do it"'), 'the retired alias appears nowhere');
@@ -138,7 +138,7 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
       };
       assert.match(result.reason!, /focus:\s+openspec_focus/, 'the session has the instrument → its remedy may speak');
       assert.ok(!/^\s{3}aim:\s+eospec focus \S/m.test(result.reason!), 'no live change → no aim remedy line (the declare tail may mention aim generically)');
-      assert.match(result.reason!, /the walk: create → aim → draft → approve/, 'the loop order is taught here too');
+      assert.match(result.reason!, /the walk: create → draft plan.md → eospec approve/, 'the loop order is taught here too');
     } finally {
       rmSync(lab, { recursive: true, force: true });
     }

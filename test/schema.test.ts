@@ -215,15 +215,15 @@ describe('schema reader: parsing', () => {
 });
 
 describe('schema reader: resolution and grant semantics', () => {
-  test('the repo spec schema resolves project-locally and is gated', () => {
+  test('the repo micro schema resolves project-locally — one artifact, teeth by name', () => {
     const openspecRoot = join(REPO_ROOT, 'openspec');
-    const file = findSchemaFile(openspecRoot, 'spec');
-    assert.ok(file, 'repo-local spec schema found');
-    const resolution = resolveChangeSchema(openspecRoot, 'spec');
+    const file = findSchemaFile(openspecRoot, 'micro');
+    assert.ok(file, 'repo-local micro schema found');
+    const resolution = resolveChangeSchema(openspecRoot, 'micro');
     assert.ok(resolution.ok);
     if (resolution.ok) {
-      assert.equal(resolution.schema.artifacts.length, 5, 'the walk is five steps (the fifth conditional)');
-      assert.ok(schemaIsGated(resolution.schema));
+      assert.equal(resolution.schema.name, 'micro');
+      assert.equal(resolution.schema.artifacts.length, 1, 'one plan.md, the whole mini-iteration');
     }
   });
 
@@ -260,31 +260,26 @@ const SHIPPED = (name: string): string =>
   readFileSync(findSchemaFile(join(REPO_ROOT, 'openspec'), name)!, 'utf8');
 
 describe('bin parser reads the shipped schemas', () => {
-  test('spec: gated, verbs resolve nothing, block lists populate', () => {
-    const schema = parseSchemaYamlBin(SHIPPED('spec'), 'spec');
-    assert.equal(schemaIsGatedBin(schema), true, 'spec schema must be gated on the CLI side');
+  test('micro: one artifact, writes unlock, the human verdict', () => {
+    const schema = parseSchemaYamlBin(SHIPPED('micro'), 'micro');
+    assert.equal(schema.artifacts.length, 1, 'one plan.md — the whole mini-iteration');
+    const plan = schema.artifacts[0];
+    assert.equal(plan.id, 'plan');
+    assert.equal(plan.generates, 'plan.md');
+    assert.deepEqual(plan.unlocks, ['writes']);
+    assert.equal(plan.verdictLine, 'Hands-on validation');
+    assert.equal(plan.completes, 'approved');
+    assert.deepEqual(
+      plan.sections.map((s: any) => s.id),
+      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
+    );
+    assert.equal(schemaIsGatedBin(schema), false, 'micro gates by name + approve, not x-requires tags');
     for (const artifact of schema.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');
-    const investigate = schema.artifacts.find((a: any) => a.id === 'investigate');
-    assert.deepEqual(investigate?.requiresApproval, ['brainstorm']);
-    assert.deepEqual(investigate?.unlocks, ['research']);
-    const brainstorm = schema.artifacts.find((a: any) => a.id === 'brainstorm');
-    assert.deepEqual(
-      brainstorm?.sections.map((s: any) => s.id),
-      ['Pain', 'Questions'],
-    );
-    const plan = schema.artifacts.find((a: any) => a.id === 'plan');
-    assert.deepEqual(
-      plan?.sections.map((s: any) => s.id),
-      ['Estimate', 'Skills', 'Workflow', 'Slices', 'Verification', 'History'],
-    );
-    const execute = schema.artifacts.find((a: any) => a.id === 'execute');
-    assert.equal(execute?.verdictLine, 'Human validation');
-    assert.equal(execute?.completes, 'approved');
   });
 });
 
 describe('parity: bin ≡ src on the shipped schemas', () => {
-  test('projections equal over spec and mission — drift fails loudly', () => {
+  test('projections equal over micro and mission — drift fails loudly', () => {
     const project = (schema: any) => ({
       name: schema.name,
       declares: schema.declares,
@@ -302,7 +297,7 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
         unlocksSource: !!a.unlocksSource,
       })),
     });
-    for (const name of ['spec']) {
+    for (const name of ['micro']) {
       const srcSchema = parseSchemaYaml(SHIPPED(name), name);
       const binSchema = parseSchemaYamlBin(SHIPPED(name), name);
       assert.deepEqual(project(binSchema), project(srcSchema), `parity broken on ${name}`);

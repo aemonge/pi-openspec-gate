@@ -230,7 +230,7 @@ test('approvals: the full five-step walk approves in order and completes the sch
     assert.equal(aim.status, 0);
     assert.match(aim.stdout, /focused m1 · next: read 1-idea\.md → eospec approve/);
 
-    let first;
+    let first: { status: number; stdout: string; called: boolean } | undefined;
     for (let i = 0; i < 5; i += 1) {
       first = run(repo, ['approve']);
       assert.equal(first.status, 0, `approve #${i + 1}`);
@@ -295,7 +295,7 @@ test('teaching: the gate names the next act — aim echo, approval echo, room vi
     assert.match(room.stdout, /read 2-proposition\.md → eospec approve/);
     assert.equal(room.called, false, 'the room view never forwards');
 
-    let done;
+    let done: { status: number; stdout: string; called: boolean } | undefined;
     for (let i = 0; i < 4; i += 1) done = run(repo, ['approve']);
     assert.equal(done!.status, 0);
     assert.match(done!.stdout, /all steps approved — status: approved/);
@@ -653,24 +653,23 @@ test('room view: approval marks and the next act, one line per change, no schema
 
 function shippedRepo(): Repo {
   const repo = makeRepo();
-  const dir = join(repo.dir, 'openspec', 'schemas', 'spec');
+  const dir = join(repo.dir, 'openspec', 'schemas', 'micro');
   mkdirSync(dir, { recursive: true });
   copyFileSync(
-    join(import.meta.dirname, '..', 'openspec', 'schemas', 'spec', 'schema.yaml'),
+    join(import.meta.dirname, '..', 'openspec', 'schemas', 'micro', 'schema.yaml'),
     join(dir, 'schema.yaml'),
   );
   return repo;
 }
 
-function specChange(repo: Repo, slug: string): void {
-  change(repo, slug, 'schema: spec\nx-status: proposed\nx-created_by: assistant\n');
-  draft(repo, slug, '1-brainstorm.md', '# Brainstorm\n\n## Pain\n\nfixture\n\n## Questions\n\n- fixture\n');
+function fixtureChange(repo: Repo, slug: string): void {
+  change(repo, slug, 'schema: micro\nx-status: proposed\nx-created_by: assistant\n');
 }
 
 test('parity live: a rung word forwards verbatim — nothing gate-owned answers it', () => {
   const repo = shippedRepo();
   try {
-    specChange(repo, 'fx');
+    fixtureChange(repo, 'fx');
     const p = run(repo, ['open', 'fx']);
     assert.equal(p.status, 0, 'openspec (fake) answers — the gate never interpreted');
     assert.equal(p.called, true, 'a dead verb word forwards; nothing gate-owned answers it');
@@ -684,7 +683,7 @@ test('parity live: a rung word forwards verbatim — nothing gate-owned answers 
 test('parity live: named stamps forward — nothing stamps without approve', () => {
   const repo = shippedRepo();
   try {
-    specChange(repo, 'fx');
+    fixtureChange(repo, 'fx');
     const g = run(repo, ['grant', 'fx', 'brainstorm']);
     assert.equal(g.status, 0, 'openspec (fake) answers');
     assert.equal(g.called, true, 'the named stamp forwards — it is not gate-owned');
@@ -698,7 +697,7 @@ test('parity live: named stamps forward — nothing stamps without approve', () 
 test('parity live: approve without an aim refuses loudly — and never stamps', () => {
   const repo = shippedRepo();
   try {
-    specChange(repo, 'fx');
+    fixtureChange(repo, 'fx');
     const bare = run(repo, ['approve', 'fx']);
     assert.equal(bare.status, 1, 'approve is gate-owned: without an aim it refuses');
     assert.match(bare.stdout, /nothing aimed/);

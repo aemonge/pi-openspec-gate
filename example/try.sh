@@ -1,13 +1,12 @@
 #!/bin/sh
-# try.sh — the example walkthrough on the v9 spec schema.
+# try.sh — the example walkthrough on the micro schema.
 #
-# Builds a scratch repo from this example, runs the negatives first, then
-# walks a findings-free lifecycle — aim once, four approve presses, the
-# fifth never exists, the close skips it — and then a second delivery
-# whose verdict routes a finding to the fifth artifact: ticked, drafted,
-# approved, closed. This directory is never modified.
-# Every approve below is what a HUMAN types in their terminal — that is
-# the point of the gate.
+# Builds a scratch repo from this example, runs the refusals first, then
+# walks two lifecycles: a findings-free mini-plan (draft → approve → tick
+# → verdict → close) and a slice-gated one (approve opens slice 1, the
+# boundary pauses, approve advances, close ends it). This directory is
+# never modified. Every approve below is what a HUMAN types in their
+# terminal — that is the point of the gate.
 #
 #   ./example/try.sh          (or: just try)
 #   GATE=/path/to/eospec ./example/try.sh    # override the binary
@@ -25,7 +24,7 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT INT TERM
 mkdir -p "$WORK/openspec/changes/hello-gate"
 cp -r "$HERE/openspec/schemas" "$WORK/openspec/schemas"
-printf 'schema: spec\nx-status: proposed\n' > "$WORK/openspec/changes/hello-gate/.openspec.yaml"
+printf 'schema: micro\nx-status: proposed\n' > "$WORK/openspec/changes/hello-gate/.openspec.yaml"
 cd "$WORK" || exit 2
 
 pass=0
@@ -51,76 +50,68 @@ expect_fail() {
 
 C=openspec/changes/hello-gate
 
-# md <file> <H1 title> [H2 sections…]
-md() {
-  f=$1; t=$2; shift 2
-  { printf '# %s\n' "$t"; for s in "$@"; do printf '\n## %s\n' "$s"; done; } > "$C/$f"
+# plan <task-line> — a minimal valid micro plan with one open task line
+plan() {
+  { printf '# hello-gate\n\n## Goal\n\nPrint hello, fast.\n\n'
+    printf '## Questions & Decisions\n\n- which name? → the argument\n\n'
+    printf '## Tasks\n\n%s\n\n## Verification\n\n- [ ] checks pass\n- [ ] Hands-on validation\n' "$1"
+  } > "$C/plan.md"
 }
 
-echo "1 ── aim, and the walk refuses what isn't there"
-expect 'focused hello-gate · next: awaiting draft of 1-brainstorm.md' hello-gate
+echo "1 ── the gate refuses what isn't there"
+expect 'focused hello-gate' hello-gate
 expect_fail 'not drafted yet' approve
-expect_fail 'not closed' close hello-gate
-md 1-brainstorm.md Brainstorm Pain Questions
-expect 'approved hello-gate · brainstorm' approve
+plan '- [ ] write src/hello.py'
+expect 'approved hello-gate · plan · coding open — 2 task(s)/2' approve
 
-echo '2 ── the journal is free: investigate needs no shape, only substance'
-printf '# Investigate\n\nFindings: the gate reads only x- tags.\nNo alternatives needed — direct route.\n' > "$C/2-investigate.md"
-expect 'approved hello-gate · investigate' approve
+echo '2 ── the room view names the counts and your verb'
+expect '[0/2 tasks] · coding' focus
 
-echo '3 ── the contract is hard: every declared section at stamp time'
-md 3-plan.md Plan Estimate Skills
-expect_fail 'missing declared structure: Workflow' approve
-md 3-plan.md Plan Estimate Skills Workflow Slices Verification History
-expect 'approved hello-gate · plan' approve
+echo '3 ── re-approve reports the walk, it does not re-stamp'
+expect 'coding open — 0/2 tasks done' approve
 
-echo '4 ── the room view names the next human act'
-printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
-expect '→ eospec approve' focus
+echo '4 ── the close waits for the tasks'
+expect_fail '2 task(s) open' close
+sed -i 's/- \[ \] write src\/hello.py/- [x] write src\/hello.py/' "$C/plan.md"
+sed -i 's/- \[ \] checks pass/- [x] checks pass/' "$C/plan.md"
 
-echo '5 ── the verdict wall: approve refuses the bearer while the tick is open'
-expect_fail 'not approved — tick' approve
-printf '# Execute\n\n- [x] Human validation — response: the walk held · outcome: pass\n' > "$C/4-execute.md"
-expect 'all steps approved — status: approved' approve
-
-echo '6 ── the close: the registry remembers which artifact''s verdict closed it'
-expect '— eospec close' focus
-printf '# Execute\n\n- [ ] Human validation — response: · outcome:\n' > "$C/4-execute.md"
-expect_fail 'not closed — tick' close
-printf '# Execute\n\n- [x] Human validation — response: looks right · outcome: pass\n' > "$C/4-execute.md"
+echo '5 ── the close waits for your verdict'
+expect_fail "tick 'Hands-on validation'" close
+sed -i 's/- \[ \] Hands-on validation/- [x] Hands-on validation/' "$C/plan.md"
 expect 'closed hello-gate · validated · archiving' close
 
-echo '7 ── a second delivery: findings route to the fifth artifact'
-C2=openspec/changes/hello-two
-mkdir -p "$WORK/openspec/changes/hello-two"
-printf 'schema: spec\nx-status: proposed\n' > "$C2/.openspec.yaml"
-printf '# Brainstorm\n\n## Pain\n\n## Questions\n' > "$C2/1-brainstorm.md"
-printf '# Investigate\n' > "$C2/2-investigate.md"
-printf '# Plan\n\n## Estimate\n\n## Skills\n\n## Workflow\n\n## Slices\n\n## Verification\n\n## History\n' > "$C2/3-plan.md"
-printf '# Execute\n\n- [ ] feat(walk): the finding surfaces\n      hash: abc1234\n- [ ] Human validation — response: · outcome: · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
-expect 'focused hello-two' hello-two
-expect 'approved hello-two · brainstorm' approve
-expect 'approved hello-two · investigate' approve
-expect 'approved hello-two · plan' approve
-expect_fail 'not approved — tick' approve
-printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
-expect 'all steps approved — status: approved' approve
-printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
-expect_fail 'not closed — the ledger owes' close
-printf '# Execute\n\n- [x] feat(walk): the finding surfaces\n      hash: abc1234\n- [x] Human validation — response: yes · outcome: pass · surfaced: F1 → post-delivery\n' > "$C2/4-execute.md"
-printf '# Post-delivery\n\n## F1 — the walk needs a fifth step\n\n- from: slice 4 review\n- why here: the routing law needs its own risk pass\n- route: the fifth artifact designs it\n- risk: the walk grows ceremony\n\n- [x] design the fifth artifact\n- [x] feat(walk): post-delivery — the conditional fifth\n      hash: def5678\n\n- [x] Human validation — response: yes · outcome: pass\n' > "$C2/5-post-delivery.md"
-expect '→ eospec approve' focus
-expect 'approved hello-two · post-delivery · all steps approved — status: approved' approve
-expect 'closed hello-two · validated · archiving' close
+echo '6 ── archived with receipts, the room released'
+ARCH=$(ls -d "$WORK"/openspec/changes/archive/*hello-gate 2>/dev/null | head -1)
+grep -q 'x-validated' "$ARCH/.openspec.yaml" && ok 'x-validated stamped' || bad 'x-validated missing'
+grep -q 'human-approve' "$ARCH/.ledger" && ok 'ledger: human-approve first' || bad 'ledger: human-approve missing'
 
-echo '8 ── the final state on disk'
-ARCH_C=$(ls -d "$WORK"/openspec/changes/archive/*hello-gate 2>/dev/null | head -1)
-ARCH_C2=$(ls -d "$WORK"/openspec/changes/archive/*hello-two 2>/dev/null | head -1)
-grep -q 'x-validated_execute' "$ARCH_C/.openspec.yaml" && ok 'registry: x-validated_execute stamped' || bad 'registry: x-validated_execute missing'
-echo '── .openspec.yaml (archived hello-gate):'
-cat "$ARCH_C/.openspec.yaml"
-echo '── room:'
-"$GATE" focus
+echo '7 ── slice gates: approve opens one slice at a time'
+C2=openspec/changes/hello-sliced
+mkdir -p "$C2"
+printf 'schema: micro\nx-status: proposed\n' > "$C2/.openspec.yaml"
+{ printf '# hello-sliced\n\n## Goal\n\nTwo slices, gated.\n\n'
+  printf '## Questions & Decisions\n\n## Tasks\n\nslice-gates: true\n\n'
+  printf '### Slice: one\n\n- [ ] first\n\n### Slice: two\n\n- [ ] second\n\n'
+  printf '## Verification\n\n- [ ] checks pass\n- [ ] Hands-on validation\n'
+} > "$C2/plan.md"
+expect 'focused hello-sliced' hello-sliced
+expect 'approved hello-sliced · plan · coding open — 3 task(s)/3' approve
+grep -q 'x-slice: 1' "$C2/.openspec.yaml" && ok 'x-slice: 1 stamped' || bad 'x-slice: 1 missing'
+sed -i 's/- \[ \] first/- [x] first/' "$C2/plan.md"
+
+echo '8 ── the boundary pauses, and names the next slice'
+expect "slice 'Slice: one' done" focus
+
+echo '9 ── approve advances the slice'
+expect "slice 'Slice: two' unlocked" approve
+grep -q 'x-slice: 2' "$C2/.openspec.yaml" && ok 'x-slice: 2 stamped' || bad 'x-slice: 2 missing'
+
+echo '10 ── the walk ends the same way'
+sed -i 's/- \[ \] second/- [x] second/' "$C2/plan.md"
+sed -i 's/- \[ \] checks pass/- [x] checks pass/' "$C2/plan.md"
+sed -i 's/- \[ \] Hands-on validation/- [x] Hands-on validation/' "$C2/plan.md"
+expect 'closed hello-sliced · validated · archiving' close
+expect 'nothing pending' focus
 
 echo
 echo "passed: $pass   failed: $fail"

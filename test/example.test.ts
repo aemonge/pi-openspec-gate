@@ -1,13 +1,11 @@
 /**
  * The shipped example — a strong starting point, kept honest.
  *
- * The example carries the v9 `spec` schema: five steps (brainstorm →
- * investigate → plan → execute → post-delivery), strictness at the two
- * boundaries humans own — commit at plan (x-unlocks: [writes]), the
- * verdict at execute — and the research window opening at investigate
- * (x-unlocks: [research]). The fifth is conditional: x-optional and
- * x-requires-verdict — drafted only when the verdict's surfaced: line
- * names findings too big for slices.
+ * The example carries the `micro` schema: one change, one plan.md, one
+ * human approve before code. x-unlocks: [writes] opens coding at the
+ * single grant; x-completes: approved stamps it; x-verdict-line:
+ * Hands-on validation is the one human-only tick. The declared doors
+ * ("start the spec" / "skip the spec") ride schema data.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,64 +13,69 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { describe, test } from 'node:test';
 
-import { findSchemaFile, parseSchemaYaml, schemaIsGated } from '../src/schema.ts';
-import { parseSchemaYaml as parseSchemaYamlBin } from '../bin/gate-lib.js';
+import { findSchemaFile, parseSchemaYaml, writesUnlocked } from '../src/schema.ts';
+import { parsePlan } from '../src/plan.ts';
+import { parseSchemaYaml as parseSchemaYamlBin, parsePlan as parsePlanBin } from '../bin/gate-lib.js';
 
 const REPO_ROOT = join(import.meta.dirname, '..');
 const EXAMPLE_ROOT = join(REPO_ROOT, 'example', 'openspec');
 
-describe('the example schema (spec)', () => {
-  test('parses on both sides, is gated, and declares the four grants + unlocks', () => {
-    const file = findSchemaFile(EXAMPLE_ROOT, 'spec');
-    assert.ok(file, 'example spec schema found');
+describe('the example schema (micro)', () => {
+  test('parses on both sides and declares the micro law', () => {
+    const file = findSchemaFile(EXAMPLE_ROOT, 'micro');
+    assert.ok(file, 'example micro schema found');
     const yaml = readFileSync(file!, 'utf8');
     const src = parseSchemaYaml(yaml, file!);
     const bin = parseSchemaYamlBin(yaml, file!);
 
-    assert.equal(schemaIsGated(src), true);
     assert.deepEqual(src.declares, ['start the spec', 'skip the spec']);
+    assert.deepEqual(src.artifacts.map((a) => a.id), ['plan']);
+    const plan = src.artifacts[0]!;
+    assert.equal(plan.generates, 'plan.md');
+    assert.deepEqual(plan.unlocks, ['writes']);
+    assert.equal(plan.completes, 'approved');
+    assert.equal(plan.verdictLine, 'Hands-on validation');
     assert.deepEqual(
-      src.artifacts.map((a) => a.id),
-      ['brainstorm', 'investigate', 'plan', 'execute', 'post-delivery'],
+      plan.sections.map((s) => s.id),
+      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
     );
-    assert.equal(schemaIsGated(src), true);
-    for (const artifact of src.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');
-
-    // the capability boundaries, declared in data
-    assert.deepEqual(src.artifacts[1]!.unlocks, ['research']);
-    assert.deepEqual(src.artifacts[2]!.unlocks, ['writes']);
-    assert.equal(src.artifacts[1]!.sections.length, 0, 'the journal is free');
-    assert.deepEqual(
-      src.artifacts[2]!.sections.map((s) => s.id),
-      ['Estimate', 'Skills', 'Workflow', 'Slices', 'Verification', 'History'],
-    );
-    assert.equal(src.artifacts[3]!.verdictLine, 'Human validation');
-    assert.equal(src.artifacts[3]!.completes, 'approved');
-
-    // the conditional fifth: optional, verdict-first, chained to execute
-    const fifth = src.artifacts[4]!;
-    assert.equal(fifth.optional, true);
-    assert.equal(fifth.requiresVerdict, true);
-    assert.deepEqual(fifth.requiresApproval, ['execute']);
-    assert.equal(src.artifacts[3]!.optional, false);
-    assert.equal(src.artifacts[3]!.requiresVerdict, false);
+    assert.equal(plan.requiresApproval.length, 0, 'one artifact: the approve IS the gate');
+    assert.ok(!('grantVerb' in plan), 'the verbs died by silent ignore');
+    // one granted artifact unlocks writes and completes the schema
+    assert.equal(writesUnlocked(src, new Set(['plan'])), true);
 
     // bin ≡ src mirror on the example itself
     assert.deepEqual(
       bin.artifacts.map((a) => [a.id, a.requiresApproval, a.grantVerb, a.unlocks, a.sections.map((s) => s.id)]),
       src.artifacts.map((a) => [a.id, a.requiresApproval, a.grantVerb, a.unlocks, a.sections.map((s) => s.id)]),
     );
-    assert.equal((bin.artifacts[4] as { optional?: boolean }).optional, true, 'bin parses x-optional too');
-    assert.equal((bin.artifacts[4] as { requiresVerdict?: boolean }).requiresVerdict, true, 'bin parses x-requires-verdict too');
+    assert.equal(
+      (bin.artifacts[0] as { verdictLine?: string }).verdictLine,
+      'Hands-on validation',
+      'bin parses the verdict line too',
+    );
+  });
+
+  test('the template parses as a plan — sections present, tasks open, verdict excluded', () => {
+    const text = readFileSync(join(EXAMPLE_ROOT, 'schemas', 'micro', 'templates', 'plan.md'), 'utf8');
+    assert.deepEqual(
+      [...text.matchAll(/^## (.+)$/gmu)].map((m) => m[1]),
+      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
+    );
+    const model = parsePlan(text, 'Hands-on validation');
+    assert.ok(model.open >= 1, 'the template ships open tasks');
+    assert.equal(model.verdictTicked, false, 'the verdict ships unticked — the human ticks it');
+    const binModel = parsePlanBin(text, 'Hands-on validation');
+    assert.deepEqual(binModel, model, 'twins agree');
   });
 
   test('the schema parses under real yaml — openspec itself reads it', () => {
     // our line-parser tolerates things real YAML does not (live-caught:
-    // unescaped quotes inside the double-quoted description broke
-    // `openspec new change --schema spec` while our tests stayed green)
+    // unescaped quotes inside a double-quoted description broke
+    // `openspec new change --schema …` while our tests stayed green)
     const result = spawnSync('openspec', ['schemas'], { cwd: REPO_ROOT, encoding: 'utf8' });
     assert.equal(result.status, 0, `openspec cannot parse the shipped schema:\n${result.stdout}\n${result.stderr}`);
-    assert.match(result.stdout, /spec/, 'the shipped schema is listed');
+    assert.match(result.stdout, /micro/, 'the shipped schema is listed');
   });
 
   test('the walkthrough passes end to end with every key marker', () => {
@@ -80,17 +83,21 @@ describe('the example schema (spec)', () => {
     assert.equal(result.status, 0, `walkthrough failed:\n${result.stdout}\n${result.stderr}`);
     for (const marker of [
       'not drafted yet',
-      'missing declared structure: Workflow',
-      'not approved — tick',
-      'not closed — the ledger owes',
-      'all steps approved — status: approved',
-      '— eospec close',
-      'not closed — tick',
+      'approved hello-gate · plan · coding open — 2 task(s)/2',
+      '[0/2 tasks] · coding',
+      'coding open — 0/2 tasks done',
+      '2 task(s) open',
+      "tick 'Hands-on validation'",
       'closed hello-gate · validated · archiving',
-      'approved hello-two · post-delivery · all steps approved — status: approved',
-      'closed hello-two · validated · archiving',
-      'registry: x-validated_execute stamped',
-      'passed: 24',
+      'x-validated stamped',
+      'human-approve first',
+      "slice 'Slice: one' done",
+      'approved hello-sliced · plan · coding open — 3 task(s)/3',
+      "slice 'Slice: two' unlocked",
+      'x-slice: 2 stamped',
+      'closed hello-sliced · validated · archiving',
+      'nothing pending',
+      'passed: 18',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);
     }
