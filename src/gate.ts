@@ -44,6 +44,7 @@ import {
   capabilityUnlocked,
   resolveChangeSchema,
   scanDeclares,
+  scanDeclaresBare,
   schemaIsGated,
   schemaVerdictLine,
   scanSchemaNames,
@@ -296,6 +297,27 @@ function declarePhrases(openspecRoot: string): RegExp | null {
   return pattern;
 }
 
+const declareBareCache = new Map<string, RegExp | null>();
+
+/** Only the bare-work phrases latch: x-declares-bare when schemas split
+ *  the doors, else the whole vocabulary (schemas that never did).
+ *  (live-caught 2026-11-19, /tmp/sup lab: a stale "start the spec" spent
+ *  the one gate — ceremony phrases must never arm the latch.) */
+function declareBarePhrases(openspecRoot: string): RegExp | null {
+  if (declareBareCache.has(openspecRoot)) return declareBareCache.get(openspecRoot) ?? null;
+  const phrases = [...scanDeclaresBare(openspecRoot)];
+  let pattern: RegExp | null = null;
+  if (phrases.length > 0) {
+    const alternation = phrases
+      .sort((a, b) => b.length - a.length)
+      .map((p) => p.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+      .join('|');
+    pattern = new RegExp(`\\b(?:${alternation})\\b`, 'iu');
+  }
+  declareBareCache.set(openspecRoot, pattern);
+  return pattern;
+}
+
 /** Research instruments the `research` capability class gates. Defaults:
  *  the web/docs tool set; config `unlocks.research` replaces either side
  *  (tools + bash command verbs like graphify, wget). */
@@ -509,6 +531,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
           : '';
     const declareRoot = openspecRootOf((ctx as { cwd?: string } | undefined)?.cwd ?? process.cwd());
     const phrases = declareRoot ? declarePhrases(declareRoot) : null;
+    const bare = declareRoot ? declareBarePhrases(declareRoot) : null;
     if (message.role === 'assistant') {
       // self-declaration attempt: the latch refuses by construction (user
       // messages only) — record it and let the next block carry the
@@ -522,7 +545,7 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     }
     if (message.role !== 'user') return;
     if (text.length === 0 || text.length > DECLARE_MAX_LENGTH) return;
-    if (phrases && phrases.test(text)) {
+    if (bare && bare.test(text)) {
       state.declarationWords = text.trim().replace(/\s+/gu, ' ').slice(0, 120);
     }
     if (VALID_PATTERN.test(text)) {
@@ -861,7 +884,18 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             };
           }
         }
-        if (plan.open === 0 && !isVerificationCommand(bashCommand)) {
+        // the verifying memory: the first all-ticked observation stamps
+        // x-verifying — from then on, appended tasks are follow-up work
+        // and only approve lifts the lock (plan.open alone forgets)
+        if (!meta.raw['x-verifying'] && plan.open === 0) {
+          try {
+            writeChangeMeta(openspecRoot!, focus.change, { 'x-verifying': utcNow() });
+            meta.raw['x-verifying'] = utcNow();
+          } catch {
+            /* a lost stamp never blocks the lock */
+          }
+        }
+        if ((plan.open === 0 || Boolean(meta.raw['x-verifying'])) && !isVerificationCommand(bashCommand)) {
           if (declareDoor()) return undefined;
           appendFact(FACT.unapproved, { kind: 'micro-verifying', tool: toolName, change: focus.change, paths, at: utcNow() });
           return { block: true, reason: withDeclareNote(blockMicroVerifying(focus.change)) };

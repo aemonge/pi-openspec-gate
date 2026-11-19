@@ -61,6 +61,9 @@ const READ_ONLY_TOOLS = new Set([
   // question is the opposite of the risk the fail-safe guards
   // (live-caught 2026-11-19: the gate blocked a question to the human)
   'ask_user_question',
+  // pi-lens diagnostics — reads, never writes (the older lsp_diagnostics
+  // name stays for compatibility)
+  'lens_diagnostics',
 ]);
 const MUTATING_TOOLS = new Set(['edit', 'write']);
 

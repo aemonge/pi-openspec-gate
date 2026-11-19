@@ -1,6 +1,7 @@
 name: micro
 version: 1
 x-declares: [start the spec, skip the spec]
+x-declares-bare: [skip the spec]
 description: "The zero-bureaucracy micro loop — one change, one file, one hard
   gate. Conversation is exploration: reading, searching, asking, and drafting
   are never gated. openspec/changes/<slug>/plan.md holds the whole

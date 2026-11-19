@@ -349,18 +349,27 @@ if (command === 'approve') {
       console.log(`approved ${focused} · plan · coding open — ${plan.open} task(s)/${total} · at ${at} · next: tick tasks in plan.md, then: eospec close`);
       process.exit(0);
     }
+    if (meta['x-verifying'] && plan.open > 0) {
+      // the follow-up door: the appended slice waits for THIS approve —
+      // clearing the memory is the re-opening, and it leaves a receipt
+      writeChangeMeta(root, focused, { 'x-verifying': '' });
+      receipt();
+      writeFocus(root, focused);
+      console.log(`approved ${focused} · coding re-opened · at ${at} · next: tick the new tasks, then: eospec close`);
+      process.exit(0);
+    }
     if (plan.sliceGates) {
       const unlocked = Math.max(0, Number(meta['x-slice'] ?? '0'));
       const upcoming = plan.slices[unlocked];
       if (rest.includes('--all') && unlocked < plan.slices.length) {
-        writeChangeMeta(root, focused, { 'x-slice': String(plan.slices.length) });
+        writeChangeMeta(root, focused, { 'x-slice': String(plan.slices.length), 'x-verifying': '' });
         receipt();
         writeFocus(root, focused);
         console.log(`approved ${focused} · all ${plan.slices.length} slice(s) unlocked · at ${at} · next: tick tasks, then: eospec close`);
         process.exit(0);
       }
       if (upcoming) {
-        writeChangeMeta(root, focused, { 'x-slice': String(unlocked + 1) });
+        writeChangeMeta(root, focused, { 'x-slice': String(unlocked + 1), 'x-verifying': '' });
         receipt();
         writeFocus(root, focused);
         console.log(`approved ${focused} · slice '${upcoming.title}' unlocked · at ${at} · next: tick its tasks — eospec approve at the next boundary, or: eospec approve --all`);

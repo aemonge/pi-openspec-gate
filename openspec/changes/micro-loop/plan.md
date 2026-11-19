@@ -39,6 +39,13 @@ gate (approve) opens coding; accounting never sleeps.
   declare remedy; the self-declare note only rides states where
   declaring can help.
 
+- Doors split (live-caught in the /tmp/sup lab: "start the spec" armed
+  the same latch as "skip the spec", and the stale ceremony phrase
+  spent the one gate — src landed before approval). Only bare-work
+  phrases latch a mutation; the schema declares them via
+  x-declares-bare; ceremony phrases are pure instruction. Schemas
+  without the tag keep the old all-phrases latch (back-compat).
+
 (Veto any decision by editing this section — the plan re-opens.)
 
 ## Tasks
@@ -90,6 +97,18 @@ gate (approve) opens coding; accounting never sleeps.
 - [x] tests: micro schema parse (both twins), plan parser, watcher state
       transitions (draft→coding→verifying, slice-pause, verification
       verbs), CLI verbs, contract twins stay agreed
+
+### Slice: door discipline
+- [x] split the doors: x-declares-bare names the phrases that latch one
+      bare mutation; ceremony phrases latch nothing (live-caught: a
+      stale "start the spec" spent the one gate in the /tmp/sup lab)
+- [x] lens_diagnostics joins the read-only set (pi-lens's real name —
+      the older lsp_diagnostics stays)
+- [x] verifying leaves a memory: the watcher stamps x-verifying when
+      the plan completes; approve clears it — appending a slice no
+      longer auto-unlocks coding (the lock lifts by approve alone)
+- [x] tests: the ceremony phrase arms nothing; skip-the-spec latches
+      exactly one; twins carry declaresBare
 
 ## Verification
 

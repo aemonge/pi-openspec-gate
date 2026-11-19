@@ -14,7 +14,8 @@ import { join } from 'node:path';
 import { after, before, describe, test } from 'node:test';
 
 import { parsePlan, planComplete } from '../src/plan.ts';
-import { parsePlan as parsePlanBin } from '../bin/gate-lib.js';
+import { parsePlan as parsePlanBin, parseSchemaYaml as parseSchemaYamlBin } from '../bin/gate-lib.js';
+import { findSchemaFile, parseSchemaYaml } from '../src/schema.ts';
 import { sliceBoundary, blockMicroDraft, blockMicroVerifying, blockMicroSlice } from '../src/gate.ts';
 import { createGate } from '../src/gate.ts';
 import { classifyMutation, isVerificationCommand } from '../src/classifier.ts';
@@ -65,6 +66,25 @@ describe('plan model: the one-artifact math', () => {
     assert.equal(done.verdictTicked, true);
   });
 
+  test('the doors split: declaresBare rides the schema, twins agree', () => {
+    const file = findSchemaFile(join(REPO_ROOT, 'openspec'), 'micro');
+    assert.ok(file, 'repo micro schema found');
+    const yaml = readFileSync(file!, 'utf8');
+    const src = parseSchemaYaml(yaml, file!);
+    assert.deepEqual(src.declares, ['start the spec', 'skip the spec']);
+    assert.deepEqual(src.declaresBare, ['skip the spec']);
+    assert.deepEqual(parseSchemaYamlBin(yaml, file!).declaresBare, ['skip the spec'], 'twin carries declaresBare');
+    assert.throws(
+      () =>
+        parseSchemaYaml(
+          'name: s\nx-declares: [a]\nx-declares-bare: [b]\nartifacts:\n  - id: x\n    generates: x.md\n',
+          'fixture',
+        ),
+      /not in x-declares/u,
+      'a bare phrase outside the vocabulary fails loudly',
+    );
+  });
+
   test('the repo template parses — twins agree, the verdict ships unticked', () => {
     const text = readFileSync(join(REPO_ROOT, 'openspec', 'schemas', 'micro', 'templates', 'plan.md'), 'utf8');
     const src = parsePlan(text, 'Hands-on validation');
@@ -101,6 +121,11 @@ describe('classifier: conversation instruments and verification verbs', () => {
     assert.equal(verdict.basis, 'tool.known-read-only');
   });
 
+  test('pi-lens diagnostics read-only under its real name', () => {
+    const verdict = classifyMutation('lens_diagnostics', {}, undefined, none);
+    assert.equal(verdict.mutating, false);
+  });
+
   test('verification verbs anchor per segment — anything else stays fail-safe', () => {
     for (const good of [
       'npm test',
@@ -122,11 +147,15 @@ describe('classifier: conversation instruments and verification verbs', () => {
 
 describe('gate: the four micro states', () => {
   let repo: string;
+  let xdg: string;
+  let prevData: string | undefined;
+  let prevConfig: string | undefined;
   const entries: { type: string; customType?: string; data?: unknown }[] = [];
 
-  const MICRO_YAML = [
+const MICRO_YAML = [
     'name: micro',
-    'x-declares: [skip the spec]',
+    'x-declares: [start the spec, skip the spec]',
+    'x-declares-bare: [skip the spec]',
     'artifacts:',
     '  - id: plan',
     '    generates: plan.md',
@@ -182,6 +211,14 @@ describe('gate: the four micro states', () => {
   const metaOf = (): string => join(repo, 'openspec', 'changes', 'mx', '.openspec.yaml');
 
   before(() => {
+    // isolate the latch vocabulary from user-global schema homes — legacy
+    // schemas elsewhere legitimately re-arm their own phrases, and this
+    // suite's law must stay machine-independent
+    xdg = mkdtempSync(join(tmpdir(), 'gate-micro-xdg-'));
+    prevData = process.env.XDG_DATA_HOME;
+    prevConfig = process.env.OPENSPEC_CONFIG_DIR;
+    process.env.XDG_DATA_HOME = join(xdg, 'data');
+    process.env.OPENSPEC_CONFIG_DIR = join(xdg, 'config');
     repo = mkdtempSync(join(tmpdir(), 'gate-micro-'));
     mkdirSync(join(repo, 'openspec', 'schemas', 'micro'), { recursive: true });
     writeFileSync(join(repo, 'openspec', 'schemas', 'micro', 'schema.yaml'), MICRO_YAML, 'utf8');
@@ -195,7 +232,12 @@ describe('gate: the four micro states', () => {
   });
 
   after(() => {
+    if (prevData === undefined) delete process.env.XDG_DATA_HOME;
+    else process.env.XDG_DATA_HOME = prevData;
+    if (prevConfig === undefined) delete process.env.OPENSPEC_CONFIG_DIR;
+    else process.env.OPENSPEC_CONFIG_DIR = prevConfig;
     rmSync(repo, { recursive: true, force: true });
+    rmSync(xdg, { recursive: true, force: true });
   });
 
   test('draft: source mutations lock behind plan + approve', async () => {
@@ -281,5 +323,41 @@ describe('gate: the four micro states', () => {
     writeFileSync(metaOf(), 'schema: micro\nx-granted: plan\nx-status: approved\nx-approved_at: 2026-11-19T00:00:00Z\nx-slice: 2\n', 'utf8');
     const pass = await fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts', oldText: 'x', newText: 'y' } }, ctx);
     assert.equal(pass, undefined, 'the advance re-opens coding');
+  });
+
+  test('ceremony phrase arms nothing — the wall holds', async () => {
+    aim();
+    writeFileSync(metaOf(), 'schema: micro\n', 'utf8'); // draft state — no grants
+    rmSync(join(repo, 'openspec', 'bare-work.md'), { force: true });
+    const { fire, ctx } = freshGate();
+    await fire('message_end', { message: { role: 'user', content: 'start the spec' } }, ctx);
+    const blocked = (await fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts', oldText: 'x', newText: 'y' } }, ctx)) as {
+      block?: boolean;
+    };
+    assert.equal(blocked?.block, true, 'the ceremony phrase is instruction, not a latch');
+    assert.ok(!entries.some((e) => e.customType === 'gate.declared'), 'no declared fact');
+    assert.ok(!existsSync(join(repo, 'openspec', 'bare-work.md')), 'no debt line');
+  });
+
+  test('verifying memory: appended tasks stay locked until approve', async () => {
+    aim();
+    writeFileSync(metaOf(), 'schema: micro\nx-granted: plan\nx-status: approved\nx-approved_at: 2026-11-19T00:00:00Z\nx-verifying: 2026-11-19T00:00:00Z\n', 'utf8');
+    // the follow-up: a new task appended while verifying (plan.md is free)
+    writeFileSync(
+      planOf(),
+      ['# mx', '', '## Goal', '', 'tiny', '', '## Questions & Decisions', '', '## Tasks', '', '- [x] first', '- [ ] new follow-up', '', '## Verification', '', '- [x] checks pass', '- [ ] Hands-on validation', ''].join('\n'),
+      'utf8',
+    );
+    const { fire, ctx } = freshGate();
+    const locked = (await fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts', oldText: 'x', newText: 'y' } }, ctx)) as {
+      block?: boolean;
+      reason?: string;
+    };
+    assert.equal(locked?.block, true, 'appended tasks do not auto-unlock — the memory holds');
+    assert.match(locked!.reason!, /is verifying/);
+    // the approve's law clears the memory (simulated — the bin owns it)
+    writeFileSync(metaOf(), 'schema: micro\nx-granted: plan\nx-status: approved\nx-approved_at: 2026-11-19T00:00:00Z\n', 'utf8');
+    const pass = await fire('tool_call', { toolName: 'edit', input: { path: 'src/a.ts', oldText: 'x', newText: 'y' } }, ctx);
+    assert.equal(pass, undefined, 'approve alone re-opens coding');
   });
 });

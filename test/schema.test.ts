@@ -283,6 +283,7 @@ describe('parity: bin ≡ src on the shipped schemas', () => {
     const project = (schema: any) => ({
       name: schema.name,
       declares: schema.declares,
+      declaresBare: schema.declaresBare ?? [],
       artifacts: schema.artifacts.map((a: any) => ({
         id: a.id,
         generates: a.generates,

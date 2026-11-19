@@ -182,7 +182,8 @@ function renderRoom(root, slug) {
       const current = plan.slices[unlockedSlices - 1];
       const upcoming = plan.slices[unlockedSlices];
       const atSliceBoundary = plan.sliceGates && current !== undefined && current.open === 0 && upcoming !== undefined;
-      nextStep = atSliceBoundary ? 'eospec approve' : 'eospec close';
+      const pendingFollowUp = Boolean(meta['x-verifying']) && plan.open > 0;
+      nextStep = atSliceBoundary || pendingFollowUp ? 'eospec approve' : 'eospec close';
     }
     fields['artifact-name'] = artifact.generates;
     fields['artifact-idx'] = '1/1';
@@ -315,6 +316,7 @@ export function parseSchemaYaml(content, source) {
   const lines = content.split('\n');
   let name = '';
   let declares = [];
+  let declaresBare = [];
   const artifacts = [];
   let current;
   let pendingKey;
@@ -330,6 +332,8 @@ export function parseSchemaYaml(content, source) {
   const flushPending = () => {
     if (pendingKey === 'x-declares') {
       declares = parseListValue('', pendingBlockItems);
+    } else if (pendingKey === 'x-declares-bare') {
+      declaresBare = parseListValue('', pendingBlockItems);
     } else if (current && pendingKey === 'x-sections') {
       current.sections = buildSections(sectionChunks, source, current.id || '(unnamed)');
     } else if (current && pendingKey) {
@@ -402,6 +406,15 @@ export function parseSchemaYaml(content, source) {
       else {
         pendingKey = 'x-declares';
         sectionsKeyIndent = indent; // block items live deeper; anything shallower ends it
+      }
+      continue;
+    }
+    if (k === 'x-declares-bare') {
+      flushPending();
+      if (v.trim().length > 0) declaresBare = parseListValue(v, []);
+      else {
+        pendingKey = 'x-declares-bare';
+        sectionsKeyIndent = indent;
       }
       continue;
     }
@@ -547,7 +560,7 @@ export function parseSchemaYaml(content, source) {
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
     }
   }
-  return { name, declares, artifacts: real };
+  return { name, declares, declaresBare, artifacts: real };
 }
 
 function configDir() {

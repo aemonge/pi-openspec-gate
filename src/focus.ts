@@ -215,13 +215,10 @@ function taskProgress(root: string, slug: string, file: string): string {
   return `${done}/${total}`;
 }
 
-/** Render the room snapshot — the src twin of bin/gate-lib.js renderRoom:
- *  the room names the human verb only, the task line exists only when
- *  the artifact has checkboxes, and the all-granted name follows the
- *  walk while the counter follows the receipts. */
-/** The micro room — the one-artifact law: approve while drafting or at a
- *  slice boundary, close once coding is done. The counter reads plan.md
- *  with the verdict line excluded — the human's act is never counted. */
+/** The micro room — the one-artifact law: approve while drafting, at a
+ *  slice boundary, or when follow-up tasks await the re-opening approve;
+ *  close once coding is done. The counter reads plan.md with the verdict
+ *  line excluded — the human's act is never counted. */
 function renderMicroRoom(root: string, slug: string, meta: ChangeMeta, schema: Schema): Record<string, string> {
   const artifact = schema.artifacts[0]!;
   const file = join(root, 'changes', slug, artifact.generates);
@@ -234,7 +231,10 @@ function renderMicroRoom(root: string, slug: string, meta: ChangeMeta, schema: S
     const current = plan.slices[unlockedSlices - 1];
     const upcoming = plan.slices[unlockedSlices];
     const atSliceBoundary = plan.sliceGates && current !== undefined && current.open === 0 && upcoming !== undefined;
-    nextStep = atSliceBoundary ? 'eospec approve' : 'eospec close';
+    // the verifying memory: while x-verifying stands, appended tasks are
+    // follow-up work — the room asks for the approve that re-opens coding
+    const pendingFollowUp = Boolean(meta.raw['x-verifying']) && plan.open > 0;
+    nextStep = atSliceBoundary || pendingFollowUp ? 'eospec approve' : 'eospec close';
   }
   return {
     change: slug,
@@ -245,6 +245,10 @@ function renderMicroRoom(root: string, slug: string, meta: ChangeMeta, schema: S
   };
 }
 
+/** Render the room snapshot — the src twin of bin/gate-lib.js renderRoom:
+ *  the room names the human verb only, the task line exists only when
+ *  the artifact has checkboxes, and the all-granted name follows the
+ *  walk while the counter follows the receipts. */
 export function renderRoom(root: string, slug: string): Record<string, string> {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.raw.schema);

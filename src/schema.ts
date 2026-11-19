@@ -58,8 +58,12 @@ export type Artifact = {
 
 export type Schema = {
   name: string;
-  /** x-declares — human phrases that latch one declared (bare) mutation */
+  /** x-declares — human phrases the schema teaches (remedy vocabulary) */
   declares: string[];
+  /** x-declares-bare — the subset that latches bare work; ceremony
+   *  phrases (the rest) are pure instruction. Empty = all of declares
+   *  latch (schemas that never split the doors). */
+  declaresBare: string[];
   /** declaration order = grant order */
   artifacts: Artifact[];
 };
@@ -155,6 +159,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
   const lines = content.split('\n');
   let name = '';
   let declares: string[] = [];
+  let declaresBare: string[] = [];
   const artifacts: Artifact[] = [];
   let current: Artifact | undefined;
   let pendingKey: string | undefined;
@@ -170,6 +175,8 @@ export function parseSchemaYaml(content: string, source: string): Schema {
   const flushPending = () => {
     if (pendingKey === 'x-declares') {
       declares = parseList('', pendingBlockItems);
+    } else if (pendingKey === 'x-declares-bare') {
+      declaresBare = parseList('', pendingBlockItems);
     } else if (current && pendingKey === 'x-sections') {
       current.sections = buildSections(sectionChunks, source, current.id || '(unnamed)');
     } else if (current && pendingKey) {
@@ -245,6 +252,15 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       else {
         pendingKey = 'x-declares';
         sectionsKeyIndent = indent; // block items live deeper; anything shallower ends it
+      }
+      continue;
+    }
+    if (k === 'x-declares-bare') {
+      flushPending();
+      if (v.trim().length > 0) declaresBare = parseList(v, []);
+      else {
+        pendingKey = 'x-declares-bare';
+        sectionsKeyIndent = indent;
       }
       continue;
     }
@@ -343,6 +359,11 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       throw new Error(`${source}: x-declares phrases must be 1–120 characters`);
     }
   }
+  for (const phrase of declaresBare) {
+    if (!declares.includes(phrase)) {
+      throw new Error(`${source}: x-declares-bare names '${phrase}' — not in x-declares`);
+    }
+  }
   const ids = new Set<string>();
   for (const a of artifactsReal) {
     if (ids.has(a.id)) throw new Error(`${source}: duplicate artifact id '${a.id}'`);
@@ -402,7 +423,7 @@ export function parseSchemaYaml(content: string, source: string): Schema {
       throw new Error(`${source}: ${tag} declared by ${bearers.map((a) => a.id).join(' and ')} — at most one`);
     }
   }
-  return { name, declares, artifacts: artifactsReal };
+  return { name, declares, declaresBare, artifacts: artifactsReal };
 }
 
 function configDir(): string {
@@ -526,6 +547,38 @@ export function scanDeclares(openspecRoot: string): Set<string> {
   }
   declareScanCache.set(openspecRoot, phrases);
   return phrases;
+}
+
+const bareScanCache = new Map<string, Set<string>>();
+
+/** Phrases that latch one bare mutation: x-declares-bare when the schema
+ *  splits the doors, else the schema's whole vocabulary (back-compat with
+ *  schemas that never did). Union across resolvable schemas, cached.
+ *  (live-caught 2026-11-19, /tmp/sup lab: a stale "start the spec" spent
+ *  the one gate — ceremony phrases must never arm the latch.) */
+export function scanDeclaresBare(openspecRoot: string): Set<string> {
+  const cached = bareScanCache.get(openspecRoot);
+  if (cached) return cached;
+  const bare = new Set<string>();
+  const seen = new Set<string>();
+  for (const dir of [join(openspecRoot, 'schemas'), ...globalSchemaDirs()]) {
+    if (!existsSync(dir)) continue;
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory() || seen.has(entry.name)) continue;
+      seen.add(entry.name);
+      const file = join(dir, entry.name, 'schema.yaml');
+      if (!existsSync(file)) continue;
+      try {
+        const schema = parseSchemaYaml(readFileSync(file, 'utf8'), file);
+        const phrases = schema.declaresBare.length > 0 ? schema.declaresBare : schema.declares;
+        for (const phrase of phrases) bare.add(phrase);
+      } catch {
+        // invalid schema: contributes nothing; loud failure happens at resolution
+      }
+    }
+  }
+  bareScanCache.set(openspecRoot, bare);
+  return bare;
 }
 
 const schemaNameCache = new Map<string, string[]>();

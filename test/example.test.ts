@@ -54,6 +54,7 @@ describe('the example schema (micro)', () => {
       'Hands-on validation',
       'bin parses the verdict line too',
     );
+    assert.deepEqual(bin.declaresBare ?? [], src.declaresBare, 'bin mirrors the bare-work doors');
   });
 
   test('the template parses as a plan — sections present, tasks open, verdict excluded', () => {
