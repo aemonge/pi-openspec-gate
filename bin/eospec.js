@@ -19,7 +19,7 @@
  */
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -207,6 +207,49 @@ if (command === 'approve') {
   }
   const meta = readChangeMeta(root, focused);
   const resolution = resolveChangeSchema(root, meta.schema);
+  // micro — one plan.md, one approve: the file exists, at least one open
+  // task, the human stamp opens coding. The bootstrap that taught eospec
+  // micro (2026-11-19); the micro-loop change finishes slices/--all.
+  if (
+    resolution.ok &&
+    resolution.schema.artifacts.length === 1 &&
+    resolution.schema.artifacts[0].generates === 'plan.md'
+  ) {
+    const planPath = join(root, 'changes', focused, 'plan.md');
+    if (!existsSync(planPath)) {
+      console.error(`not approved — ${focused}/plan.md is not drafted yet — you approve what you read`);
+      process.exit(1);
+    }
+    const verdict = resolution.schema.artifacts[0].verdictLine;
+    const verdictRe = verdict
+      ? new RegExp(verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'i')
+      : null;
+    const open = readFileSync(planPath, 'utf8')
+      .split('\n')
+      .filter((line) => /^\s*-\s+\[ \]/u.test(line))
+      .filter((line) => !(verdictRe && verdictRe.test(line)));
+    if (open.length === 0) {
+      console.error(`not approved — plan.md has nothing open — hands-on validation then: eospec close`);
+      process.exit(1);
+    }
+    const at = utcNowStamp();
+    const granted = grantedSet(meta);
+    granted.add('plan');
+    writeChangeMeta(root, focused, {
+      'x-granted': [...granted].join(','),
+      'x-granted_plan': at,
+      'x-status': 'approved',
+      'x-approved_at': at,
+    });
+    // the human's act leaves the first receipt — the trail starts with you
+    const ledger = join(root, 'changes', focused, '.ledger');
+    const prior = existsSync(ledger) ? readFileSync(ledger, 'utf8') : '';
+    const glue = prior.length > 0 && !prior.endsWith('\n') ? '\n' : '';
+    writeFileSync(ledger, `${prior}${glue}  human-approve · eospec approve · at ${at}\n`, 'utf8');
+    writeFocus(root, focused);
+    console.log(`approved ${focused} · plan · coding open · at ${at} · next: tick tasks in plan.md, then: eospec close`);
+    process.exit(0);
+  }
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     console.error(`eospec: '${focused}' has no gates — eospec close closes it as it stands`);
     process.exit(1);
