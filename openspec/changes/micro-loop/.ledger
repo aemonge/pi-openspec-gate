@@ -119,3 +119,8 @@
   gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/micro.test.ts · at 2026-11-19T15:33:10Z
   gate-attributed · tool: bash · paths: — · at 2026-11-19T15:33:10Z
   gate-attributed · tool: bash · paths: — · at 2026-11-19T15:35:17Z
+  human-approve · eospec approve · at 2026-11-19T15:48:08Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-19T15:49:06Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/classifier.ts · at 2026-11-19T15:49:31Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-19T15:51:35Z

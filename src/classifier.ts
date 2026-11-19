@@ -273,10 +273,12 @@ function stripWrapper(segment: string): string {
   return WRAPPER_TOKEN.test(segment) ? segment.replace(WRAPPER_TOKEN, 'openspec ') : segment;
 }
 
-// Verification verbs — the verifying state's allow-list. Every segment
-// must independently anchor one (conjunction closed, like every other
-// verb law); an unknown verb or a chained mutation is false and the
-// fail-safe holds. These pass the verifying lock as attributed receipts.
+// Verification verbs — the verifying state's allow-list. A compound
+// passes when EVERY segment anchors a verification verb OR is read-only
+// (reads flow with the checks — `npm test | grep x` — live-caught
+// validating this change: the filters broke the anchor and the lock
+// refused its own gates); an unknown verb or a chained mutation is
+// false and the fail-safe holds. Accepted calls pass as receipts.
 const VERIFICATION_ANCHORED: readonly RegExp[] = [
   /^(?:npm|pnpm|yarn|bun)\s+(?:test|t)\b/u,
   /^(?:npm|pnpm|yarn|bun)\s+run\s+(?:\S+\s+)*(?:test|check|lint|typecheck|tsc)\b/u,
@@ -292,9 +294,11 @@ export function isVerificationCommand(command: string): boolean {
   if (grammarUnsafe || segments.length === 0) return false;
   const kept = stripCdSegments(segments);
   if (kept.length === 0) return false;
-  return kept.every((segment) =>
-    VERIFICATION_ANCHORED.some((pattern) => pattern.test(stripAssignments(segment))),
-  );
+  return kept.every((segment) => {
+    const body = stripAssignments(stripWrapper(segment));
+    if (VERIFICATION_ANCHORED.some((pattern) => pattern.test(body))) return true;
+    return !bashVerdict(body).mutating; // reads flow with the checks
+  });
 }
 
 const offenderOf = (segment: string): string =>

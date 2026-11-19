@@ -1,0 +1,6 @@
+# one active change per room — eospec writes, verbs refresh
+change: micro-loop
+artifact-name: plan.md
+artifact-idx: 1/1
+task: 25/25
+next-step: eospec close

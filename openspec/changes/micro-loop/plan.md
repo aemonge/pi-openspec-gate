@@ -109,6 +109,11 @@ gate (approve) opens coding; accounting never sleeps.
       longer auto-unlocks coding (the lock lifts by approve alone)
 - [x] tests: the ceremony phrase arms nothing; skip-the-spec latches
       exactly one; twins carry declaresBare
+- [x] verifying law refinement (live-caught validating this change:
+      `npm test | grep x` was refused — every segment had to anchor a
+      verification verb, so read-only filters broke the anchor)
+      Segments pass when non-mutating or verification-anchored: reads
+      flow with the checks, mutations never do
 
 ## Verification
 

@@ -47,5 +47,8 @@
   "bugs": {
     "url": "https://github.com/aemonge/eospec/issues"
   },
-  "homepage": "https://github.com/aemonge/eospec#readme"
+  "homepage": "https://github.com/aemonge/eospec#readme",
+  "devDependencies": {
+    "@types/node": "^26.6.6"
+  }
 }
