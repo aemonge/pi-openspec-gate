@@ -95,6 +95,61 @@ export function readFocus(openspecRoot) {
 
 /** Checkbox progress of one artifact file: ticked/total. Empty when the
  *  file is absent or declares no checklist — absence is information. */
+// ── plan.md model — the micro schema's one artifact (the src twin of
+// src/plan.ts; contract-tested) ──
+
+const PLAN_CHECKBOX = /^\s*[-*]\s*\[([ xX])\]/u;
+const PLAN_SLICE = /^###\s+(.+?)\s*$/u;
+const PLAN_SLICE_GATES = /^\s*slice-gates:\s*true\s*$/u;
+
+/** Checkbox counts excluding the declared verdict line (the human's
+ *  hands-on act is never agent work); `### ` headings are slices; the
+ *  bare line `slice-gates: true` opts into per-slice pausing. */
+export function parsePlan(text, verdictLine) {
+  const verdictRe = verdictLine
+    ? new RegExp(verdictLine.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'i')
+    : undefined;
+  const model = { open: 0, done: 0, verdictTicked: undefined, slices: [], sliceGates: false };
+  let current;
+  for (const line of text.split('\n')) {
+    if (PLAN_SLICE_GATES.test(line)) {
+      model.sliceGates = true;
+      continue;
+    }
+    if (/^#{1,6}\s/u.test(line)) {
+      const slice = PLAN_SLICE.exec(line);
+      if (slice) {
+        current = { title: slice[1], open: 0, done: 0 };
+        model.slices.push(current);
+      } else {
+        current = undefined; // Verification and friends leave the slice
+      }
+      continue;
+    }
+    const box = PLAN_CHECKBOX.exec(line);
+    if (!box) continue;
+    const ticked = box[1] !== ' ';
+    if (verdictRe && verdictRe.test(line)) {
+      model.verdictTicked = ticked;
+      continue;
+    }
+    if (ticked) {
+      model.done += 1;
+      if (current) current.done += 1;
+    } else {
+      model.open += 1;
+      if (current) current.open += 1;
+    }
+  }
+  return model;
+}
+
+/** Every task done — the verifying line. The verdict is the human's and
+ *  never counts toward it. */
+export function planComplete(model) {
+  return model.open === 0;
+}
+
 function taskProgress(root, slug, file) {
   const path = join(root, 'changes', slug, file);
   if (!existsSync(path)) return '';
@@ -112,6 +167,29 @@ function renderRoom(root, slug) {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.schema);
   const fields = { change: slug };
+  // micro — the one-artifact law: approve while drafting or at a slice
+  // boundary, close once coding is done; the counter reads plan.md with
+  // the verdict line excluded — the human's act is never counted
+  if (resolution.ok && resolution.schema.name === 'micro') {
+    const artifact = resolution.schema.artifacts[0];
+    const file = join(root, 'changes', slug, artifact.generates);
+    const granted = grantedSet(meta).has(artifact.id);
+    const plan = parsePlan(existsSync(file) ? readFileSync(file, 'utf8') : '', artifact.verdictLine);
+    const total = plan.open + plan.done;
+    let nextStep = 'eospec approve';
+    if (granted) {
+      const unlockedSlices = Math.max(0, Number(meta['x-slice'] ?? '0'));
+      const current = plan.slices[unlockedSlices - 1];
+      const upcoming = plan.slices[unlockedSlices];
+      const atSliceBoundary = plan.sliceGates && current !== undefined && current.open === 0 && upcoming !== undefined;
+      nextStep = atSliceBoundary ? 'eospec approve' : 'eospec close';
+    }
+    fields['artifact-name'] = artifact.generates;
+    fields['artifact-idx'] = '1/1';
+    fields.task = total > 0 ? `${plan.done}/${total}` : '';
+    fields['next-step'] = nextStep;
+    return fields;
+  }
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     fields['artifact-name'] = '';
     fields['artifact-idx'] = '';
@@ -654,7 +732,10 @@ export function grantArtifact(root, slug, artifactRef) {
 }
 
 /** Human-terminal cockpit: which changes need a human act. */
-export function pendingReport(root) {
+/** One row per active change — slug + rendered line (the micro room rows
+ *  in bin/eospec.js bridge over these for legacy schemas; every law — marks,
+ *  unhashed debts, the next act — stays computed here). */
+export function pendingRows(root) {
   const changesDir = join(root, 'changes');
   const rows = [];
   for (const dir of readdirSync(changesDir, { withFileTypes: true })) {
@@ -669,7 +750,6 @@ export function pendingReport(root) {
     let humanWait = false;
     if (gated) {
       const schema = resolution.schema;
-      const approved = grantedSet(meta);
       const verdictLine = schemaVerdictLine(schema);
       const counterArtifact = schema.artifacts.find((a) => a.completes) ?? schema.artifacts[schema.artifacts.length - 1];
       const counterFile = join(changesDir, dir.name, counterArtifact.generates);
@@ -717,7 +797,7 @@ export function pendingReport(root) {
           : meta['x-validated']
             ? 'ready to close'
             : `next: ${completionLine(schema, meta)} — eospec close`;
-      rows.push(`${dir.name.padEnd(28)}${marks} ${state} · ${next}`);
+      rows.push({ slug: dir.name, line: `${dir.name.padEnd(28)}${marks} ${state} · ${next}` });
     } else {
       const need =
         status !== 'approved'
@@ -729,9 +809,15 @@ export function pendingReport(root) {
               : unhashed > 0
                 ? `${unhashed} unhashed commits`
                 : 'ready to close';
-      rows.push(`${dir.name.padEnd(28)}${status.padEnd(10)}${need}`);
+      rows.push({ slug: dir.name, line: `${dir.name.padEnd(28)}${status.padEnd(10)}${need}` });
     }
   }
-  return rows.length === 0 ? 'nothing pending — no active changes' : rows.join('\n');
+  return rows;
+}
+
+/** Human-terminal cockpit: which changes need a human act. */
+export function pendingReport(root) {
+  const rows = pendingRows(root);
+  return rows.length === 0 ? 'nothing pending — no active changes' : rows.map((r) => r.line).join('\n');
 }
 

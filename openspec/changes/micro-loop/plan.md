@@ -44,56 +44,56 @@ gate (approve) opens coding; accounting never sleeps.
 ## Tasks
 
 ### Slice: schema + plan model
-- [ ] micro schema + template finalized (staged in this change — approving
+- [x] micro schema + template finalized (staged in this change — approving
       confirms them)
-- [ ] src/plan.ts + bin/gate-lib.js twin: parse checkboxes, slices,
+- [x] src/plan.ts + bin/gate-lib.js twin: parse checkboxes, slices,
       slice-gates marker; completion = every checkbox ticked except the
       verdict line; counts for the room snapshot and CLI list
-- [ ] openspec/config.yaml → schema: micro + question-first context
+- [x] openspec/config.yaml → schema: micro + question-first context
       (explore → ask → small plan → checks)
-- [ ] delete openspec/schemas/spec/ (the 5-artifact ladder); gitignore
+- [x] delete openspec/schemas/spec/ (the 5-artifact ladder); gitignore
       the room snapshot (openspec/.focus is session state, not repo)
 
 ### Slice: watcher micro states
-- [ ] micro state machine in gate.ts: draft (block source mutations, teach
+- [x] micro state machine in gate.ts: draft (block source mutations, teach
       plan+approve) / coding (attributed + .ledger receipt) / verifying
       (all tasks ticked: lock source, allow verification verbs + plan.md)
       / slice-pause (touched-files summary + approve·--all remedy)
-- [ ] verification verbs anchored (npm|pnpm|yarn|bun test / run
+- [x] verification verbs anchored (npm|pnpm|yarn|bun test / run
       lint·typecheck·check, cargo/go/just/make test·check) — pass in
       verifying as attributed receipts
-- [ ] conversation instruments read-only by default (ask_user_question)
-- [ ] archive-guard slug fix — `--help 2>&1` made the guard read slug `2`
+- [x] conversation instruments read-only by default (ask_user_question)
+- [x] archive-guard slug fix — `--help 2>&1` made the guard read slug `2`
       (live-caught today)
-- [ ] micro block copy: the walk line, draft/verifying/slice-pause blocks;
+- [x] micro block copy: the walk line, draft/verifying/slice-pause blocks;
       subagent relay + approval-touch guards untouched
-- [ ] room snapshot (.focus) renders micro states: next-step law
+- [x] room snapshot (.focus) renders micro states: next-step law
       (approve → close) and task counts
 
 ### Slice: CLI + rules + docs + tests
-- [ ] eospec new <slug> (auto-slug when omitted, auto-focus) · focus:
+- [x] eospec new <slug> (auto-slug when omitted, auto-focus) · focus:
       numbered active list with [n/m tasks] (+TTY picker) · approve:
       plan.md exists + ≥1 unchecked task, slice advance, --all · close:
       tasks+verdict ticked or --force → archive → clear aim
-- [ ] absorb the bootstrap (bin/eospec.js, declared work): slice
+- [x] absorb the bootstrap (bin/eospec.js, declared work): slice
       advance, --all, micro close law, focus + room micro rendering
       (smoke-caught: re-approve echoes "approved" mid-coding; the room
       says close while tasks are open)
-- [ ] human verbs receipt too: approve (and slice advances) append a
+- [x] human verbs receipt too: approve (and slice advances) append a
       `human-approve` line, close a `human-close` line, to the change's
       .ledger — the human's acts leave the same trail as the agent's
-- [ ] AGENTS.md (repo root): question-first micro-loop rules
-- [ ] example/ re-demonstrates micro: schema swap, try.sh micro
+- [x] AGENTS.md (repo root): question-first micro-loop rules
+- [x] example/ re-demonstrates micro: schema swap, try.sh micro
       lifecycle walkthrough, VALIDATION.md, example.test.ts rewrite
-- [ ] README.md: micro loop replaces the multi-gate walkthrough;
+- [x] README.md: micro loop replaces the multi-gate walkthrough;
       CHANGELOG v1.5.0 entry (micro ships, spec ladder retired)
-- [ ] tests: micro schema parse (both twins), plan parser, watcher state
+- [x] tests: micro schema parse (both twins), plan parser, watcher state
       transitions (draft→coding→verifying, slice-pause, verification
       verbs), CLI verbs, contract twins stay agreed
 
 ## Verification
 
-- [ ] npm test green — full suite
-- [ ] just lint green — vocabulary law + doc↔CLI parity
-- [ ] example walkthrough (micro lifecycle) passes — try.sh green
+- [x] npm test green — full suite
+- [x] just lint green — vocabulary law + doc↔CLI parity
+- [x] example walkthrough (micro lifecycle) passes — try.sh green
 - [ ] Hands-on validation

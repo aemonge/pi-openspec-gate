@@ -1,32 +1,14 @@
-schema: spec
+schema: micro
 
-# Project context (optional)
-# Add only constraints that should guide OpenSpec artifacts and workflows.
-# Include constraints an agent cannot infer by reading the code.
-# Keep general project documentation and discoverable codebase facts out.
-# Example:
-#   context: |
-#     Designs and tasks must cover Windows, macOS, and Linux
-#     Write all artifacts in Spanish
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always state what is out of scope
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+# The micro loop — the only schema this repo ships. One change, one
+# plan.md, one human approve before code.
+context: |
+  Conversation is exploration: read code, search docs, ask the human —
+  nothing gates reading, and openspec/**, docs/**, skills/** are free
+  drafting ground.
+  Ask before planning: list every ambiguity and ask concise clarifying
+  questions; the resolved answers go into plan.md's Questions & Decisions.
+  Keep plans small: 1–3 slices per mini-iteration, every task small and
+  verifiable.
+  Run automated checks (typecheck/test/lint) before handing back for the
+  human's hands-on validation and eospec close.

@@ -21,8 +21,9 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { grantedSet, readChangeMeta } from './approval.ts';
-import { resolveChangeSchema, schemaIsGated } from './schema.ts';
+import { grantedSet, readChangeMeta, type ChangeMeta } from './approval.ts';
+import { resolveChangeSchema, schemaIsGated, type Schema } from './schema.ts';
+import { parsePlan } from './plan.ts';
 
 export const OPENSPEC_FOCUS_ENTRY_TYPE = 'eospec.focus';
 
@@ -218,10 +219,39 @@ function taskProgress(root: string, slug: string, file: string): string {
  *  the room names the human verb only, the task line exists only when
  *  the artifact has checkboxes, and the all-granted name follows the
  *  walk while the counter follows the receipts. */
+/** The micro room — the one-artifact law: approve while drafting or at a
+ *  slice boundary, close once coding is done. The counter reads plan.md
+ *  with the verdict line excluded — the human's act is never counted. */
+function renderMicroRoom(root: string, slug: string, meta: ChangeMeta, schema: Schema): Record<string, string> {
+  const artifact = schema.artifacts[0]!;
+  const file = join(root, 'changes', slug, artifact.generates);
+  const granted = grantedSet(meta).has(artifact.id);
+  const plan = parsePlan(existsSync(file) ? readFileSync(file, 'utf8') : '', artifact.verdictLine);
+  const total = plan.open + plan.done;
+  let nextStep = 'eospec approve';
+  if (granted) {
+    const unlockedSlices = Math.max(0, Number(meta.raw['x-slice'] ?? '0'));
+    const current = plan.slices[unlockedSlices - 1];
+    const upcoming = plan.slices[unlockedSlices];
+    const atSliceBoundary = plan.sliceGates && current !== undefined && current.open === 0 && upcoming !== undefined;
+    nextStep = atSliceBoundary ? 'eospec approve' : 'eospec close';
+  }
+  return {
+    change: slug,
+    'artifact-name': artifact.generates,
+    'artifact-idx': '1/1',
+    task: total > 0 ? `${plan.done}/${total}` : '',
+    'next-step': nextStep,
+  };
+}
+
 export function renderRoom(root: string, slug: string): Record<string, string> {
   const meta = readChangeMeta(root, slug);
   const resolution = resolveChangeSchema(root, meta.raw.schema);
   const fields: Record<string, string> = { change: slug };
+  if (resolution.ok && resolution.schema.name === 'micro') {
+    return renderMicroRoom(root, slug, meta, resolution.schema);
+  }
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     fields['artifact-name'] = '';
     fields['artifact-idx'] = '';

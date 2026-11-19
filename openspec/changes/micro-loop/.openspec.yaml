@@ -1,5 +1,9 @@
 schema: micro
 created: 2026-11-19
 
-x-status: proposed
+x-status: approved
 x-created_by: assistant
+
+x-granted: plan
+x-granted_plan: 2026-11-19T14:10:36Z
+x-approved_at: 2026-11-19T14:10:36Z

@@ -17,12 +17,12 @@ import { dirname, join } from 'node:path';
 import { appendDebtLine, appendAttributionReceipt } from './attribution.ts';
 import {
   changeIsApproved,
-  changeMetaPath,
   grantedSet,
   readChangeMeta,
   writeChangeMeta,
 } from './approval.ts';
-import { classifyMutation } from './classifier.ts';
+import { classifyMutation, isVerificationCommand } from './classifier.ts';
+import { parsePlan, type PlanModel } from './plan.ts';
 import type { GateConfig } from './config.ts';
 import { FACT, utcNow, type FactAppender } from './facts.ts';
 import {
@@ -113,7 +113,7 @@ export function blockUnaccounted(options?: {
   if (options?.subagent) {
     lines.push('   subagent: focus is inherited from your parent session — relay this block upward, do not self-serve');
   }
-  lines.push('   the walk: create → aim → draft → approve → draft → … → tick the verdict → eospec close');
+  lines.push('   the walk: create → draft plan.md → eospec approve → code (+.ledger) → tick tasks → hands-on → eospec close');
   return lines.join('\n');
 }
 
@@ -142,7 +142,56 @@ export const BLOCK_UNAPPROVED = [
   '   docs:    openspec/** stays exempt — drafting is never blocked',
 ].join('\n');
 
-export function blockArtifactApproval(slug: string, missing: string[]): string {
+export function blockMicroDraft(slug: string, planFile: string): string {
+  return [
+    `⛔ micro — '${slug}' is drafting — source mutations locked`,
+    `   draft:   openspec/changes/${slug}/${planFile} — Goal · Questions & Decisions · Tasks · Verification`,
+    '   open:    eospec approve   ← your terminal — the one gate before code',
+    '   explore: openspec/**, docs/**, skills/** stay open — reads and research are never gated',
+  ].join('\n');
+}
+
+export function blockMicroVerifying(slug: string): string {
+  return [
+    `⛔ micro — '${slug}' is verifying — every task ticked — source locked`,
+    '   run:     verification commands only (test · lint · typecheck) — they pass, receipted',
+    "   hands-on: the human validates, then ticks '- [ ] Hands-on validation' in plan.md",
+    '   close:   eospec close   ← your terminal',
+    '   more:    append a slice to plan.md, then eospec approve re-opens coding',
+  ].join('\n');
+}
+
+export function blockMicroSlice(slug: string, done: string, next: string): string {
+  return [
+    `⛔ micro — '${slug}' slice '${done}' complete — coding paused at the slice boundary`,
+    '   receipts in .ledger — the human reads what landed',
+    `   next:    eospec approve — unlocks '${next}'`,
+    '   all:     eospec approve --all — unlocks every slice at once',
+  ].join('\n');
+}
+
+/** The slice boundary for a slice-gated plan: the slice the next approve
+ *  unlocks, or undefined while coding continues. Head checkboxes (above
+ *  the first ###) are always unlocked; slice k unlocks when meta x-slice
+ *  has reached it. */
+export function sliceBoundary(
+  plan: PlanModel,
+  unlockedSlices: number,
+): { done: string; next: string } | undefined {
+  const headOpen = plan.open - plan.slices.reduce((sum, s) => sum + s.open, 0);
+  if (headOpen === 0 && unlockedSlices === 0) {
+    const first = plan.slices[0];
+    return { done: 'nothing', next: first ? first.title : 'the first slice' };
+  }
+  const current = unlockedSlices > 0 ? plan.slices[unlockedSlices - 1] : undefined;
+  const upcoming = plan.slices[unlockedSlices];
+  if (current && current.open === 0 && upcoming) {
+    return { done: current.title, next: upcoming.title };
+  }
+  return undefined;
+}
+
+export function blockArtifactApproval(_slug: string, missing: string[]): string {
   const grant = `eospec approve`;
   return [
     `⛔ phase gate — ${missing.join(', ')} not granted yet`,
@@ -160,7 +209,7 @@ export function blockRequiresVerdict(slug: string, ledger: string, verdict: stri
 }
 
 /** The advance command for a gated change: the human verb itself. */
-export function advanceCommand(schema: Schema, approved: Set<string>, slug: string): string | undefined {
+export function advanceCommand(schema: Schema, approved: Set<string>, _slug: string): string | undefined {
   const nextRung = schema.artifacts.find((a) => !approved.has(a.id));
   if (!nextRung) return undefined;
   return `eospec approve`;
@@ -266,7 +315,6 @@ function researchCallMatches(toolName: string, bashCommand: string, config: Gate
 
 /** A literal "VALID" reply latches exactly one human-gate flip. */
 const VALID_PATTERN = /\bVALID\b/u;
-const VALID_MAX_LENGTH = 200;
 
 /** A literal human pause/resume latches the session permit. Duration
  *  grammar X{h,m,s} is MANDATORY — the word is the law: pause, never
@@ -515,7 +563,6 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
         ? String((input as Record<string, unknown>).command ?? '')
         : '';
     if (bashCommand) {
-      const touchRoot = openspecRootOf(cwd);
       if (APPROVAL_TOUCH_RESERVED.test(bashCommand)) {
         appendFact(FACT.unapproved, { kind: 'approval-touch', tool: toolName, paths: [], at: utcNow() });
         return { block: true, reason: BLOCK_APPROVAL_TOUCH };
@@ -566,7 +613,6 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
             res.schema.artifacts.some((a) => a.unlocks.includes('research')) &&
             !capabilityUnlocked(res.schema, grantedSet(meta), 'research')
           ) {
-            const bearer = res.schema.artifacts.find((a) => a.unlocks.includes('research'))!;
             const grant = `eospec approve`;
             appendFact(FACT.phasegate, {
               kind: 'research-window',
@@ -628,10 +674,9 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
 
     // 0.8 archive guard — archiving an unapproved change needs a human flag
     if (!paused && approval.archiveGuard && bashCommand && ARCHIVE_PATTERN.test(bashCommand)) {
-      const slug = /\bopenspec\s+archive\s+(?:-[\w-]+\s+)*([a-z0-9][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
+      const slug = /\bopenspec\s+archive\s+(?:-[\w-]+\s+)*([a-z][a-z0-9-]*)/iu.exec(bashCommand)?.[1];
       const root = openspecRootOf(cwd);
       const meta = slug && root ? readChangeMeta(root, slug) : undefined;
-      const changeExists = slug && root ? exists(changeMetaPath(root, slug).replace(/\.openspec\.yaml$/u, '')) : false;
       if (slug && meta && !changeIsApproved(meta) && !ARCHIVE_FLAG.test(bashCommand)) {
         appendFact(FACT.unapproved, { kind: 'archive', tool: toolName, change: slug, at: utcNow() });
         const resolution = root ? resolveChangeSchema(root, meta.raw.schema) : undefined;
@@ -774,14 +819,57 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // 2. attributed — the focus names an active change
     const focus = activeFocus(ctx.sessionManager, cwd);
     if (focusIsActive(focus, openspecRoot)) {
-      // 2a. approval teeth — attribution is not approval; source mutations
-      // on a focused-but-unapproved change block with the terminal remedy
+      // 2a. the teeth. micro first: the one-artifact law runs four states
+      // (draft / coding / verifying / slice-pause), and the declared door
+      // lands exactly one human-authorized mutation even behind the walls
+      // (debt line + fact — the assistant's own words never declare; the
+      // approval-touch guard and verdict flips above stay human-only).
       const meta = readChangeMeta(openspecRoot!, focus.change);
-      if (approval.enforce && !paused) {
-        // unlock is data: any granted writes-unlock artifact (x-unlocks:
-        //  [writes], or the x-unlocks-source alias), else (no declaration)
-        // full completion — attribution is not approval
-        const unlockResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
+      const unlockResolution = resolveChangeSchema(openspecRoot!, meta.raw.schema);
+      const declareDoor = (): boolean => {
+        if (!state.declarationWords) return false;
+        const words = state.declarationWords;
+        state.declarationWords = undefined; // the latch: one landing
+        const at = utcNow();
+        appendFact(FACT.declared, { tool: toolName, words, paths, at });
+        void appendDebtLine(openspecRoot, words, at);
+        return true;
+      };
+      if (
+        approval.enforce &&
+        !paused &&
+        unlockResolution.ok &&
+        unlockResolution.schema.name === 'micro'
+      ) {
+        const artifact = unlockResolution.schema.artifacts[0]!;
+        const planPath = join(openspecRoot!, 'changes', focus.change, artifact.generates);
+        const plan = parsePlan(exists(planPath) ? readFileSync(planPath, 'utf8') : '', artifact.verdictLine);
+        if (!grantedSet(meta).has(artifact.id)) {
+          if (declareDoor()) return undefined;
+          appendFact(FACT.unapproved, { kind: 'micro-draft', tool: toolName, change: focus.change, paths, at: utcNow() });
+          return { block: true, reason: withDeclareNote(blockMicroDraft(focus.change, artifact.generates)) };
+        }
+        if (plan.sliceGates) {
+          const unlockedSlices = Math.max(0, Number(meta.raw['x-slice'] ?? '0'));
+          const boundary = sliceBoundary(plan, unlockedSlices);
+          if (boundary !== undefined) {
+            if (declareDoor()) return undefined;
+            appendFact(FACT.unapproved, { kind: 'micro-slice', tool: toolName, change: focus.change, paths, at: utcNow() });
+            return {
+              block: true,
+              reason: withDeclareNote(blockMicroSlice(focus.change, boundary.done, boundary.next)),
+            };
+          }
+        }
+        if (plan.open === 0 && !isVerificationCommand(bashCommand)) {
+          if (declareDoor()) return undefined;
+          appendFact(FACT.unapproved, { kind: 'micro-verifying', tool: toolName, change: focus.change, paths, at: utcNow() });
+          return { block: true, reason: withDeclareNote(blockMicroVerifying(focus.change)) };
+        }
+      } else if (approval.enforce && !paused) {
+        // 2a-generic — attribution is not approval; unlock is data: any
+        // granted writes-unlock artifact (x-unlocks: [writes], or the
+        // x-unlocks-source alias), else (no declaration) full completion
         const unlocked =
           unlockResolution.ok && schemaIsGated(unlockResolution.schema)
             ? writesUnlocked(unlockResolution.schema, grantedSet(meta))

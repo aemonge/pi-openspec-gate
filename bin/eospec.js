@@ -1,10 +1,11 @@
 /**
  * eospec — openspec, extended: three words, then openspec.
  *
+ *   eospec new [slug]       birth a mini-plan — timestamped slug, auto-focus
  *   eospec focus <change>   aim the room at a change
- *   eospec focus            the room + every change, one line each
- *   eospec approve          approve the next pending step of the aim
- *   eospec close            tick-checked close: validate, archive, release
+ *   eospec focus            the room: every change [n/m tasks], a TTY picks
+ *   eospec approve [--all]  the one gate — draft → coding (slices: advance/all)
+ *   eospec close [--force]  tasks + verdict ticked — validate, archive, release
  *
  *   eospec -- <args>        everything after -- is openspec, verbatim
  *   eospec help             this
@@ -19,7 +20,8 @@
  */
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
+import { existsSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -27,14 +29,17 @@ import {
   findOpenspecRoot,
   grantedSet,
   grantArtifact,
+  parsePlan,
   pendingAct,
-  pendingReport,
+  pendingRows,
   readChangeMeta,
   readFocus,
   focusPath,
   resolveChangeSchema,
   schemaIsGated,
   schemaVerdictLine,
+  sectionHeadingPresent,
+  sectionTitles,
   utcNowStamp,
   writeChangeMeta,
   writeFocus,
@@ -134,6 +139,56 @@ const doApprove = (root, slug, artifactId) => {
   process.exit(0);
 };
 
+/** One micro row — [n/m tasks] and the state the human's verb addresses. */
+const microRow = (root, slug, meta, artifact) => {
+  const file = join(root, 'changes', slug, artifact.generates);
+  const plan = parsePlan(existsSync(file) ? readFileSync(file, 'utf8') : '', artifact.verdictLine);
+  const total = plan.open + plan.done;
+  const counts = total > 0 ? `[${plan.done}/${total} tasks]` : '[no tasks yet]';
+  const granted = grantedSet(meta).has(artifact.id);
+  const unlocked = Math.max(0, Number(meta['x-slice'] ?? '0'));
+  const current = plan.slices[unlocked - 1];
+  const upcoming = plan.slices[unlocked];
+  const boundary = plan.sliceGates && granted && current && current.open === 0 && upcoming;
+  let next;
+  if (!granted) next = 'draft — eospec approve';
+  else if (boundary) next = `slice '${current.title}' done — eospec approve`;
+  else if (plan.open === 0) next = `tick '${artifact.verdictLine ?? 'hands-on'}' — eospec close`;
+  else next = `coding — ${plan.open} open`;
+  return `${slug}  ${counts} · ${next}`;
+};
+
+/** The room's rows — one line per active change: micro plans show
+ *  [n/m tasks] and their state; legacy walks keep their pendingReport
+ *  rows (marks, unhashed debts, the next act). */
+const roomRows = (root) => {
+  const rows = [];
+  const dir = join(root, 'changes');
+  let names = [];
+  try {
+    names = readdirSync(dir, { withFileTypes: true })
+      .filter((d) => d.isDirectory() && d.name !== 'archive')
+      .map((d) => d.name);
+  } catch {
+    return rows;
+  }
+  const legacy = pendingRows(root);
+  for (const slug of names) {
+    const meta = readChangeMeta(root, slug);
+    const resolution = resolveChangeSchema(root, meta.schema);
+    if (resolution.ok && resolution.schema.name === 'micro') {
+      rows.push({ slug, line: microRow(root, slug, meta, resolution.schema.artifacts[0]) });
+      continue;
+    }
+    const found = legacy.find((row) => row.slug === slug);
+    rows.push({
+      slug,
+      line: found ? found.line : `${slug}  ${meta['x-status'] ?? 'no-meta'} · eospec close closes it as it stands`,
+    });
+  }
+  return rows;
+};
+
 const exitPassthrough = (args) => {
   const filtered = args.filter((a) => a !== '--i-am-the-human');
   const result = spawnSync('openspec', filtered, { stdio: 'inherit' });
@@ -153,10 +208,11 @@ if (command === '--') exitPassthrough(rest);
 if (!command || command === 'help' || command === '--help' || command === '-h') {
   console.log(`eospec — openspec, extended: three words, then openspec
 
-  eospec focus <change>   aim the room at a change
-  eospec focus            the room + every change, one line each
-  eospec approve          approve the next pending step of the aim
-  eospec close            tick-checked close: validate, archive, release
+  eospec new [slug]        birth a mini-plan — timestamped slug, auto-focus
+  eospec focus <change>    aim the room at a change
+  eospec focus             the room: every change [n/m tasks], a TTY picks
+  eospec approve [--all]   the one gate — draft → coding (slices: advance/all)
+  eospec close [--force]   tasks + verdict ticked — validate, archive, release
 
   eospec -- <args>        everything after -- is openspec, verbatim
   eospec help             this
@@ -165,6 +221,32 @@ Anything else runs openspec verbatim, exit code intact.
 approve and close are human-terminal — the pi gate refuses the
 assistant's tool calls that name them.`);
   process.exit(0);
+}
+
+// frictionless birth: eospec new [change] [slug] — timestamped slug when
+// omitted, the room's default schema (config.yaml, micro fallback), and
+// the aim follows the birth: drafting starts immediately
+if (command === 'new') {
+  const root = rootOf();
+  const named = rest[0] === 'change' ? rest[1] : rest[0];
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const slug = named || `m-${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  let schema = 'micro';
+  try {
+    schema = /^schema:\s*(\S+)/m.exec(readFileSync(join(root, 'config.yaml'), 'utf8'))?.[1] ?? schema;
+  } catch { /* the fallback is the law: micro */ }
+  const result = spawnSync('openspec', ['new', 'change', slug, '--schema', schema], { stdio: 'inherit' });
+  if (result.status === 0 && !existsSync(join(root, 'changes', slug))) {
+    // the scaffolder claimed success but no change landed — never aim a ghost
+    console.error(`eospec: the scaffolder ran but ${slug} never appeared — check openspec new`);
+    result.status = 1;
+  }
+  if (result.status === 0) {
+    try { writeFocus(root, slug); } catch { /* a lost snapshot never blocks the birth */ }
+    console.log(`aimed ${slug} — draft openspec/changes/${slug}/plan.md, then: eospec approve`);
+  }
+  process.exit(result.status ?? 1);
 }
 
 // the aim: focus <change>
@@ -178,8 +260,9 @@ if (command === 'focus' && rest[0]) {
   aimFocus(root, target);
 }
 
-// the room: bare focus — where the room points, every change's pending
-// state; the aimed snapshot re-renders on every read (verbs refresh)
+// the room: bare focus — where the room points, every active change one
+// line each ([n/m tasks]); a TTY picks a number and aims it. The aimed
+// snapshot re-renders on every read (verbs refresh)
 if (command === 'focus') {
   const root = rootOf();
   const focused = readFocus(root);
@@ -187,8 +270,22 @@ if (command === 'focus') {
     try { writeFocus(root, focused); } catch { /* a stale snapshot never blocks the view */ }
   }
   console.log(focused ? `aim: ${focused}` : 'nothing aimed — eospec focus <change>');
-  console.log(pendingReport(root));
-  process.exit(0);
+  const rows = roomRows(root);
+  if (rows.length === 0) {
+    console.log('nothing pending — no active changes — eospec new <slug> starts one');
+    process.exit(0);
+  }
+  rows.forEach((row, i) => {
+    console.log(`  ${i + 1}  ${row.line}`);
+  });
+  if (!process.stdin.isTTY) process.exit(0);
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  rl.question('aim at # (enter skips): ', (answer) => {
+    rl.close();
+    const pick = Number(answer.trim());
+    if (Number.isInteger(pick) && pick >= 1 && pick <= rows.length) aimFocus(root, rows[pick - 1].slug);
+    process.exit(0);
+  });
 }
 
 // the advance: approve the next pending step of the aimed change — the
@@ -207,48 +304,76 @@ if (command === 'approve') {
   }
   const meta = readChangeMeta(root, focused);
   const resolution = resolveChangeSchema(root, meta.schema);
-  // micro — one plan.md, one approve: the file exists, at least one open
-  // task, the human stamp opens coding. The bootstrap that taught eospec
-  // micro (2026-11-19); the micro-loop change finishes slices/--all.
-  if (
-    resolution.ok &&
-    resolution.schema.artifacts.length === 1 &&
-    resolution.schema.artifacts[0].generates === 'plan.md'
-  ) {
-    const planPath = join(root, 'changes', focused, 'plan.md');
+  // micro — the one-artifact law: the first approve opens coding (the
+  // plan must exist with at least one open task); later approves advance
+  // slices (opt-in) or report the walk; --all unlocks every slice at once
+  if (resolution.ok && resolution.schema.name === 'micro') {
+    const artifact = resolution.schema.artifacts[0];
+    const planPath = join(root, 'changes', focused, artifact.generates);
     if (!existsSync(planPath)) {
-      console.error(`not approved — ${focused}/plan.md is not drafted yet — you approve what you read`);
+      console.error(`not approved — ${focused}/${artifact.generates} is not drafted yet — you approve what you read`);
       process.exit(1);
     }
-    const verdict = resolution.schema.artifacts[0].verdictLine;
-    const verdictRe = verdict
-      ? new RegExp(verdict.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'), 'i')
-      : null;
-    const open = readFileSync(planPath, 'utf8')
-      .split('\n')
-      .filter((line) => /^\s*-\s+\[ \]/u.test(line))
-      .filter((line) => !(verdictRe && verdictRe.test(line)));
-    if (open.length === 0) {
-      console.error(`not approved — plan.md has nothing open — hands-on validation then: eospec close`);
+    const text = readFileSync(planPath, 'utf8');
+    const plan = parsePlan(text, artifact.verdictLine);
+    const missing = sectionTitles(artifact).filter((section) => !sectionHeadingPresent(text, section));
+    if (missing.length > 0) {
+      console.error(`not approved — plan.md missing declared structure: ${missing.join(' · ')}`);
       process.exit(1);
     }
     const at = utcNowStamp();
-    const granted = grantedSet(meta);
-    granted.add('plan');
-    writeChangeMeta(root, focused, {
-      'x-granted': [...granted].join(','),
-      'x-granted_plan': at,
-      'x-status': 'approved',
-      'x-approved_at': at,
-    });
-    // the human's act leaves the first receipt — the trail starts with you
-    const ledger = join(root, 'changes', focused, '.ledger');
-    const prior = existsSync(ledger) ? readFileSync(ledger, 'utf8') : '';
-    const glue = prior.length > 0 && !prior.endsWith('\n') ? '\n' : '';
-    writeFileSync(ledger, `${prior}${glue}  human-approve · eospec approve · at ${at}\n`, 'utf8');
-    writeFocus(root, focused);
-    console.log(`approved ${focused} · plan · coding open · at ${at} · next: tick tasks in plan.md, then: eospec close`);
-    process.exit(0);
+    const receipt = () => {
+      const ledger = join(root, 'changes', focused, '.ledger');
+      const prior = existsSync(ledger) ? readFileSync(ledger, 'utf8') : '';
+      const glue = prior.length > 0 && !prior.endsWith('\n') ? '\n' : '';
+      writeFileSync(ledger, `${prior}${glue}  human-approve · eospec approve · at ${at}\n`, 'utf8');
+    };
+    if (!grantedSet(meta).has(artifact.id)) {
+      if (plan.open === 0) {
+        console.error('not approved — plan.md has no open tasks to approve — you approve what you read');
+        process.exit(1);
+      }
+      const granted = grantedSet(meta);
+      granted.add(artifact.id);
+      const stamps = {
+        'x-granted': [...granted].join(','),
+        [`x-granted_${artifact.id}`]: at,
+        'x-status': 'approved',
+        'x-approved_at': at,
+      };
+      if (plan.sliceGates) stamps['x-slice'] = '1';
+      writeChangeMeta(root, focused, stamps);
+      receipt();
+      writeFocus(root, focused);
+      const total = plan.open + plan.done;
+      console.log(`approved ${focused} · plan · coding open — ${plan.open} task(s)/${total} · at ${at} · next: tick tasks in plan.md, then: eospec close`);
+      process.exit(0);
+    }
+    if (plan.sliceGates) {
+      const unlocked = Math.max(0, Number(meta['x-slice'] ?? '0'));
+      const upcoming = plan.slices[unlocked];
+      if (rest.includes('--all') && unlocked < plan.slices.length) {
+        writeChangeMeta(root, focused, { 'x-slice': String(plan.slices.length) });
+        receipt();
+        writeFocus(root, focused);
+        console.log(`approved ${focused} · all ${plan.slices.length} slice(s) unlocked · at ${at} · next: tick tasks, then: eospec close`);
+        process.exit(0);
+      }
+      if (upcoming) {
+        writeChangeMeta(root, focused, { 'x-slice': String(unlocked + 1) });
+        receipt();
+        writeFocus(root, focused);
+        console.log(`approved ${focused} · slice '${upcoming.title}' unlocked · at ${at} · next: tick its tasks — eospec approve at the next boundary, or: eospec approve --all`);
+        process.exit(0);
+      }
+    }
+    if (plan.open > 0) {
+      const total = plan.open + plan.done;
+      console.log(`coding open — ${plan.done}/${total} tasks done · eospec approve advances slices; eospec close ends after hands-on`);
+      process.exit(0);
+    }
+    console.error(`tasks done — hands-on validation then: eospec close${plan.verdictTicked === false ? ` — tick '${artifact.verdictLine}' in ${artifact.generates} (your pass, your tick)` : ''}`);
+    process.exit(1);
   }
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     console.error(`eospec: '${focused}' has no gates — eospec close closes it as it stands`);
@@ -287,6 +412,39 @@ if (command === 'close') {
   }
   const meta = readChangeMeta(root, focused);
   const resolution = resolveChangeSchema(root, meta.schema);
+  // micro — the close law: every task ticked, the verdict ticked by the
+  // human (--force skips both), a human-close receipt, then the archive
+  if (resolution.ok && resolution.schema.name === 'micro') {
+    const force = rest.includes('--force');
+    const artifact = resolution.schema.artifacts[0];
+    const planPath = join(root, 'changes', focused, artifact.generates);
+    const plan = parsePlan(existsSync(planPath) ? readFileSync(planPath, 'utf8') : '', artifact.verdictLine);
+    if (!grantedSet(meta).has(artifact.id) && !force) {
+      console.error(`not closed — '${focused}' was never approved — eospec approve`);
+      process.exit(1);
+    }
+    if (plan.open > 0 && !force) {
+      console.error(`not closed — ${plan.open} task(s) open — finish them, or: eospec close --force`);
+      process.exit(1);
+    }
+    if (plan.verdictTicked === false && !force) {
+      console.error(`not closed — tick '${artifact.verdictLine}' in ${artifact.generates} first — your hands-on pass, your tick — or: eospec close --force`);
+      process.exit(1);
+    }
+    const at = utcNowStamp();
+    writeChangeMeta(root, focused, { 'x-validated': at, 'x-validated_at': at });
+    const ledger = join(root, 'changes', focused, '.ledger');
+    const prior = existsSync(ledger) ? readFileSync(ledger, 'utf8') : '';
+    const glue = prior.length > 0 && !prior.endsWith('\n') ? '\n' : '';
+    writeFileSync(ledger, `${prior}${glue}  human-close · eospec close · at ${at}\n`, 'utf8');
+    console.log(`closed ${focused} · validated · archiving${receiptCount(root, focused)}`);
+    const archive = spawnSync('openspec', ['archive', focused], { stdio: 'inherit' });
+    if (archive.status === 0) {
+      try { unlinkSync(focusPath(root)); } catch { /* the aim already died with the change */ }
+      console.log(`the archival commit is yours: git add -A && git commit -m "chore(openspec): ${focused} archived"`);
+    }
+    process.exit(archive.status ?? 1);
+  }
   if (!resolution.ok || !schemaIsGated(resolution.schema)) {
     // ungated room: nothing to walk — close IS the judgment
     const at = utcNowStamp();

@@ -57,6 +57,10 @@ const READ_ONLY_TOOLS = new Set([
   'mem_current_project',
   'mem_doctor',
   'mem_review',
+  // conversation instruments — asking the human mutates nothing; a
+  // question is the opposite of the risk the fail-safe guards
+  // (live-caught 2026-11-19: the gate blocked a question to the human)
+  'ask_user_question',
 ]);
 const MUTATING_TOOLS = new Set(['edit', 'write']);
 
@@ -264,6 +268,30 @@ const WRAPPER_TOKEN = /^(?:[^\s]*\/)?(?:eospec|pios-gate|pi-openspec-gate)(?:\.\
 
 function stripWrapper(segment: string): string {
   return WRAPPER_TOKEN.test(segment) ? segment.replace(WRAPPER_TOKEN, 'openspec ') : segment;
+}
+
+// Verification verbs — the verifying state's allow-list. Every segment
+// must independently anchor one (conjunction closed, like every other
+// verb law); an unknown verb or a chained mutation is false and the
+// fail-safe holds. These pass the verifying lock as attributed receipts.
+const VERIFICATION_ANCHORED: readonly RegExp[] = [
+  /^(?:npm|pnpm|yarn|bun)\s+(?:test|t)\b/u,
+  /^(?:npm|pnpm|yarn|bun)\s+run\s+(?:\S+\s+)*(?:test|check|lint|typecheck|tsc)\b/u,
+  /^(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:typecheck|tsc|lint|check)\b/u,
+  /^node\s+--test\b/u,
+  /^(?:cargo|go|uv)\s+test\b/u,
+  /^(?:just|make)\s+(?:test|check|lint)\b/u,
+  /^(?:pytest|vitest|jest|eslint|tsc|biome|ruff|mypy|pyright)\b/u,
+];
+
+export function isVerificationCommand(command: string): boolean {
+  const { segments, grammarUnsafe } = splitSegments(command);
+  if (grammarUnsafe || segments.length === 0) return false;
+  const kept = stripCdSegments(segments);
+  if (kept.length === 0) return false;
+  return kept.every((segment) =>
+    VERIFICATION_ANCHORED.some((pattern) => pattern.test(stripAssignments(segment))),
+  );
 }
 
 const offenderOf = (segment: string): string =>
