@@ -1,41 +1,73 @@
 # eospec
 
-openspec, extended. Two halves, one package:
+openspec, extended. The **micro loop**: one change, one `plan.md`, one
+human approve before code. Two halves, one package:
 
 **The watcher** — a Pi extension that accounts every mutating tool call.
 Each call lands in exactly one of four buckets:
 
-- **allowed by path** — `openspec/**`, `docs/**`, `skills/**` are drafting
-  ground: they pass, recorded
-- **attributed** — the room is aimed at a change (the `openspec/.focus`
-  snapshot); the call proceeds and a receipt (tool · paths · UTC) lands in
-  that change's sidecar (`.ledger`) — artifacts stay prose
-- **declared** — you say a phrase the schema declares; the shipped `spec`
-  schema declares two doors: **"start the spec"** — run the ceremony
-  (create, aim, draft — that part needs no declaration) — and
-  **"skip the spec"** — land the next mutation as declared work, one
-  debt line in `openspec/bare-work.md`
-- **refused** — with a stop directive and the exact remedy for this state:
-  aim a change, create one, or wait for your phrase
+- **allowed by path** — `openspec/**`, `docs/**`, `skills/**` are
+  drafting and exploration ground: reads, research, and docs passes are
+  never gated; writes there pass, recorded
+- **attributed** — the room is aimed at an approved change (the
+  `openspec/.focus` snapshot); the call proceeds and a receipt
+  (tool · paths · UTC) lands in that change's sidecar (`.ledger`)
+- **declared** — the human says a phrase the schema declares;
+  **"skip the spec"** lands exactly one bare mutation as declared work,
+  one debt line in `openspec/bare-work.md` — even behind a draft wall;
+  **"start the spec"** asks for the ceremony. Assistant text never
+  declares — it relays the phrases upward
+- **refused** — with a stop directive and the exact remedies for this
+  state: finish the plan, wait for the approve, run the checks, or
+  close
 
-It never judges quality — only that nothing happens silently. Read-only
-commands pass; memory writes are bookkeeping, not work; research tools
-open only when the schema's approval window says so.
+It never judges quality — only that nothing happens silently.
+`approve` and `close` are human-terminal: no tool call may name them,
+and the verdict line (`- [ ] Hands-on validation`) is the human's tick
+or a literal `VALID` reply.
 
-**The CLI** — three words over openspec's `new`/`archive`:
+**The CLI** — the loop's verbs, run by the human in their terminal:
 
 ```sh
-eospec focus <change>   # aim the room at a change
-eospec focus            # the room + every change, one line each
-eospec approve          # approve the next pending step of the aim
-eospec close            # tick-checked close: validate, archive, release
-eospec archive <change> # openspec archive, plus the fence: aim released, commit taught
-eospec -- <args>        # everything after -- is openspec, verbatim
+eospec new [slug]        # birth a mini-plan — timestamped slug, auto-focus
+eospec focus <change>    # aim the room at a change
+eospec focus             # the room: every change [n/m tasks], a TTY picks
+eospec approve [--all]   # the one gate — draft → coding (slices: advance/all)
+eospec close [--force]   # tasks + verdict ticked — validate, archive, release
+eospec archive <change>  # openspec archive, plus the fence: aim released
+eospec -- <args>         # everything after -- is openspec, verbatim
 ```
 
-Anything else — `new`, `archive`, `validate`, typos — runs openspec
-verbatim, exit code intact. `approve` and `close` are human-terminal:
-the watcher refuses any assistant tool call that names them.
+Anything else — `validate`, `list`, typos — runs openspec verbatim,
+exit code intact.
+
+## The micro loop
+
+One schema ships: **`micro`**. One artifact: `plan.md`.
+
+```markdown
+## Goal                ← 2–3 lines: what lands, for whom
+## Questions & Decisions  ← every ambiguity resolved BEFORE approval
+## Tasks               ← small vercheckbox steps; ### slices; 1–3 max
+## Verification        ← automated checks first, then the human pass
+```
+
+The four states, all derived — never stored prose:
+
+| state | law |
+|---|---|
+| **draft** | source mutations locked — finish `plan.md`, the human runs `eospec approve` |
+| **coding** | mutations attribute + receipt to `.ledger`; the agent ticks tasks as they land |
+| **verifying** | every task ticked — source re-locks; verification commands (test · lint · typecheck) pass receipted until the human validates |
+| **slice pause** | `slice-gates: true` in the plan pauses at slice boundaries — `eospec approve` advances, `--all` unlocks all |
+
+The declared door overrides the draft wall: the human's phrase lands
+one mutation as bare work, debt line and all — live-caught when a
+latched *"skip the spec"* died silently behind the old teeth.
+
+Large planning lives in Jira; openspec here is optimized for many
+small, rapid iterations — a dozen mini-plans a day, zero ceremony
+between thinking steps.
 
 ## The room file
 
@@ -43,32 +75,47 @@ the watcher refuses any assistant tool call that names them.
 
 ```yaml
 # one active change per room — eospec writes, verbs refresh
-change: rebuild
-artifact-name: 4-execute.md
-artifact-idx: 4/5
-task: 4/12
-next-step: eospec approve
+change: rebuild-search
+artifact-name: plan.md
+artifact-idx: 1/1
+task: 2/3
+next-step: eospec close
 ```
 
-The law: `next-step` names the human's verb, always — `eospec approve`
-while anything pends, `eospec close` once all are granted; the draft
-rhythm and the verdict reminder live in the CLI echo and close's
-refusal. The `task:` line exists only when the artifact has checkboxes
-(no empty counters). The all-granted name follows the walk (the final
-artifact) while the counter follows the checkboxes (the completing
-artifact). The
-watcher re-renders on every gate-side touch; verbs re-render; `close`
-deletes it. A snapshot, never the truth — the change's meta, the
-schema, and the artifact files decide.
+`next-step` names the human's verb, always: `eospec approve` while
+drafting or at a slice boundary, `eospec close` once coding is done.
+The `task:` counter reads plan.md with the verdict line excluded — the
+human's act is never counted. A snapshot, never the truth: the change's
+meta, the schema, and plan.md decide.
+
+## Schemas
+
+The schema declares the gates as data (`x-` tags) and the engine
+enforces them — the micro schema is the shipped example:
+
+```yaml
+artifacts:
+  - id: plan
+    generates: plan.md
+    x-sections: [Goal, Questions & Decisions, Tasks, Verification]
+    x-unlocks: [writes]        # approve opens coding
+    x-completes: approved
+    x-verdict-line: Hands-on validation
+```
+
+Copy `openspec/schemas/micro` as your starting point and edit the yaml;
+the engine hardcodes nothing and stays schema-agnostic — user-global
+schemas elsewhere keep working. Findings surfaced mid-delivery become
+appended slices (re-approve) or fresh mini-plans (close, then new).
 
 ## Spawning children — the admission contract
 
-Subagents are only as gated as their spawner makes them. A child spawned
-through pi's native delegation is accounted: the gate reads
-`PI_SUBAGENT_DELEGATION` and relays its blocks upward instead of pressing
-a child that cannot aim, approve, or close. A spawner that does NOT set
-that environment spawns an unaccounted child — the admission hooks a
-compliant spawner must claim are `registerRequiredChildExtensions`
+Subagents are only as gated as their spawner makes them. A child
+spawned through pi's native delegation is accounted: the gate reads
+`PI_SUBAGENT_DELEGATION` and relays its blocks upward instead of
+pressing a child that cannot aim, approve, or close. A spawner that does
+NOT set that environment spawns an unaccounted child — the admission
+hooks a compliant spawner must claim are `registerRequiredChildExtensions`
 (fail-closed admission: a child inherits the gate or does not spawn) and
 `registerSubagentCapabilityCeiling` (a ceiling on what a child may do).
 Neither is claimed by any installed package today, so the native path is
@@ -79,23 +126,6 @@ regardless of spawner) needs a child-parentage signal from pi core —
 when pi exposes it, the gate grows the teeth; until then, the contract
 above is the law. Install `npm:pi-subagents` (or any spawner) only after
 it claims both hooks.
-
-## Schemas
-
-Changes declare a schema; the schema declares the human gates as data
-(`x-` tags), and the gate enforces them: approve step N before step N+1
-drafts, sections present at stamp time, receipts flowing into the
-change's sidecar (`.ledger`), one human-verdict line closing the walk. The shipped
-example is [`example/openspec/schemas/spec`](example/openspec/schemas/spec)
-— five steps (brainstorm → investigate → plan → execute →
-post-delivery — the fifth conditional: it exists only when the
-verdict's `surfaced:` line routes findings to it), strict at the
-two boundaries humans own: spend at plan, judge at the verdict. Copy it
-as your starting point and edit the yaml; the engine hardcodes nothing.
-Findings surfaced while delivering become appended slices in the same
-ledger (the small ones) or route `→ post-delivery` in the verdict's
-`surfaced:` line (the too-big ones, designed inside the change) — a
-closed change's follow-ups open their own change.
 
 ## Install
 
@@ -134,7 +164,10 @@ npm install -g @aemonge-dev/pi-openspec-gate        # the eospec bin
 
 Exemptions are path-scoped, never fuzzy. `accountingTools` are
 instruments that pass ungated — bookkeeping about the work, never the
-work. `readOnlyTools` merges over the built-in research set.
+work. `readOnlyTools` merges over the built-in set (conversation
+instruments like `ask_user_question` are read-only by default).
+`unlocks.research` names the capability class for schemas that declare
+`x-unlocks: [research]` — micro declares none: research is never gated.
 
 ## Facts (session entries; any reader may consume, the gate never renders)
 
@@ -146,7 +179,7 @@ work. `readOnlyTools` merges over the built-in research set.
 | `gate.exempt` | path-allowed pass with category + paths |
 | `gate.inherited` | subagent inherited the parent's aim |
 | `gate.instrument` | allowlisted instrument passed |
-| `gate.unapproved` | unapproved-change refusal |
+| `gate.unapproved` | draft/verifying/slice refusal |
 | `gate.human-gate` | human-validation flip checked |
 | `gate.creation-stamped` | witnessed creation stamped |
 | `gate.phase-gate` | artifact gate: missing approval / sections |
@@ -160,8 +193,8 @@ work. `readOnlyTools` merges over the built-in research set.
 ```
 
 A self-verifying walkthrough in a scratch repo: the refusals first, then
-the full four-step lifecycle to `status: approved`, the verdict tick,
-and the close — asserting every step.
+the full micro lifecycle — draft, approve, slice pause, tick, verdict,
+close — asserting every step.
 
 ## Development
 

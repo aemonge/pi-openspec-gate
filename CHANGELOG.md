@@ -3,6 +3,35 @@
 The archive (`openspec/changes/archive/`) is the source of truth — every
 change that built this package is there, with receipts.
 
+## 1.5.0 — 2026-11-19
+
+- **the micro loop** — one change, one `plan.md`, one human approve
+  before code. The five-step spec ladder retires from this repo: the
+  `micro` schema ships as the only schema (Goal · Questions & Decisions ·
+  Tasks · Verification), `example/` re-demonstrates on it, and the
+  engine stays schema-agnostic for user-global schemas elsewhere.
+- **the watcher's four states** — draft / coding / verifying /
+  slice-pause, all derived: draft locks source behind plan.md + approve;
+  coding receipts everything to `.ledger`; a fully-ticked plan re-locks
+  source for the human's hands-on pass (verification commands — test ·
+  lint · typecheck — pass receipted); `slice-gates: true` pauses at
+  slice boundaries (`approve` advances, `--all` unlocks all). The
+  declared door now overrides the draft wall — a latched human phrase
+  lands one bare mutation instead of dying silently (live-caught
+  2026-11-19).
+- **conversation instruments read-only** — `ask_user_question` (and
+  future question instruments) classify read-only: the gate no longer
+  blocks a question to the human (live-caught 2026-11-19).
+- **the eospec verbs** — `new` births a mini-plan (timestamped slug,
+  auto-focus); bare `focus` lists every active change `[n/m tasks]`
+  and a TTY picks; `approve` carries the micro law (≥1 open task,
+  slice advance, `--all`); `close` demands tasks + verdict (or
+  `--force`); the human's approve/close land as `human-approve` /
+  `human-close` receipts — the trail starts with the human.
+- **fixes** — the archive guard no longer reads `2>&1` as a change
+  slug; dead declarations cleared; the room snapshot renders micro
+  states (approve → close) with plan.md counts.
+
 ## 1.4.0 — 2026-11-13
 
 - **schema v11 — honest retro drafts, titled acceptance, pinned contracts** —
