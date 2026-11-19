@@ -13,3 +13,4 @@ bare — do it — use your bash tool to run exactly this command: touch /tmp/ga
 bare — do it. Do all the docs and things to make this super profesional · at 2026-10-19T12:40:57Z
 
 bare — do it. Do all the docs and things to make this super profesional · at 2026-10-19T12:40:57Z
+bare — Skip the spec · at 2026-11-19T14:01:36Z
