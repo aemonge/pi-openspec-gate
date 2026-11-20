@@ -654,6 +654,12 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
 
     const paths = extractPaths(toolName, input, cwd);
 
+    // rootless — no openspec root anywhere up the tree: no schema, no rooms,
+    // no jurisdiction — the gate never acts here (KO #1, live-caught in a
+    // wiped /tmp lab: the model says rootless means ungated; rooms keep
+    // their walls)
+    if (!openspecRoot) return undefined;
+
     // 0.7 human-gate flip guard — a [x] flip on the schema-declared
     // verdict line needs a human act; runs before exempt (change files
     // are openspec/**). The check runs on the edit's POST-STATE — disk

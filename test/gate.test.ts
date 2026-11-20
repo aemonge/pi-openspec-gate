@@ -118,6 +118,19 @@ describe('gate protocol: block → declare → attribute → exempt → inherit'
     assert.equal((blocked!.data as { tool: string }).tool, 'write');
   });
 
+  test('rootless: no openspec root, no jurisdiction — mutations flow unaccounted', async () => {
+    const bare = mkdtempSync(join(tmpdir(), 'gate-rootless-'));
+    const { fire, entries } = freshGate();
+    const ctx = { cwd: bare, sessionManager: { getEntries: () => [] } };
+    const pass = await fire(
+      'tool_call',
+      { toolName: 'write', input: { path: 'hello.py', content: 'print(1)' } },
+      ctx,
+    );
+    assert.equal(pass, undefined, 'rootless territory is ungated — the gate never acts');
+    assert.ok(!entries.some((e) => e.customType === 'gate.blocked'), 'no blocked fact rootless');
+  });
+
   test('block: the openspec_focus remedy appears only when the session has it', async () => {
     const fake = makeFakePi();
     (fake.pi.getAllTools as unknown as () => { name: string }[]) = () => [
