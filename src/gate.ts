@@ -146,7 +146,7 @@ export const BLOCK_UNAPPROVED = [
 export function blockMicroDraft(slug: string, planFile: string): string {
   return [
     `⛔ micro — '${slug}' is drafting — source mutations locked`,
-    `   draft:   openspec/changes/${slug}/${planFile} — Goal · Questions & Decisions · Tasks · Verification`,
+    `   draft:   openspec/changes/${slug}/${planFile} — Goal · Estimate · Skills · Approach · Questions & Decisions · Tasks · Verification`,
     '   open:    eospec approve   ← your terminal — the one gate before code',
     '   explore: openspec/**, docs/**, skills/** stay open — reads and research are never gated',
   ].join('\n');

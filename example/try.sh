@@ -50,18 +50,26 @@ expect_fail() {
 
 C=openspec/changes/hello-gate
 
-# plan <task-line> — a minimal valid micro plan with one open task line
+# plan <task-lines> — a minimal valid micro plan: the seven-section spine,
+# one acceptance-titled slice, a commit line + hash slot per step
 plan() {
   { printf '# hello-gate\n\n## Goal\n\nPrint hello, fast.\n\n'
+    printf '## Estimate\n\nminutes · high\n\n'
+    printf '## Skills\n\nnone — a one-liner needs no skill\n\n'
+    printf '## Approach\n\nmethod: direct\narchitecture: stdlib-first, single module\n\n'
     printf '## Questions & Decisions\n\n- which name? → the argument\n\n'
-    printf '## Tasks\n\n%s\n\n## Verification\n\n- [ ] checks pass\n- [ ] Hands-on validation\n' "$1"
+    printf '## Tasks\n\n### Slice — hello printed\n\n%s\n\n## Verification\n\n- [ ] checks pass\n- [ ] Hands-on validation\n' "$1"
   } > "$C/plan.md"
+  grep -q '## Estimate' "$C/plan.md" && grep -q '## Skills' "$C/plan.md" \
+    && grep -q '## Approach' "$C/plan.md" \
+    && ok 'hello-gate speaks v2 — seven sections' || bad 'hello-gate plan is not v2'
 }
 
 echo "1 ── the gate refuses what isn't there"
 expect 'focused hello-gate' hello-gate
 expect_fail 'not drafted yet' approve
-plan '- [ ] write src/hello.py'
+plan '- [ ] write src/hello.py
+  commit: feat(hello): print the greeting (hash: ____)'
 expect 'approved hello-gate · plan · coding open — 2 task(s)/2' approve
 
 echo '2 ── the room view names the counts and your verb'
@@ -90,20 +98,27 @@ C2=openspec/changes/hello-sliced
 mkdir -p "$C2"
 printf 'schema: micro\nx-status: proposed\n' > "$C2/.openspec.yaml"
 { printf '# hello-sliced\n\n## Goal\n\nTwo slices, gated.\n\n'
+  printf '## Estimate\n\nminutes · high\n\n'
+  printf '## Skills\n\nnone — printf needs no skill\n\n'
+  printf '## Approach\n\nmethod: slice-gated\narchitecture: stdlib-first, single module\n\n'
   printf '## Questions & Decisions\n\n## Tasks\n\nslice-gates: true\n\n'
-  printf '### Slice: one\n\n- [ ] first\n\n### Slice: two\n\n- [ ] second\n\n'
+  printf '### Slice — hello printed\n\n- [ ] first\n  commit: feat(hello): the greeting (hash: ____)\n\n'
+  printf '### Slice — hello polite\n\n- [ ] second\n  commit: feat(hello): the politeness (hash: ____)\n\n'
   printf '## Verification\n\n- [ ] checks pass\n- [ ] Hands-on validation\n'
 } > "$C2/plan.md"
+grep -q '## Estimate' "$C2/plan.md" && grep -q '## Skills' "$C2/plan.md" \
+  && grep -q '## Approach' "$C2/plan.md" \
+  && ok 'hello-sliced speaks v2 — seven sections' || bad 'hello-sliced plan is not v2'
 expect 'focused hello-sliced' hello-sliced
 expect 'approved hello-sliced · plan · coding open — 3 task(s)/3' approve
 grep -q 'x-slice: 1' "$C2/.openspec.yaml" && ok 'x-slice: 1 stamped' || bad 'x-slice: 1 missing'
 sed -i 's/- \[ \] first/- [x] first/' "$C2/plan.md"
 
 echo '8 ── the boundary pauses, and names the next slice'
-expect "slice 'Slice: one' done" focus
+expect "slice 'Slice — hello printed' done" focus
 
 echo '9 ── approve advances the slice'
-expect "slice 'Slice: two' unlocked" approve
+expect "slice 'Slice — hello polite' unlocked" approve
 grep -q 'x-slice: 2' "$C2/.openspec.yaml" && ok 'x-slice: 2 stamped' || bad 'x-slice: 2 missing'
 
 echo '10 ── the walk ends the same way'

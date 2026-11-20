@@ -271,7 +271,7 @@ describe('bin parser reads the shipped schemas', () => {
     assert.equal(plan.completes, 'approved');
     assert.deepEqual(
       plan.sections.map((s: any) => s.id),
-      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
+      ['Goal', 'Estimate', 'Skills', 'Approach', 'Questions & Decisions', 'Tasks', 'Verification'],
     );
     assert.equal(schemaIsGatedBin(schema), false, 'micro gates by name + approve, not x-requires tags');
     for (const artifact of schema.artifacts) assert.ok(!('grantVerb' in artifact), 'the verbs died by silent ignore');

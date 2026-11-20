@@ -37,7 +37,7 @@ describe('the example schema (micro)', () => {
     assert.equal(plan.verdictLine, 'Hands-on validation');
     assert.deepEqual(
       plan.sections.map((s) => s.id),
-      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
+      ['Goal', 'Estimate', 'Skills', 'Approach', 'Questions & Decisions', 'Tasks', 'Verification'],
     );
     assert.equal(plan.requiresApproval.length, 0, 'one artifact: the approve IS the gate');
     assert.ok(!('grantVerb' in plan), 'the verbs died by silent ignore');
@@ -61,7 +61,7 @@ describe('the example schema (micro)', () => {
     const text = readFileSync(join(EXAMPLE_ROOT, 'schemas', 'micro', 'templates', 'plan.md'), 'utf8');
     assert.deepEqual(
       [...text.matchAll(/^## (.+)$/gmu)].map((m) => m[1]),
-      ['Goal', 'Questions & Decisions', 'Tasks', 'Verification'],
+      ['Goal', 'Estimate', 'Skills', 'Approach', 'Questions & Decisions', 'Tasks', 'Verification'],
     );
     const model = parsePlan(text, 'Hands-on validation');
     assert.ok(model.open >= 1, 'the template ships open tasks');
@@ -92,13 +92,13 @@ describe('the example schema (micro)', () => {
       'closed hello-gate · validated · archiving',
       'x-validated stamped',
       'human-approve first',
-      "slice 'Slice: one' done",
+      "slice 'Slice — hello printed' done",
       'approved hello-sliced · plan · coding open — 3 task(s)/3',
-      "slice 'Slice: two' unlocked",
+      "slice 'Slice — hello polite' unlocked",
       'x-slice: 2 stamped',
       'closed hello-sliced · validated · archiving',
       'nothing pending',
-      'passed: 18',
+      'passed: 20',
     ]) {
       assert.ok(result.stdout.includes(marker), `walkthrough missing marker: ${marker}`);
     }

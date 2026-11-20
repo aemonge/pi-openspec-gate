@@ -40,8 +40,14 @@ artifacts:
       literal VALID. Drafting is free; approval is the only gate, and it opens
       coding.'
     requires: []
-    x-sections: [Goal, Estimate, Skills, Approach,
-                 Questions & Decisions, Tasks, Verification]
+    x-sections:
+      - Goal
+      - Estimate
+      - Skills
+      - Approach
+      - Questions & Decisions
+      - Tasks
+      - Verification
     x-unlocks: [writes]
     x-completes: approved
     x-verdict-line: Hands-on validation

@@ -108,8 +108,7 @@ enforces them — the micro schema is the shipped example:
 artifacts:
   - id: plan
     generates: plan.md
-    x-sections: [Goal, Estimate, Skills, Approach,
-                 Questions & Decisions, Tasks, Verification]
+    x-sections: [Goal, Estimate, Skills, Approach, Questions & Decisions, Tasks, Verification]
     x-unlocks: [writes]        # approve opens coding
     x-completes: approved
     x-verdict-line: Hands-on validation

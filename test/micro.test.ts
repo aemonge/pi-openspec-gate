@@ -159,7 +159,7 @@ const MICRO_YAML = [
     'artifacts:',
     '  - id: plan',
     '    generates: plan.md',
-    '    x-sections: [Goal, Tasks, Verification]',
+    '    x-sections: [Goal, Estimate, Skills, Approach, Questions & Decisions, Tasks, Verification]',
     '    x-unlocks: [writes]',
     '    x-completes: approved',
     '    x-verdict-line: Hands-on validation',
