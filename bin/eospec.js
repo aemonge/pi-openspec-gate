@@ -232,10 +232,16 @@ if (command === 'new') {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const slug = named || `m-${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
-  let schema = 'micro';
-  try {
-    schema = /^schema:\s*(\S+)/m.exec(readFileSync(join(root, 'config.yaml'), 'utf8'))?.[1] ?? schema;
-  } catch { /* the fallback is the law: micro */ }
+  // KO #4: an explicit --schema beats the room's config default, and the
+  // birthmark carries it — upstream scaffolders ignore the flag entirely
+  // (walk-1 was born spec-driven in the middle of a micro walkthrough)
+  const schemaFlag = rest.includes('--schema') ? rest[rest.indexOf('--schema') + 1] : undefined;
+  let schema = schemaFlag || 'micro';
+  if (!schemaFlag) {
+    try {
+      schema = /^schema:\s*(\S+)/m.exec(readFileSync(join(root, 'config.yaml'), 'utf8'))?.[1] ?? schema;
+    } catch { /* the fallback is the law: micro */ }
+  }
   const result = spawnSync('openspec', ['new', 'change', slug, '--schema', schema], { stdio: 'inherit' });
   if (result.status === 0 && !existsSync(join(root, 'changes', slug))) {
     // the scaffolder claimed success but no change landed — never aim a ghost
@@ -243,6 +249,7 @@ if (command === 'new') {
     result.status = 1;
   }
   if (result.status === 0) {
+    try { writeChangeMeta(root, slug, { schema }); } catch { /* a lost stamp never blocks the birth */ }
     try { writeFocus(root, slug); } catch { /* a lost snapshot never blocks the birth */ }
     console.log(`aimed ${slug} — draft openspec/changes/${slug}/plan.md, then: eospec approve`);
   }

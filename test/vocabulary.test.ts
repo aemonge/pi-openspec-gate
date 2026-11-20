@@ -140,6 +140,32 @@ function run(dir: string, args: string[]): { status: number; stdout: string } {
   return { status: result.status ?? -1, stdout: result.stdout + result.stderr };
 }
 
+test('KO #4: new honors --schema over the room default, and stamps the birthmark', () => {
+const dir = customRepo();
+try {
+writeFileSync(join(dir, 'openspec', 'config.yaml'), 'schema: spec-driven\n', 'utf8');
+// upstream's birth: the scaffolder writes the room default into the meta
+for (const slug of ['ko4', 'ko5']) {
+mkdirSync(join(dir, 'openspec', 'changes', slug), { recursive: true });
+writeFileSync(join(dir, 'openspec', 'changes', slug, '.openspec.yaml'), 'schema: spec-driven\ncreated: 2026-11-20\n', 'utf8');
+}
+const env = { ...process.env, PATH: `${join(dir, 'fakebin')}:${process.env.PATH ?? ''}` };
+
+const flagged = spawnSync(WRAPPER, ['new', 'change', 'ko4', '--schema', 'micro'], { cwd: dir, encoding: 'utf8', env });
+assert.equal(flagged.status, 0, flagged.stdout + flagged.stderr);
+const ko4 = readFileSync(join(dir, 'openspec', 'changes', 'ko4', '.openspec.yaml'), 'utf8');
+assert.match(ko4, /^schema: micro$/mu, 'the flag wins — the birthmark carries the declared schema');
+assert.match(ko4, /^created: 2026-11-20$/mu, 'upstream fields survive the stamp');
+
+const plain = spawnSync(WRAPPER, ['new', 'change', 'ko5'], { cwd: dir, encoding: 'utf8', env });
+assert.equal(plain.status, 0);
+const ko5 = readFileSync(join(dir, 'openspec', 'changes', 'ko5', '.openspec.yaml'), 'utf8');
+assert.match(ko5, /^schema: spec-driven$/mu, 'no flag — the room default is the law');
+} finally {
+rmSync(dir, { recursive: true, force: true });
+}
+});
+
 describe('vocabulary: the CLI walk on a custom schema', () => {
   test('grants by declared verb, sub-grants by id-path, unlock at the declared artifact', () => {
     const dir = customRepo();
