@@ -53,8 +53,10 @@ bare mutation, it does not die behind the wall.
 
 Prompt: `start the spec — I want hello.py walked properly`
 
-Expected: the agent creates a change (`eospec new` or `openspec new
-change <slug> --schema micro`), aims the room, and drafts
+Expected: the agent creates a change (`eospec new change <slug> --schema micro`
+— the birth law: the flag beats the room default, and the birthmark carries
+`schema: micro` whatever `openspec init` configured; live-caught when a lab
+room born `spec-driven` left every wall paper), aims the room, and drafts
 `openspec/changes/<slug>/plan.md` — the seven-section spine: Goal,
 Estimate, Skills, Approach, resolved Questions & Decisions,
 acceptance-titled Tasks, Verification. Before drafting it should ask
