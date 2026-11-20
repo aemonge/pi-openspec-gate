@@ -44,10 +44,11 @@ Prompt: `start the spec — I want hello.py walked properly`
 
 Expected: the agent creates a change (`eospec new` or `openspec new
 change <slug> --schema micro`), aims the room, and drafts
-`openspec/changes/<slug>/plan.md` — Goal, resolved Questions &
-Decisions, Tasks, Verification. Before drafting it should ask its
-clarifying questions; the answers land in the plan. `openspec/.focus`
-appears. No refusal anywhere in that chain.
+`openspec/changes/<slug>/plan.md` — the seven-section spine: Goal,
+Estimate, Skills, Approach, resolved Questions & Decisions,
+acceptance-titled Tasks, Verification. Before drafting it should ask
+its clarifying questions; the answers land in the plan.
+`openspec/.focus` appears. No refusal anywhere in that chain.
 
 ## P4 — the draft wall: plan first, code never
 
@@ -59,8 +60,8 @@ code`. The agent may keep reading, searching, and drafting plan.md.
 
 ## P5 — the one gate opens coding
 
-Read the plan (it should be small: 1–3 slices, every question
-answered), then press `eospec approve`.
+Read the plan (it should be small: 1–3 acceptance-titled slices, a
+commit per step, every question answered), then press `eospec approve`.
 
 Expected: `approved <slug> · plan · coding open — N task(s)/M · next:
 tick tasks in plan.md, then: eospec close`. Now `write src/hello.py`
