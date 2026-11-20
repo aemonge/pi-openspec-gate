@@ -218,6 +218,46 @@ describe('approval teeth: attribution is not approval', () => {
     assert.equal((fact!.data as { permit: string }).permit, 'none');
   });
 
+  test('human-gate: a batch edits[] payload cannot smuggle a verdict tick', async () => {
+    const { fire, ctx, entries } = freshGate();
+    const result = await fire(
+      'tool_call',
+      {
+        toolName: 'edit',
+        input: {
+          path: 'openspec/changes/c1/4-tasks.md',
+          edits: [
+            { oldText: '# Tasks', newText: '# Tasks\n\nnotes stay prose' },
+            { oldText: '- [ ] Step 9 — Human validation — evidence review', newText: '- [x] Step 9 — Human validation — evidence review' },
+          ],
+        },
+      },
+      ctx,
+    );
+    assert.deepEqual(result, { block: true, reason: BLOCK_HUMANGATE });
+    const fact = entries.find((e) => e.customType === 'gate.human-gate');
+    assert.equal((fact!.data as { permit: string }).permit, 'none');
+  });
+
+  test('human-gate: a batch edits[] payload of prose edits flows', async () => {
+    const { fire, ctx } = freshGate();
+    const pass = await fire(
+      'tool_call',
+      {
+        toolName: 'edit',
+        input: {
+          path: 'openspec/changes/c1/4-tasks.md',
+          edits: [
+            { oldText: '# Tasks', newText: '# Tasks\n\nnotes stay prose' },
+            { oldText: 'evidence review', newText: 'evidence review, hands-on' },
+          ],
+        },
+      },
+      ctx,
+    );
+    assert.equal(pass, undefined);
+  });
+
   test('human-gate: meta `validated` is a standing permit', async () => {
     const { fire, ctx, entries } = freshGate();
     writeChangeMeta(root, 'c1', { 'x-validated': '2026-10-17T12:00:00Z' });

@@ -661,8 +661,14 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
     // edit, prose in another) never carries the ticked line whole.
     if (approval.humanGateSteps && (toolName === 'edit' || toolName === 'write')) {
       const record = input as Record<string, unknown> | null;
-      const newText = typeof record?.newText === 'string' ? record.newText : '';
-      const oldText = typeof record?.oldText === 'string' ? record.oldText : '';
+      // batch edits[] and the single oldText/newText shape are one crime
+      // surface — the payload shape must never blind the guard (KO #2,
+      // live-caught on the gate's own plan: a batch tick landed while the
+      // guard read only the single-edit shape)
+      const batch = Array.isArray(record?.edits) ? (record.edits as unknown[]) : [];
+      const payloads = batch.length > 0
+        ? batch.filter((entry): entry is Record<string, unknown> => entry !== null && typeof entry === 'object')
+        : [record ?? {}];
       const content = typeof record?.content === 'string' ? record.content : '';
       const flipSlug =
         paths.map((p) => CHANGE_FROM_PATH_PATTERN.exec(p)?.[1]).find(Boolean) ??
@@ -671,13 +677,20 @@ export function createGate(pi: ExtensionAPI, config: GateConfig): void {
       const flipResolution = flipMeta && openspecRoot ? resolveChangeSchema(openspecRoot, flipMeta.raw.schema) : undefined;
       const verdictLine = flipResolution?.ok ? schemaVerdictLine(flipResolution.schema) : undefined;
       if (verdictLine) {
-        let post = content || newText;
+        let post = content;
         const target = paths[0];
         if (toolName === 'edit' && target && exists(target)) {
           try {
-            post = editPostState(readFileSync(target, 'utf8'), oldText, newText);
+            post = readFileSync(target, 'utf8');
+            for (const payload of payloads) {
+              const oldText = typeof payload.oldText === 'string' ? payload.oldText : '';
+              const newText = typeof payload.newText === 'string' ? payload.newText : '';
+              post = editPostState(post, oldText, newText);
+            }
           } catch {
-            post = newText; // unreadable disk: the payload check still applies
+            post = payloads
+              .map((payload) => (typeof payload.newText === 'string' ? payload.newText : ''))
+              .join('\n'); // unreadable disk: the payload check still applies
           }
         }
         if (flipsVerdictLine(post, verdictLine)) {
