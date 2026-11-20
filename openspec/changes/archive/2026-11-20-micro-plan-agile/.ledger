@@ -1,0 +1,63 @@
+  human-approve · eospec approve · at 2026-11-20T09:15:24Z
+
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:18:11Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:18:22Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:18:50Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-20T09:19:51Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:20:07Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/AGENTS.md · at 2026-11-20T09:20:27Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:20:33Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-20T09:23:59Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/schema.test.ts · at 2026-11-20T09:24:00Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/example.test.ts · at 2026-11-20T09:24:01Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/micro.test.ts · at 2026-11-20T09:24:01Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/try.sh · at 2026-11-20T09:25:02Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:25:18Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:25:38Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:26:01Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:26:08Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-20T09:26:49Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:31:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:31:43Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:32:14Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:32:52Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:33:58Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:34:58Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:36:44Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-20T09:37:23Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:37:36Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:37:37Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:48:27Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:56:54Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T09:58:56Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:20:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:21:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:21:24Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-20T11:41:19Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-20T11:41:40Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/approval.test.ts · at 2026-11-20T11:41:51Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:42:03Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:42:19Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/src/gate.ts · at 2026-11-20T11:42:42Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/gate.test.ts · at 2026-11-20T11:43:55Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:44:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:45:43Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:45:53Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/README.md · at 2026-11-20T11:45:54Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/AGENTS.md · at 2026-11-20T11:45:55Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-20T11:46:12Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:46:20Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:46:41Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T11:47:12Z
+  human-approve · eospec approve · at 2026-11-20T12:37:52Z
+
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/bin/eospec.js · at 2026-11-20T12:39:37Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/test/vocabulary.test.ts · at 2026-11-20T12:39:38Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:40:06Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:40:27Z
+  gate-attributed · tool: edit · paths: /home/aemonge/projects/pi-openspec-gate/example/VALIDATION.md · at 2026-11-20T12:40:37Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:40:44Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:40:49Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:40:50Z
+  gate-attributed · tool: bash · paths: — · at 2026-11-20T12:41:23Z
+  human-close · eospec close · at 2026-11-20T14:17:57Z

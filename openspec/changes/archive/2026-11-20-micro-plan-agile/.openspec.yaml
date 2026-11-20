@@ -1,0 +1,15 @@
+schema: micro
+created: 2026-11-20
+skip_specs: true
+
+x-status: approved
+x-created_by: assistant
+
+x-granted: plan
+x-granted_plan: 2026-11-20T09:15:24Z
+x-approved_at: 2026-11-20T09:15:24Z
+
+x-verifying: 
+
+x-validated: 2026-11-20T14:17:57Z
+x-validated_at: 2026-11-20T14:17:57Z
