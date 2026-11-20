@@ -1,33 +1,47 @@
 name: micro
-version: 1
+version: 2
 x-declares: [start the spec, skip the spec]
+x-declares-bare: [skip the spec]
 description: "The zero-bureaucracy micro loop — one change, one file, one hard
   gate. Conversation is exploration: reading, searching, asking, and drafting
   are never gated. openspec/changes/<slug>/plan.md holds the whole
-  mini-iteration — Goal, resolved Questions & Decisions, Tasks (1–3 slices),
-  Verification — and `eospec approve` is the single boundary from drafting to
-  coding. Every mutating call during coding is receipted to the change's
-  `.ledger`; when the last task ticks, the change self-locks into verifying
-  until the human's hands-on pass ends it with `eospec close` (archives
-  immediately). Large planning lives in Jira; this schema is for the many
-  small, rapid iterations between."
+  mini-iteration — Goal, Estimate, Skills, Approach, resolved Questions &
+  Decisions, acceptance-titled Tasks, Verification — and `eospec approve` is
+  the single boundary from drafting to coding. Every mutating call during
+  coding is receipted to the change's `.ledger`; when the last task ticks, the
+  change self-locks into verifying until the human's hands-on pass ends it
+  with `eospec close` (archives immediately). Large planning lives in Jira;
+  this schema is for the many small, rapid iterations between."
 artifacts:
   - id: plan
     generates: plan.md
-    description: One mini-iteration in one file —
-      goal, decisions, tasks, verification
+    description: One mini-iteration in one file — goal, estimate, skills,
+      approach, decisions, acceptance-titled tasks, verification
     template: plan.md
-    instruction: 'The whole mini-iteration, one file. Goal: 2–3 lines — what
-      lands, for whom. Questions & Decisions: every ambiguity resolved BEFORE
+    instruction: 'The whole mini-iteration, one file, seven sections. Goal: 2–3
+      lines — what lands, for whom. Estimate: a range and a confidence —
+      honest sizing, not hope. Skills: the skills this walk loads; empty is
+      allowed, absent is not — record the choice, even `none — why`. Approach:
+      two labeled lines, `method:` and `architecture:` — naming the paradigm
+      is the awareness win; omitting `architecture:` consciously takes the
+      simple default (stdlib-first, single module), mixed paradigms go
+      comma-listed. Questions & Decisions: every ambiguity resolved before
       approval as `question → decision`; open questions go back to the human,
-      never into code. Tasks: small verifiable checkbox steps, 1–3 slices
-      (### headings, optional); the line `slice-gates: true` pauses coding at
-      slice boundaries — eospec approve advances, --all approves all.
-      Verification: automated checks first (typecheck/lint/tests), then the
-      one human-only act — `- [ ] Hands-on validation`. Drafting is free;
-      approval is the only gate, and it opens coding.'
+      never into code. Tasks: 1–3 mandatory slices titled by their acceptance
+      — `### Slice — <the acceptance>`; steps are checkbox lines, each
+      carrying its `commit:` line and hash slot; one commit per step — the law
+      binds plan-gated coding only, bare work stays one mutation; the line
+      `slice-gates: true` pauses coding at slice boundaries — eospec approve
+      advances, --all approves all. Verification: automated checks first
+      (typecheck/lint/tests), then the acceptance criteria as tick-free prose
+      bullets echoing the slice titles, then explicit human validation
+      instructions — prose, never checkboxes; only `- [ ] Hands-on validation`
+      stays a checkbox — the human-only act, answerable in conversation with a
+      literal VALID. Drafting is free; approval is the only gate, and it opens
+      coding.'
     requires: []
-    x-sections: [Goal, Questions & Decisions, Tasks, Verification]
+    x-sections: [Goal, Estimate, Skills, Approach,
+                 Questions & Decisions, Tasks, Verification]
     x-unlocks: [writes]
     x-completes: approved
     x-verdict-line: Hands-on validation
