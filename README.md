@@ -43,13 +43,17 @@ exit code intact.
 
 ## The micro loop
 
-One schema ships: **`micro`**. One artifact: `plan.md`.
+One schema ships: **`micro`**. One artifact: `plan.md` — seven sections,
+the agile spine:
 
 ```markdown
-## Goal                ← 2–3 lines: what lands, for whom
+## Goal                   ← 2–3 lines: what lands, for whom
+## Estimate               ← range · confidence — honest sizing, not hope
+## Skills                 ← what this walk loads; `none — why` allowed, absent not
+## Approach               ← method: + architecture: — naming the paradigm is the win
 ## Questions & Decisions  ← every ambiguity resolved BEFORE approval
-## Tasks               ← small vercheckbox steps; ### slices; 1–3 max
-## Verification        ← automated checks first, then the human pass
+## Tasks                  ← ### Slice — <the acceptance>; 1–3, mandatory
+## Verification           ← ACs as prose, instructions, then the human pass
 ```
 
 The four states, all derived — never stored prose:
@@ -57,13 +61,20 @@ The four states, all derived — never stored prose:
 | state | law |
 |---|---|
 | **draft** | source mutations locked — finish `plan.md`, the human runs `eospec approve` |
-| **coding** | mutations attribute + receipt to `.ledger`; the agent ticks tasks as they land |
+| **coding** | mutations attribute + receipt to `.ledger`; the agent ticks tasks as they land; one commit per step, hash pasted into the step's slot — the law binds plan-gated coding only, bare work stays one mutation |
 | **verifying** | every task ticked — source re-locks; verification commands (test · lint · typecheck) pass receipted until the human validates |
 | **slice pause** | `slice-gates: true` in the plan pauses at slice boundaries — `eospec approve` advances, `--all` unlocks all |
 
 The declared door overrides the draft wall: the human's phrase lands
 one mutation as bare work, debt line and all — live-caught when a
 latched *"skip the spec"* died silently behind the old teeth.
+
+The plan is shape, not process: the gate teaches what an artifact must
+contain — acceptance-titled slices, a commit per step, a tick-free
+Verification — never which skills to load or when to brainstorm; that
+choice stays with the human and their skills. And the hands-on pass
+needs no file entry: a literal `VALID` reply latches one verdict flip —
+ticking plan.md stays the optional path.
 
 Large planning lives in Jira; openspec here is optimized for many
 small, rapid iterations — a dozen mini-plans a day, zero ceremony
@@ -97,7 +108,8 @@ enforces them — the micro schema is the shipped example:
 artifacts:
   - id: plan
     generates: plan.md
-    x-sections: [Goal, Questions & Decisions, Tasks, Verification]
+    x-sections: [Goal, Estimate, Skills, Approach,
+                 Questions & Decisions, Tasks, Verification]
     x-unlocks: [writes]        # approve opens coding
     x-completes: approved
     x-verdict-line: Hands-on validation
