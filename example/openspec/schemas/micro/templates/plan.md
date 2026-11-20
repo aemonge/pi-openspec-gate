@@ -44,8 +44,11 @@
 
 <!-- automated checks first; then the acceptance criteria as tick-free prose
      bullets echoing the slice titles; then explicit human validation
-     instructions — prose, never checkboxes: a checkbox here counts as work
-     and could self-lock the change before the human pass -->
+     instructions — a production smoke test / guided manual walkthrough in
+     the human environment (a prompt ladder for gates, a UI walkthrough for
+     interfaces, API smoke for backends) — never diff/git-diff, and prose
+     never checkboxes: a checkbox here counts as work and could self-lock
+     the change before the human pass -->
 
 - [ ] typecheck / lint / tests pass
 

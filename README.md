@@ -53,7 +53,7 @@ the agile spine:
 ## Approach               ← method: + architecture: — naming the paradigm is the win
 ## Questions & Decisions  ← every ambiguity resolved BEFORE approval
 ## Tasks                  ← ### Slice — <the acceptance>; 1–3, mandatory
-## Verification           ← ACs as prose, instructions, then the human pass
+## Verification           ← ACs as prose, a smoke-walk, then the human pass
 ```
 
 The four states, all derived — never stored prose:

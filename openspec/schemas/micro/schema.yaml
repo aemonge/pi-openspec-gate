@@ -35,7 +35,10 @@ artifacts:
       advances, --all approves all. Verification: automated checks first
       (typecheck/lint/tests), then the acceptance criteria as tick-free prose
       bullets echoing the slice titles, then explicit human validation
-      instructions — prose, never checkboxes; only `- [ ] Hands-on validation`
+      instructions — a production smoke test and a guided manual walkthrough
+      walked in the human environment: a prompt ladder for gates, a UI
+      walkthrough for interfaces, API smoke for backends — prose, never
+      `diff` / `git diff`, never checkboxes; only `- [ ] Hands-on validation`
       stays a checkbox — the human-only act, answerable in conversation with a
       literal VALID. Drafting is free; approval is the only gate, and it opens
       coding.'

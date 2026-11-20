@@ -17,8 +17,9 @@ the human's call and their skills' territory.
    (range · confidence), Skills (may be empty, never absent), Approach
    (`method:` · `architecture:`), resolved questions, Tasks (1–3
    acceptance-titled slices, a commit per step), Verification
-   (automated checks first, tick-free instructions, then the human
-   pass).
+   (automated checks first, tick-free instructions — a production
+   smoke test or guided manual walkthrough, never diff — then the
+   human pass).
 4. **One gate.** `eospec approve` — typed by the human in their
    terminal — is the single boundary from drafting to coding. Every
    mutation after it lands as a receipt in the change's `.ledger`.

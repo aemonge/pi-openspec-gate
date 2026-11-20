@@ -18,6 +18,17 @@ pi
 One session, one aim, walked end to end. `approve` and `close` are
 always your terminal presses, never the agent's.
 
+## P0 — bare territory: no openspec, no gate
+
+From a fresh directory with NO openspec folder anywhere up the tree
+(e.g. `mkdir -p /tmp/valitaino/bare && cd /tmp/valitaino/bare`):
+
+Prompt: `create hello.py that prints Hello {name}`
+
+Expected: the file lands — the gate holds jurisdiction only where an
+openspec root exists; rootless means ungated (live-caught in a wiped
+/tmp lab: the loaded-but-rootless gate once refused a two-line hello).
+
 ## P1 — the gate is alive
 
 Prompt: `Create a python script that takes a name and prints Hello {name}`
