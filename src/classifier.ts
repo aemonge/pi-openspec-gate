@@ -40,6 +40,10 @@ const READ_ONLY_TOOLS = new Set([
   'grep',
   'find',
   'ls',
+  // skill catalog — listing/reading installed skills is discovery and
+  // brainstorm, never mutation (live-caught 2026-11-23: the gate refused
+  // a `skills` list in its own unfocused repo)
+  'skills',
   // research instruments: web (pi-web-agent), docs (context7), lsp reads,
   // Engram memory reads (gentle-engram)
   'web_explore',
