@@ -1,0 +1,6 @@
+# one active change per room — eospec writes, verbs refresh
+change: skills-readonly
+artifact-name: plan.md
+artifact-idx: 1/1
+task: 2/3
+next-step: eospec close
