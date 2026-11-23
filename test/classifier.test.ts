@@ -10,10 +10,16 @@ test('annotations: readOnlyHint true is not mutating', () => {
 });
 
 test('known read-only tools pass', () => {
-  for (const tool of ['read', 'grep', 'find', 'ls']) {
+  for (const tool of ['read', 'grep', 'find', 'ls', 'skills']) {
     const verdict = classifyMutation(tool, {});
     assert.equal(verdict.mutating, false, tool);
   }
+});
+
+test('skills catalog reads pass (discovery/brainstorm, live-caught 2026-11-23)', () => {
+  const verdict = classifyMutation('skills', { command: 'list' });
+  assert.equal(verdict.mutating, false);
+  assert.equal(verdict.basis, 'tool.known-read-only');
 });
 
 test('edit and write are mutating', () => {
