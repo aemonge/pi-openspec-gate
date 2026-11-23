@@ -42,4 +42,4 @@ architecture: single module, stdlib-first; the set is name-keyed so it covers th
 
 Validation: from the repo root, in a session where the `skills` tool exists and no change is focused (the room aims nothing), invoke `skills` list — expect the catalog to answer, not the refusal; then read one skill to confirm the read path. The human judges, then ticks the verdict below (or replies VALID) and runs eospec close.
 
-- [ ] Hands-on validation
+- [x] Hands-on validation
