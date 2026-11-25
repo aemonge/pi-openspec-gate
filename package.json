@@ -1,6 +1,6 @@
 {
   "name": "@aemonge-dev/pi-openspec-gate",
-  "version": "1.17.0",
+  "version": "1.18.0",
   "description": "pi-openspec-gate — openspec, extended. The micro loop: one plan.md per change, one human approve before code, every mutation receipted to the change's .ledger — via the eospec CLI (new, focus, approve, close) and a Pi extension that accounts every mutating tool call: allowed by path, attributed to the aimed change, declared by the human, or refused with instructions.",
   "type": "module",
   "license": "MIT",
