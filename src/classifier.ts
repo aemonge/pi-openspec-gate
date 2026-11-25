@@ -44,6 +44,11 @@ const READ_ONLY_TOOLS = new Set([
   // brainstorm, never mutation (live-caught 2026-11-23: the gate refused
   // a `skills` list in its own unfocused repo)
   'skills',
+  // session thinking level — the agent's own cognition knob, never
+  // project state (live-caught 2026-11-25: the gate refused
+  // `set_thinking_level high` twice in one session)
+  'set_thinking_level',
+  'get_thinking_level',
   // research instruments: web (pi-web-agent), docs (context7), lsp reads,
   // Engram memory reads (gentle-engram)
   'web_explore',
