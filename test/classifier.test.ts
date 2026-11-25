@@ -22,6 +22,17 @@ test('skills catalog reads pass (discovery/brainstorm, live-caught 2026-11-23)',
   assert.equal(verdict.basis, 'tool.known-read-only');
 });
 
+test('thinking-level tools pass (session state, live-caught 2026-11-25)', () => {
+  for (const [tool, input] of [
+    ['set_thinking_level', { level: 'high', persist: false }],
+    ['get_thinking_level', {}],
+  ] as const) {
+    const verdict = classifyMutation(tool, input);
+    assert.equal(verdict.mutating, false, tool);
+    assert.equal(verdict.basis, 'tool.known-read-only', tool);
+  }
+});
+
 test('edit and write are mutating', () => {
   assert.equal(classifyMutation('edit', { path: '/a' }).mutating, true);
   assert.equal(classifyMutation('write', { path: '/a' }).mutating, true);
